@@ -74,6 +74,7 @@
       "/persist" = {
         hideMounts = true;
         directories = [ "/etc/nixos" ];
+        files = [ "/root/.ssh/known_hosts" ];
       };
     };
 
@@ -136,6 +137,21 @@
   programs.fish.enable = true;
 
   services = {
+    borgbackup.jobs = {
+      "sidechest" = {
+        paths = [ "/persist" "/var/log" ];
+        repo =
+          "ssh://u237324-sub2@u237324-sub2.your-storagebox.de:23/home/borg";
+        encryption = {
+          mode = "repokey-blake2";
+          passCommand = "cat /persist/credentials/borg_sidechest_passphrase";
+        };
+        environment.BORG_RSH = "ssh -i /persist/credentials/borg_sidechest_ssh";
+        compression = "auto,zstd";
+        startAt = "daily";
+      };
+    };
+
     openssh = {
       enable = true;
       settings = {
