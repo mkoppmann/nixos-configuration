@@ -1,11 +1,7 @@
 { config, lib, pkgs, impermanence, ... }:
 
 {
-  imports =
-    [ 
-      impermanence.nixosModule
-      ./hardware-configuration.nix
-    ];
+  imports = [ impermanence.nixosModule ./hardware-configuration.nix ];
 
   nix = {
     gc = {
@@ -33,14 +29,12 @@
         ssh = {
           enable = true;
           port = 2222;
-          hostKeys = [
-            /persist/credentials/initrd_host_ed25519_key
-          ];
-	  authorizedKeys = config.users.users.mcp.openssh.authorizedKeys.keys;
+          hostKeys = [ /persist/credentials/initrd_host_ed25519_key ];
+          authorizedKeys = config.users.users.mcp.openssh.authorizedKeys.keys;
         };
         postCommands = lib.mkAfter ''
-          echo "zfs load-key -a; killall zfs" >> /root/.profile
-	'';
+                    echo "zfs load-key -a; killall zfs" >> /root/.profile
+          	'';
       };
       postDeviceCommands = lib.mkAfter ''
         zfs rollback -r "rpool/local/root@blank"
@@ -67,24 +61,23 @@
   environment = {
     etc = {
       "machine-id".source = "/persist/etc/machine-id";
-      "ssh/ssh_host_ed25519_key".source = "/persist/etc/ssh/ssh_host_ed25519_key";
-      "ssh/ssh_host_ed25519_key.pub".source = "/persist/etc/ssh/ssh_host_ed25519_key.pub";
+      "ssh/ssh_host_ed25519_key".source =
+        "/persist/etc/ssh/ssh_host_ed25519_key";
+      "ssh/ssh_host_ed25519_key.pub".source =
+        "/persist/etc/ssh/ssh_host_ed25519_key.pub";
       "ssh/ssh_host_rsa_key".source = "/persist/etc/ssh/ssh_host_rsa_key";
-      "ssh/ssh_host_rsa_key.pub".source = "/persist/etc/ssh/ssh_host_rsa_key.pub";
-    }; 
+      "ssh/ssh_host_rsa_key.pub".source =
+        "/persist/etc/ssh/ssh_host_rsa_key.pub";
+    };
 
     persistence = {
       "/persist" = {
         hideMounts = true;
-        directories = [
-          "/etc/nixos"
-        ];
+        directories = [ "/etc/nixos" ];
       };
     };
 
-    variables = {
-      EDITOR = "nvim";
-    };
+    variables = { EDITOR = "nvim"; };
   };
 
   networking = {
@@ -99,19 +92,20 @@
       allowedUDPPorts = [ ];
     };
 
-    nameservers = [ "2606:4700:4700::1111" "2606:4700:4700::1001" "1.1.1.1" "1.0.0.1" ];
+    nameservers =
+      [ "2606:4700:4700::1111" "2606:4700:4700::1001" "1.1.1.1" "1.0.0.1" ];
 
     interfaces.ens3 = {
       useDHCP = false;
 
       ipv4.addresses = [{
         address = "152.53.35.165";
-	prefixLength = 22;
+        prefixLength = 22;
       }];
 
       ipv6.addresses = [{
         address = "2a0a:4cc0:100:23::bad:c0de";
-	prefixLength = 64;
+        prefixLength = 64;
       }];
     };
 
@@ -120,10 +114,7 @@
 
   time.timeZone = "Europe/Vienna";
 
-  environment.systemPackages = with pkgs; [
-    git
-    neovim
-  ];
+  environment.systemPackages = with pkgs; [ git neovim ];
 
   users = {
     mutableUsers = false;
@@ -131,14 +122,14 @@
       mcp = {
         extraGroups = [ "wheel" ];
         isNormalUser = true;
-        openssh.authorizedKeys.keys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAID2aEPKcElIy1hJbiBjAa2wil6AYqWydtORxl0ErfBOT" ];
+        openssh.authorizedKeys.keys = [
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAID2aEPKcElIy1hJbiBjAa2wil6AYqWydtORxl0ErfBOT"
+        ];
         hashedPasswordFile = "/persist/credentials/user_mcp";
         shell = pkgs.fish;
       };
 
-      root = {
-        initialHashedPassword = "!";
-      };
+      root = { initialHashedPassword = "!"; };
     };
   };
 

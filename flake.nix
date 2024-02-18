@@ -15,17 +15,18 @@
 
   outputs = { self, nixpkgs, home-manager, ... }@inputs: {
     nixosConfigurations.apollo = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        specialArgs = inputs;
-        modules = [
-          ./configuration.nix
+      system = "x86_64-linux";
+      specialArgs = inputs;
+      modules = [
+        ./configuration.nix
 
-	  home-manager.nixosModules.home-manager {
-	    home-manager.useGlobalPkgs = true;
-	    home-manager.useUserPackages = true;
-	    home-manager.users.mcp = import ./home.nix;
-	  }
-        ];
+        home-manager.nixosModules.home-manager
+        {
+          home-manager.useGlobalPkgs = true;
+          home-manager.useUserPackages = true;
+          home-manager.users.mcp = import ./home.nix;
+        }
+      ];
     };
   };
 }
