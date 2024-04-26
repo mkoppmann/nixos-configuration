@@ -74,7 +74,10 @@
       "/persist" = {
         hideMounts = true;
         directories = [ "/etc/nixos" ];
-        files = [ "/root/.ssh/known_hosts" ];
+        files = [
+          "/root/.ssh/known_hosts"
+          "/home/mcp/.config/share/fish/fish_history"
+        ];
       };
     };
 
