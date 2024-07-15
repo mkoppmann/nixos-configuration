@@ -122,6 +122,7 @@
     fzf
     git
     neovim
+    tmux
   ];
 
   users = {
