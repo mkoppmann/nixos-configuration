@@ -118,7 +118,11 @@
 
   time.timeZone = "Europe/Vienna";
 
-  environment.systemPackages = with pkgs; [ git neovim ];
+  environment.systemPackages = with pkgs; [
+    fzf
+    git
+    neovim
+  ];
 
   users = {
     mutableUsers = false;
