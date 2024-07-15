@@ -76,8 +76,12 @@
         directories = [ "/etc/nixos" ];
         files = [
           "/root/.ssh/known_hosts"
-          "/home/mcp/.config/share/fish/fish_history"
         ];
+        users.mcp = {
+          files = [
+            ".local/share/fish/fish_history"
+          ];
+        };
       };
     };
 
