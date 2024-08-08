@@ -84,8 +84,6 @@
         };
       };
     };
-
-    variables = { EDITOR = "nvim"; };
   };
 
   networking = {

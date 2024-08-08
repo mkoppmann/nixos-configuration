@@ -19,6 +19,18 @@
     userEmail = "dev@mkoppmann.at";
   };
 
+  programs.neovim = {
+    enable = true;
+    defaultEditor = true;
+    viAlias = true;
+    vimAlias = true;
+    vimdiffAlias = true;
+    extraConfig = ''
+      set relativenumber
+      set number
+    '';
+  };
+
   home.stateVersion = "23.11";
 }
 
