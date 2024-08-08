@@ -1,7 +1,16 @@
-{ config, lib, pkgs, impermanence, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  impermanence,
+  ...
+}:
 
 {
-  imports = [ impermanence.nixosModule ./hardware-configuration.nix ];
+  imports = [
+    impermanence.nixosModule
+    ./hardware-configuration.nix
+  ];
 
   nix = {
     gc = {
@@ -12,7 +21,10 @@
     optimise.automatic = true;
     settings = {
       allowed-users = [ "@wheel" ];
-      experimental-features = [ "nix-command" "flakes" ];
+      experimental-features = [
+        "nix-command"
+        "flakes"
+      ];
     };
   };
 
@@ -61,26 +73,19 @@
   environment = {
     etc = {
       "machine-id".source = "/persist/etc/machine-id";
-      "ssh/ssh_host_ed25519_key".source =
-        "/persist/etc/ssh/ssh_host_ed25519_key";
-      "ssh/ssh_host_ed25519_key.pub".source =
-        "/persist/etc/ssh/ssh_host_ed25519_key.pub";
+      "ssh/ssh_host_ed25519_key".source = "/persist/etc/ssh/ssh_host_ed25519_key";
+      "ssh/ssh_host_ed25519_key.pub".source = "/persist/etc/ssh/ssh_host_ed25519_key.pub";
       "ssh/ssh_host_rsa_key".source = "/persist/etc/ssh/ssh_host_rsa_key";
-      "ssh/ssh_host_rsa_key.pub".source =
-        "/persist/etc/ssh/ssh_host_rsa_key.pub";
+      "ssh/ssh_host_rsa_key.pub".source = "/persist/etc/ssh/ssh_host_rsa_key.pub";
     };
 
     persistence = {
       "/persist" = {
         hideMounts = true;
         directories = [ "/etc/nixos" ];
-        files = [
-          "/root/.ssh/known_hosts"
-        ];
+        files = [ "/root/.ssh/known_hosts" ];
         users.mcp = {
-          files = [
-            ".local/share/fish/fish_history"
-          ];
+          files = [ ".local/share/fish/fish_history" ];
         };
       };
     };
@@ -94,25 +99,36 @@
 
     firewall = {
       enable = true;
-      allowedTCPPorts = [ 22 2222 ];
+      allowedTCPPorts = [
+        22
+        2222
+      ];
       allowedUDPPorts = [ ];
     };
 
-    nameservers =
-      [ "2606:4700:4700::1111" "2606:4700:4700::1001" "1.1.1.1" "1.0.0.1" ];
+    nameservers = [
+      "2606:4700:4700::1111"
+      "2606:4700:4700::1001"
+      "1.1.1.1"
+      "1.0.0.1"
+    ];
 
     interfaces.ens3 = {
       useDHCP = false;
 
-      ipv4.addresses = [{
-        address = "152.53.35.165";
-        prefixLength = 22;
-      }];
+      ipv4.addresses = [
+        {
+          address = "152.53.35.165";
+          prefixLength = 22;
+        }
+      ];
 
-      ipv6.addresses = [{
-        address = "2a0a:4cc0:100:23::bad:c0de";
-        prefixLength = 64;
-      }];
+      ipv6.addresses = [
+        {
+          address = "2a0a:4cc0:100:23::bad:c0de";
+          prefixLength = 64;
+        }
+      ];
     };
 
     defaultGateway = "152.53.32.1";
@@ -140,7 +156,9 @@
         shell = pkgs.fish;
       };
 
-      root = { initialHashedPassword = "!"; };
+      root = {
+        initialHashedPassword = "!";
+      };
     };
   };
 
@@ -149,9 +167,11 @@
   services = {
     borgbackup.jobs = {
       "sidechest" = {
-        paths = [ "/persist" "/var/log" ];
-        repo =
-          "ssh://u237324-sub2@u237324-sub2.your-storagebox.de:23/home/borg";
+        paths = [
+          "/persist"
+          "/var/log"
+        ];
+        repo = "ssh://u237324-sub2@u237324-sub2.your-storagebox.de:23/home/borg";
         encryption = {
           mode = "repokey-blake2";
           passCommand = "cat /persist/credentials/borg_sidechest_passphrase";
@@ -202,4 +222,3 @@
   system.stateVersion = "23.11"; # Did you read the comment?
 
 }
-

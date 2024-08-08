@@ -7,9 +7,18 @@
       set fish_greeting # Disable greeting
     '';
     plugins = [
-      { name = "done"; src = pkgs.fishPlugins.done; }
-      { name = "forgit"; src = pkgs.fishPlugins.forgit; }
-      { name = "sponge"; src = pkgs.fishPlugins.sponge; }
+      {
+        name = "done";
+        src = pkgs.fishPlugins.done;
+      }
+      {
+        name = "forgit";
+        src = pkgs.fishPlugins.forgit;
+      }
+      {
+        name = "sponge";
+        src = pkgs.fishPlugins.sponge;
+      }
     ];
   };
 
@@ -33,4 +42,3 @@
 
   home.stateVersion = "23.11";
 }
-
