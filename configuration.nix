@@ -10,6 +10,7 @@
   imports = [
     impermanence.nixosModule
     ./hardware-configuration.nix
+    ./modules/nginx.nix
   ];
 
   nix = {
@@ -82,7 +83,10 @@
     persistence = {
       "/persist" = {
         hideMounts = true;
-        directories = [ "/etc/nixos" ];
+        directories = [
+          "/etc/nixos"
+          "/var/lib/acme"
+        ];
         files = [ "/root/.ssh/known_hosts" ];
         users.mcp = {
           files = [ ".local/share/fish/fish_history" ];
@@ -101,6 +105,8 @@
       enable = true;
       allowedTCPPorts = [
         22
+        80
+        443
         2222
       ];
       allowedUDPPorts = [ ];
@@ -206,6 +212,11 @@
   };
 
   security = {
+    acme = {
+      acceptTerms = true;
+      defaults.email = "acme@ncrypt.at";
+    };
+
     auditd.enable = true;
     audit.enable = true;
     sudo.execWheelOnly = true;
