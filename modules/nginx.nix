@@ -41,6 +41,35 @@ in
     recommendedProxySettings = true;
     recommendedTlsSettings = true;
 
+    virtualHosts."cypherpunk.observer" = {
+      enableACME = true;
+      forceSSL = true;
+
+      extraConfig = hsts;
+
+      globalRedirect = "www.cypherpunk.observer";
+    };
+
+    virtualHosts."mta-sts.cypherpunk.observer" = {
+      enableACME = true;
+      forceSSL = true;
+      root = "/srv/www/mta-sts.cypherpunk.observer/";
+
+      extraConfig = default-headers;
+    };
+
+    virtualHosts."www.cypherpunk.observer" = {
+      enableACME = true;
+      forceSSL = true;
+      root = "/srv/www/cypherpunk.observer/";
+
+      extraConfig = default-headers;
+
+      locations."~ /\.git".extraConfig = ''
+        deny all;
+      '';
+    };
+
     virtualHosts."mkoppmann.at" = {
       enableACME = true;
       forceSSL = true;
