@@ -87,6 +87,21 @@ in
       extraConfig = default-headers;
     };
 
+    virtualHosts."wtcvss.mkoppmann.at" = {
+      enableACME = true;
+      forceSSL = true;
+      root = "/srv/www/wtcvss/";
+
+      extraConfig =
+        hsts
+        + referrer-policy
+        + x-frame-options
+        + x-content-type-options
+        + ''
+          add_header Content-Security-Policy "default-src 'none'; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self'; script-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'none'; upgrade-insecure-requests;" always;
+        '';
+    };
+
     virtualHosts."www.mkoppmann.at" = {
       enableACME = true;
       forceSSL = true;
