@@ -85,6 +85,7 @@
         hideMounts = true;
         directories = [
           "/etc/nixos"
+          "/srv/www"
           "/var/lib/acme"
         ];
         files = [ "/root/.ssh/known_hosts" ];
