@@ -86,7 +86,9 @@
         directories = [
           "/etc/nixos"
           "/srv/www"
+          "/var/backup"
           "/var/lib/acme"
+          "/var/lib/postgresql"
         ];
         files = [ "/root/.ssh/known_hosts" ];
         users.mcp = {
