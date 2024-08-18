@@ -11,6 +11,7 @@
     impermanence.nixosModule
     ./hardware-configuration.nix
     ./modules/nginx.nix
+    ./modules/postgresql.nix
   ];
 
   nix = {
