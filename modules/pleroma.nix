@@ -42,7 +42,7 @@
           referrer_policy: "no-referrer"
 
         config :web_push_encryption, :vapid_details,
-          subject: "mailto:shibayashi@cypherpunk.observer",
+          subject: "mailto:shibayashi@cypherpunk.observer"
 
         config :pleroma, configurable_from_database: true
       ''
