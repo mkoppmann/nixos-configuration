@@ -31,7 +31,7 @@
     startAt = "*-*-* 23:05:00";
     location = "/var/backup/postgresql";
     compression = "none";
-    pgdumpOptions = "--format=directory";
+    pgdumpOptions = "--format=custom";
 
     databases = [
       "pleroma"
