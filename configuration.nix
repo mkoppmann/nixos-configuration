@@ -11,6 +11,7 @@
     impermanence.nixosModule
     ./hardware-configuration.nix
     ./modules/nginx.nix
+    ./modules/pleroma.nix
     ./modules/postgresql.nix
   ];
 
@@ -89,6 +90,7 @@
           "/srv/www"
           "/var/backup"
           "/var/lib/acme"
+          "/var/lib/pleroma"
           "/var/lib/postgresql"
         ];
         files = [ "/root/.ssh/known_hosts" ];
