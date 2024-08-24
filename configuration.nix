@@ -13,6 +13,7 @@
     ./modules/nginx.nix
     ./modules/pleroma.nix
     ./modules/postgresql.nix
+    ./modules/vaultwarden.nix
   ];
 
   nix = {
@@ -90,6 +91,7 @@
           "/srv/www"
           "/var/backup"
           "/var/lib/acme"
+          "/var/lib/bitwarden_rs"
           "/var/lib/pleroma"
           "/var/lib/postgresql"
         ];

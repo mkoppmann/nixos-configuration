@@ -17,10 +17,18 @@
       local all       postgres peer
     '';
 
-    ensureDatabases = [ "pleroma" ];
+    ensureDatabases = [
+      "pleroma"
+      "vaultwarden"
+    ];
+
     ensureUsers = [
       {
         name = "pleroma";
+        ensureDBOwnership = true;
+      }
+      {
+        name = "vaultwarden";
         ensureDBOwnership = true;
       }
     ];
@@ -35,6 +43,7 @@
 
     databases = [
       "pleroma"
+      "vaultwarden"
     ];
   };
 }
