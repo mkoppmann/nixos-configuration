@@ -14,7 +14,7 @@ in
 {
   services.authentik = {
     enable = true;
-    environmentFile = "/var/lib/authentik/authentik-env";
+    environmentFile = "/persist/var/lib/authentik/authentik-env";
     createDatabase = false;
     nginx.enable = false;
     settings = {
