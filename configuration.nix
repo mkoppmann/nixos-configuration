@@ -2,14 +2,16 @@
   config,
   lib,
   pkgs,
+  authentik-nix,
   impermanence,
   ...
 }:
-
 {
   imports = [
+    authentik-nix.nixosModules.default
     impermanence.nixosModule
     ./hardware-configuration.nix
+    ./modules/authentik.nix
     ./modules/nginx.nix
     ./modules/pleroma.nix
     ./modules/postgresql.nix
@@ -94,6 +96,7 @@
           "/var/lib/bitwarden_rs"
           "/var/lib/pleroma"
           "/var/lib/postgresql"
+          "/var/lib/private/authentik"
         ];
         files = [ "/root/.ssh/known_hosts" ];
         users.mcp = {

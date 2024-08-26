@@ -18,11 +18,16 @@
     '';
 
     ensureDatabases = [
+      "authentik"
       "pleroma"
       "vaultwarden"
     ];
 
     ensureUsers = [
+      {
+        name = "authentik";
+        ensureDBOwnership = true;
+      }
       {
         name = "pleroma";
         ensureDBOwnership = true;
@@ -42,6 +47,7 @@
     pgdumpOptions = "--format=custom";
 
     databases = [
+      "authentik"
       "pleroma"
       "vaultwarden"
     ];

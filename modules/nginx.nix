@@ -200,6 +200,15 @@ in
       '';
     };
 
+    virtualHosts."idp.ncrypt.at" = {
+      enableACME = true;
+      forceSSL = true;
+      locations."/" = {
+        proxyWebsockets = true;
+        proxyPass = "https://localhost:9443";
+      };
+    };
+
     virtualHosts."pw.ncrypt.at" = {
       enableACME = true;
       forceSSL = true;
