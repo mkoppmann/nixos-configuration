@@ -23,7 +23,7 @@
       ROCKET_PORT = 8222;
       ROCKET_LOG = "critical";
 
-      SMTP_HOST = "mail4.web-server.biz";
+      SMTP_HOST = "smtp.webspace.bz";
       SMTP_FROM = "pw@ncrypt.at";
       SMTP_FROM_NAME = "Vaultwarden ncrypt.at";
       SMTP_USERNAME = "pw@ncrypt.at";
