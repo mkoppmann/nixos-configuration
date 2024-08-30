@@ -28,7 +28,7 @@ in
         username = "idp@ncrypt.at";
         use_tls = false;
         use_ssl = true;
-        from = "Authentik ncrypt.at";
+        from = "Authentik ncrypt.at <idp@ncrypt.at>";
       };
       error_reporting.enabled = false;
       postgresql = {
