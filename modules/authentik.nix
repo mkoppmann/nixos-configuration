@@ -23,12 +23,12 @@ in
       disable_startup_analytics = true;
       disable_update_check = true;
       email = {
-        host = "";
-        port = 587;
+        host = "smtp.webspace.bz";
+        port = 465;
         username = "idp@ncrypt.at";
         use_tls = true;
         use_ssl = false;
-        from = "idp@ncrypt.at";
+        from = "Authentik ncrypt.at";
       };
       error_reporting.enabled = false;
       postgresql = {
