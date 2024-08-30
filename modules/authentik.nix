@@ -26,8 +26,8 @@ in
         host = "smtp.webspace.bz";
         port = 465;
         username = "idp@ncrypt.at";
-        use_tls = true;
-        use_ssl = false;
+        use_tls = false;
+        use_ssl = true;
         from = "Authentik ncrypt.at";
       };
       error_reporting.enabled = false;
