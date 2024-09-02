@@ -6,7 +6,7 @@
 }:
 {
   services.matrix-synapse = {
-    enable = false;
+    enable = true;
     extras = [ "oidc" ];
     extraConfigFiles = [ "/var/lib/matrix-synapse/secrets.yaml" ];
 
