@@ -96,6 +96,7 @@
           "/var/lib/acme"
           "/var/lib/bitwarden_rs"
           "/var/lib/matrix-synapse"
+          "/var/lib/nixos"
           "/var/lib/pleroma"
           "/var/lib/postgresql"
           "/var/lib/private/authentik"
