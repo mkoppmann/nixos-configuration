@@ -31,6 +31,17 @@ let
   '';
 
   default-headers = hsts + csp + referrer-policy + x-frame-options + x-content-type-options;
+
+  synapse-client-config."m.homeserver".base_url = "https://matrix.ncrypt.at";
+
+  synapse-server-config."m.server" = "matrix.ncrypt.at:443";
+
+  synapse-mk-well-known = data: ''
+    default_type application/json;
+    add_header Access-Control-Allow-Origin *;
+    return 200 '${builtins.toJSON data}';
+  '';
+
 in
 {
   services.nginx = {
@@ -200,6 +211,47 @@ in
       '';
     };
 
+    virtualHosts."ncrypt.at" = {
+      enableACME = true;
+      forceSSL = true;
+
+      extraConfig = hsts;
+
+      locations."= /.well-known/matrix/server".extraConfig = synapse-mk-well-known synapse-server-config;
+
+      locations."= /.well-known/matrix/client".extraConfig = synapse-mk-well-known synapse-client-config;
+
+      locations."/".return = "301 https://www.ncrypt.at$request_uri";
+    };
+
+    virtualHosts."chat.ncrypt.at" = {
+      enableACME = true;
+      forceSSL = true;
+
+      extraConfig = hsts + referrer-policy + x-frame-options + x-content-type-options;
+
+      root = pkgs.element-web.override {
+        conf = {
+          default_server_config."m.homeserver" = {
+            base_url = "https://matrix.ncrypt.at";
+            server_name = "ncrypt.at";
+          };
+          disable_guests = true;
+          disable_3pid_login = true;
+          default_country_code = "AT";
+          show_labs_settings = true;
+          features = {
+            feature_latex_maths = "labs";
+            feature_pinning = "labs";
+          };
+          rooms_directory.servers = [
+            "ncrypt.at"
+            "matrix.org"
+          ];
+        };
+      };
+    };
+
     virtualHosts."idp.ncrypt.at" = {
       enableACME = true;
       forceSSL = true;
@@ -209,12 +261,39 @@ in
       };
     };
 
+    virtualHosts."matrix.ncrypt.at" = {
+      enableACME = true;
+      forceSSL = true;
+
+      locations."/".return = "404";
+
+      locations."/_matrix" = {
+        extraConfig = ''
+          client_max_body_size 0;
+        '';
+        proxyPass = "http://127.0.0.1:8008";
+      };
+
+      locations."/_synapse/client" = {
+        extraConfig = ''
+          client_max_body_size 0;
+        '';
+        proxyPass = "http://127.0.0.1:8008";
+      };
+    };
+
     virtualHosts."pw.ncrypt.at" = {
       enableACME = true;
       forceSSL = true;
       locations."/" = {
         proxyPass = "http://127.0.0.1:${toString config.services.vaultwarden.config.ROCKET_PORT}";
       };
+    };
+
+    virtualHosts."www.ncrypt.at" = {
+      enableACME = true;
+      forceSSL = true;
+      locations."/".return = "200";
     };
   };
 }

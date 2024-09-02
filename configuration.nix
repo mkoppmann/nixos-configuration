@@ -12,6 +12,7 @@
     impermanence.nixosModule
     ./hardware-configuration.nix
     ./modules/authentik.nix
+    ./modules/matrix-synapse.nix
     ./modules/nginx.nix
     ./modules/pleroma.nix
     ./modules/postgresql.nix
@@ -94,6 +95,7 @@
           "/var/backup"
           "/var/lib/acme"
           "/var/lib/bitwarden_rs"
+          "/var/lib/matrix-synapse"
           "/var/lib/pleroma"
           "/var/lib/postgresql"
           "/var/lib/private/authentik"

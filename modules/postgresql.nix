@@ -19,6 +19,7 @@
 
     ensureDatabases = [
       "authentik"
+      "matrix-synapse"
       "pleroma"
       "vaultwarden"
     ];
@@ -26,6 +27,10 @@
     ensureUsers = [
       {
         name = "authentik";
+        ensureDBOwnership = true;
+      }
+      {
+        name = "matrix-synapse";
         ensureDBOwnership = true;
       }
       {
@@ -48,6 +53,7 @@
 
     databases = [
       "authentik"
+      "matrix-synapse"
       "pleroma"
       "vaultwarden"
     ];
