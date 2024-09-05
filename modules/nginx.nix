@@ -252,6 +252,11 @@ in
       };
     };
 
+    virtualHosts."cloud.ncrypt.at" = {
+      enableACME = true;
+      forceSSL = true;
+    };
+
     virtualHosts."idp.ncrypt.at" = {
       enableACME = true;
       forceSSL = true;

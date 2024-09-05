@@ -20,6 +20,7 @@
     ensureDatabases = [
       "authentik"
       "matrix-synapse"
+      "nextcloud"
       "pleroma"
       "vaultwarden"
     ];
@@ -31,6 +32,10 @@
       }
       {
         name = "matrix-synapse";
+        ensureDBOwnership = true;
+      }
+      {
+        name = "nextcloud";
         ensureDBOwnership = true;
       }
       {
@@ -54,6 +59,7 @@
     databases = [
       "authentik"
       "matrix-synapse"
+      "nextcloud"
       "pleroma"
       "vaultwarden"
     ];

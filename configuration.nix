@@ -13,6 +13,7 @@
     ./hardware-configuration.nix
     ./modules/authentik.nix
     ./modules/matrix-synapse.nix
+    ./modules/nextcloud.nix
     ./modules/nginx.nix
     ./modules/pleroma.nix
     ./modules/postgresql.nix
@@ -96,6 +97,7 @@
           "/var/lib/acme"
           "/var/lib/bitwarden_rs"
           "/var/lib/matrix-synapse"
+          "/var/lib/nextcloud"
           "/var/lib/nixos"
           "/var/lib/pleroma"
           "/var/lib/postgresql"
