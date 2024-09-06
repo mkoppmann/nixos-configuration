@@ -15,6 +15,7 @@
     ./modules/matrix-synapse.nix
     ./modules/nextcloud.nix
     ./modules/nginx.nix
+    ./modules/onlyoffice.nix
     ./modules/pleroma.nix
     ./modules/postgresql.nix
     ./modules/vaultwarden.nix
@@ -99,6 +100,7 @@
           "/var/lib/matrix-synapse"
           "/var/lib/nextcloud"
           "/var/lib/nixos"
+          "/var/lib/onlyoffice"
           "/var/lib/pleroma"
           "/var/lib/postgresql"
           "/var/lib/private/authentik"
@@ -157,6 +159,8 @@
   };
 
   time.timeZone = "Europe/Vienna";
+
+  nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [ "corefonts" ];
 
   environment.systemPackages = with pkgs; [
     fzf

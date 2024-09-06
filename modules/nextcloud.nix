@@ -29,6 +29,7 @@
         contacts
         notes
         notify_push
+        onlyoffice
         tasks
         user_oidc
         ;
