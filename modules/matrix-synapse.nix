@@ -9,6 +9,7 @@
     enable = true;
     extras = [ "oidc" ];
     extraConfigFiles = [ "/var/lib/matrix-synapse/secrets.yaml" ];
+    log.root.level = "WARNING";
 
     settings = {
       server_name = "ncrypt.at";
