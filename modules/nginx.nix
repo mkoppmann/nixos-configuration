@@ -228,7 +228,14 @@ in
       enableACME = true;
       forceSSL = true;
 
-      extraConfig = hsts + referrer-policy + x-frame-options + x-content-type-options;
+      extraConfig =
+        hsts
+        + referrer-policy
+        + x-content-type-options
+        + ''
+          add_header X-Frame-Options SAMEORIGIN always;
+          add_header Content-Security-Policy "frame-ancestors 'self';" always;
+        '';
 
       root = pkgs.element-web.override {
         conf = {
