@@ -197,6 +197,9 @@
           "/persist"
           "/var/log"
         ];
+        exclude = [
+          "/persist/var/lib/postgresql"
+        ];
         repo = "ssh://u237324-sub2@u237324-sub2.your-storagebox.de:23/home/borg";
         encryption = {
           mode = "repokey-blake2";
