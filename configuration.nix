@@ -40,7 +40,7 @@
   boot = {
     loader.systemd-boot.enable = true;
     loader.efi.canTouchEfiVariables = true;
-    kernelPackages = config.boot.zfs.package.latestCompatibleLinuxPackages;
+    kernelPackages = pkgs.linuxPackages;
     kernelParams = [ "ip=152.53.35.165::152.53.32.1:255.255.252.0::ens3:none" ];
     supportedFilesystems = [ "zfs" ];
     initrd = {
