@@ -199,6 +199,9 @@
         ];
         exclude = [
           "/persist/var/lib/postgresql"
+          "/var/log/audit/audit.log"
+          "/var/log/journal/e538f1c97e5f472581a47d4a0acd816c/system.journal"
+          "/var/log/nginx/access.log"
         ];
         repo = "ssh://u237324-sub2@u237324-sub2.your-storagebox.de:23/home/borg";
         encryption = {
