@@ -58,4 +58,8 @@
       encryption_enabled_by_default_for_room_type = "invite";
     };
   };
+
+  services.synapse-auto-compressor = {
+      enable = true;
+  };
 }
