@@ -19,7 +19,7 @@
     ./modules/pleroma.nix
     ./modules/postgresql.nix
     ./modules/vaultwarden.nix
-  ];
+  ] ++ lib.optionals (builtins.pathExists ./private) [ ./private ];
 
   nix = {
     gc = {
