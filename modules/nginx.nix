@@ -188,10 +188,14 @@ in
       enableACME = true;
       forceSSL = true;
 
-      # allow large file uploads
-      extraConfig = ''
-        client_max_body_size 50000M;
-      '';
+      extraConfig =
+        hsts
+        + referrer-policy
+        + x-frame-options
+        + x-content-type-options
+        + ''
+          client_max_body_size 50000M;
+        '';
 
       locations."/" = {
         proxyPass = "http://10.100.0.2:2283";
