@@ -184,6 +184,32 @@ in
       extraConfig = default-headers;
     };
 
+    virtualHosts."photos.mkoppmann.at" = {
+      enableACME = true;
+      forceSSL = true;
+
+      # allow large file uploads
+      extraConfig = ''
+        client_max_body_size 50000M;
+      '';
+
+      locations."/" = {
+        proxyPass = "http://10.100.0.2:2283";
+        proxyWebsockets = true;
+
+        extraConfig = ''
+          proxy_read_timeout 600s;
+          proxy_send_timeout 600s;
+          send_timeout 600s;
+          proxy_redirect off;
+        '';
+      };
+
+      locations."= /.well-known/immich" = {
+        proxyPass = "http://10.100.0.2:2283";
+      };
+    };
+
     virtualHosts."wtcvss.mkoppmann.at" = {
       enableACME = true;
       forceSSL = true;
