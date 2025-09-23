@@ -19,6 +19,7 @@
     ./modules/pleroma.nix
     ./modules/postgresql.nix
     ./modules/vaultwarden.nix
+    ./modules/wireguard.nix
   ] ++ lib.optionals (builtins.pathExists ./private) [ ./private ];
 
   nix = {
@@ -104,6 +105,7 @@
           "/var/lib/pleroma"
           "/var/lib/postgresql"
           "/var/lib/private/authentik"
+          "/var/lib/wireguard"
         ];
         files = [ "/root/.ssh/known_hosts" ];
         users.mcp = {
@@ -127,7 +129,7 @@
         443
         2222
       ];
-      allowedUDPPorts = [ ];
+      allowedUDPPorts = [ 51820 ];
     };
 
     nameservers = [
@@ -136,6 +138,12 @@
       "1.1.1.1"
       "1.0.0.1"
     ];
+
+    nat = {
+      enable = true;
+      externalInterface = "ens3";
+      internalInterfaces = [ "wg0" ];
+    };
 
     interfaces.ens3 = {
       useDHCP = false;
@@ -167,6 +175,7 @@
     git
     neovim
     tmux
+    wireguard-tools
   ];
 
   users = {
