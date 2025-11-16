@@ -220,6 +220,11 @@
         environment.BORG_RSH = "ssh -i /persist/credentials/borg_sidechest_ssh";
         compression = "auto,zstd";
         startAt = "daily";
+        prune.keep = {
+          daily = 7;
+          weekly = 4;
+          monthly = 6;
+        };
       };
     };
 
