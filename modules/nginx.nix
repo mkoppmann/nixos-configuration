@@ -50,7 +50,6 @@ in
     package = pkgs.nginxMainline.override { withSlice = true; };
 
     recommendedGzipSettings = true;
-    recommendedZstdSettings = true;
     recommendedOptimisation = true;
     recommendedProxySettings = true;
     recommendedTlsSettings = true;

@@ -28,7 +28,6 @@
         calendar
         contacts
         notes
-        notify_push
         onlyoffice
         tasks
         user_oidc
@@ -54,7 +53,7 @@
       mail_sendmailmode = "smtp";
       mail_smtpsecure = "ssl";
       mail_smtphost = "smtp.webspace.bz";
-      mail_smtpport = "465";
+      mail_smtpport = 465;
       mail_from_address = "cloud";
       mail_domain = "ncrypt.at";
       mail_smtpauthtype = "LOGIN";
