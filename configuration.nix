@@ -11,6 +11,7 @@
     authentik-nix.nixosModules.default
     impermanence.nixosModule
     ./hardware-configuration.nix
+    ./modules/actual.nix
     ./modules/authentik.nix
     ./modules/matrix-synapse.nix
     ./modules/nextcloud.nix
@@ -98,6 +99,7 @@
           "/srv/www"
           "/var/backup"
           "/var/lib/acme"
+          "/var/lib/actual"
           "/var/lib/bitwarden_rs"
           "/var/lib/matrix-synapse"
           "/var/lib/nextcloud"

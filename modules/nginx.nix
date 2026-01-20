@@ -253,6 +253,34 @@ in
       locations."/".return = "301 https://www.ncrypt.at$request_uri";
     };
 
+    virtualHosts."budget.ncrypt.at" = {
+      enableACME = true;
+      forceSSL = true;
+
+      extraConfig =
+        hsts
+        + referrer-policy
+        + x-content-type-options;
+
+      locations."/" = {
+        proxyPass = "http://127.0.0.1:5006";
+
+        extraConfig = ''
+          # Prevents header duplication between Upstream and Proxy
+          proxy_hide_header Cross-Origin-Embedder-Policy;
+          proxy_hide_header Cross-Origin-Opener-Policy;
+
+          # Explicitly set mandatory security headers
+          add_header Cross-Origin-Embedder-Policy "require-corp" always;
+          add_header Cross-Origin-Opener-Policy "same-origin" always;
+          add_header Origin-Agent-Cluster "?1" always;
+
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+        '';
+      };
+    };
+
     virtualHosts."chat.ncrypt.at" = {
       enableACME = true;
       forceSSL = true;
