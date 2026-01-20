@@ -94,6 +94,7 @@
         hideMounts = true;
         directories = [
           "/etc/nixos"
+	  "/root/.ssh"
           "/srv/www"
           "/var/backup"
           "/var/lib/acme"
@@ -107,7 +108,6 @@
           "/var/lib/private/authentik"
           "/var/lib/wireguard"
         ];
-        files = [ "/root/.ssh/known_hosts" ];
         users.mcp = {
           files = [ ".local/share/fish/fish_history" ];
         };
