@@ -2,11 +2,18 @@
   config,
   lib,
   pkgs,
+  nixpkgs-unstable,
   ...
 }:
+let
+  pkgs-unstable = import nixpkgs-unstable {
+    inherit (pkgs.stdenv.hostPlatform) system;
+  };
+in
 {
   services.actual = {
     enable = true;
+    package = pkgs-unstable.actual-server;
 
     settings = {
       hostname = "127.0.0.1";
