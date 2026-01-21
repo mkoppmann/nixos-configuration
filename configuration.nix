@@ -99,7 +99,6 @@
           "/srv/www"
           "/var/backup"
           "/var/lib/acme"
-          "/var/lib/actual"
           "/var/lib/bitwarden_rs"
           "/var/lib/matrix-synapse"
           "/var/lib/nextcloud"
@@ -107,6 +106,7 @@
           "/var/lib/onlyoffice"
           "/var/lib/pleroma"
           "/var/lib/postgresql"
+          "/var/lib/private/actual"
           "/var/lib/private/authentik"
           "/var/lib/wireguard"
         ];

@@ -259,8 +259,7 @@ in
 
       extraConfig =
         hsts
-        + referrer-policy
-        + x-content-type-options;
+        + referrer-policy;
 
       locations."/" = {
         proxyPass = "http://127.0.0.1:5006";
