@@ -19,6 +19,7 @@
 
     ensureDatabases = [
       "authentik"
+      "matrix-authentication-service"
       "matrix-synapse"
       "nextcloud"
       "pleroma"
@@ -28,6 +29,10 @@
     ensureUsers = [
       {
         name = "authentik";
+        ensureDBOwnership = true;
+      }
+      {
+        name = "matrix-authentication-service";
         ensureDBOwnership = true;
       }
       {
@@ -58,6 +63,7 @@
 
     databases = [
       "authentik"
+      "matrix-authentication-service"
       "matrix-synapse"
       "nextcloud"
       "pleroma"
@@ -65,3 +71,4 @@
     ];
   };
 }
+

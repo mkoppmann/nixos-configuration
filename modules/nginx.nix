@@ -329,11 +329,24 @@ in
       };
     };
 
+    virtualHosts."auth.matrix.ncrypt.at" = {
+      enableACME = true;
+      forceSSL = true;
+
+      locations."/" = {
+        proxyPass = "http://127.0.0.1:8091";
+      };
+    };
+
     virtualHosts."matrix.ncrypt.at" = {
       enableACME = true;
       forceSSL = true;
 
       locations."/".return = "404";
+
+      locations."~ ^/_matrix/client/(.*)/(login|logout|refresh)" = {
+        proxyPass = "http://127.0.0.1:8091";
+      };
 
       locations."/_matrix" = {
         extraConfig = ''
@@ -343,6 +356,13 @@ in
       };
 
       locations."/_synapse/client" = {
+        extraConfig = ''
+          client_max_body_size 0;
+        '';
+        proxyPass = "http://127.0.0.1:8008";
+      };
+
+      locations."/_synapse/mas" = {
         extraConfig = ''
           client_max_body_size 0;
         '';

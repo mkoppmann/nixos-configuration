@@ -14,6 +14,7 @@
     ./modules/actual.nix
     ./modules/authentik.nix
     ./modules/matrix-synapse.nix
+    ./modules/mas.nix
     ./modules/nextcloud.nix
     ./modules/nginx.nix
     ./modules/onlyoffice.nix
@@ -21,6 +22,7 @@
     ./modules/postgresql.nix
     ./modules/vaultwarden.nix
     ./modules/wireguard.nix
+    ./nixos-modules/matrix-authentication-service.nix
   ] ++ lib.optionals (builtins.pathExists ./private) [ ./private ];
 
   nix = {
@@ -108,6 +110,7 @@
           "/var/lib/postgresql"
           "/var/lib/private/actual"
           "/var/lib/private/authentik"
+          "/var/lib/private/matrix-authentication-service"
           "/var/lib/wireguard"
         ];
         users.mcp = {
