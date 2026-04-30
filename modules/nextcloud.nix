@@ -8,7 +8,7 @@
   services.nextcloud = {
     enable = true;
     hostName = "cloud.ncrypt.at";
-    package = pkgs.nextcloud32;
+    package = pkgs.nextcloud33;
 
     configureRedis = true;
     database.createLocally = false;
