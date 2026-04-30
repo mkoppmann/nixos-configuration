@@ -32,6 +32,8 @@ let
 
   default-headers = hsts + csp + referrer-policy + x-frame-options + x-content-type-options;
 
+  default-headers-without-csp = hsts + referrer-policy + x-frame-options + x-content-type-options;
+
   synapse-client-config."m.homeserver".base_url = "https://matrix.ncrypt.at";
 
   synapse-server-config."m.server" = "matrix.ncrypt.at:443";
@@ -231,9 +233,29 @@ in
     virtualHosts."www.mkoppmann.at" = {
       enableACME = true;
       forceSSL = true;
-      root = "/srv/www/mkoppmann.at/";
+      root = "/srv/www/mkoppmann.at/dist/";
 
-      extraConfig = default-headers;
+      extraConfig =
+        hsts
+        + referrer-policy
+        + x-frame-options
+        + x-content-type-options
+        + ''
+          etag on;
+        '';
+
+      locations."= /".extraConfig = default-headers-without-csp + ''
+        add_header Cache-Control "no-cache, no-store, must-revalidate" always;
+      '';
+
+      locations."~* \\.html$".extraConfig = default-headers-without-csp + ''
+        add_header Cache-Control "no-cache, no-store, must-revalidate" always;
+      '';
+
+      locations."~* ^/_astro/".extraConfig = default-headers-without-csp + ''
+        expires 1y;
+        add_header Cache-Control "public, max-age=31536000, immutable" always;
+      '';
 
       locations."~ /\.git".extraConfig = ''
         deny all;
