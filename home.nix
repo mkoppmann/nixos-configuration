@@ -36,6 +36,8 @@
     viAlias = true;
     vimAlias = true;
     vimdiffAlias = true;
+    withRuby = false;
+    withPython3 = false;
     extraConfig = ''
       set relativenumber
       set number
