@@ -24,8 +24,10 @@
 
   programs.git = {
     enable = true;
-    userName = "mkoppmann";
-    userEmail = "dev@mkoppmann.at";
+    settings = {
+       user.name = "mkoppmann";
+       user.email = "dev@mkoppmann.at";
+    };
   };
 
   programs.neovim = {
