@@ -626,6 +626,21 @@ class Backup:
     def borg(self, *args, **kwargs):
         return self.call("borg", "--lock-wait", "5", *args, timeout=86400, **kwargs)
 
+    def record_archive_success(self, run):
+        # This evidence survives replacement of run.json. Test archives and
+        # incomplete uploads must never reset the production freshness clock.
+        if self.testing or run.get("testCapture") or not run.get("archiveCreated"):
+            return
+        path = self.state / "last-success.json"
+        old = json.loads(path.read_text()) if path.exists() else None
+        if old and old["capturedEpoch"] >= run["createdEpoch"]:
+            return
+        atomic_json(path, {
+            "version": 1, "runId": run["id"], "archive": run["archive"],
+            "capturedEpoch": run["createdEpoch"], "uploadedEpoch": time.time(),
+            "production": True,
+        })
+
     def upload(self):
         # No run is a normal timer no-op; a failed capture is never an upload source.
         with locked(self.runtime / "operation.lock"):
@@ -668,6 +683,7 @@ class Backup:
                         self.borg("rename", "::" + attempt, name)
                     run["archiveCreated"] = True
                     self.save(run)
+                self.record_archive_success(run)
                 options = ["prune", "--glob-archives", self.c["borg"]["prefix"] + "-*"]
                 for period, number in self.c["borg"]["keep"].items():
                     options.extend(["--keep-" + period, str(number)])

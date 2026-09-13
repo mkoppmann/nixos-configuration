@@ -300,6 +300,80 @@ class BackupTests(unittest.TestCase):
         self.backup.upload()
         self.assertEqual(sum(a[0] == "borg" and a[3] == "create" for a in self.runner.calls), 1)
 
+    def test_production_success_evidence_survives_next_capture(self):
+        self.backup.capture()
+        run = self.backup.load()
+        self.backup.upload()
+        path = self.backup.state / "last-success.json"
+        evidence = json.loads(path.read_text())
+        self.assertEqual(evidence["capturedEpoch"], run["createdEpoch"])
+        self.assertEqual(evidence["runId"], run["id"])
+        self.assertTrue(evidence["production"])
+        self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+        self.backup.capture()
+        self.assertEqual(json.loads(path.read_text()), evidence)
+
+    def test_failed_upload_and_noop_do_not_create_success_evidence(self):
+        path = self.backup.state / "last-success.json"
+        self.backup.upload()
+        self.assertFalse(path.exists())
+        self.backup.capture()
+        self.runner.fail = lambda a: a[0] == "borg" and a[3] == "create"
+        with self.assertRaises(m.BackupError):
+            self.backup.upload()
+        self.assertFalse(path.exists())
+
+    def test_prune_failure_keeps_valid_archive_evidence(self):
+        self.backup.capture()
+        self.runner.fail = lambda a: a[0] == "borg" and a[3] == "prune"
+        with self.assertRaises(m.BackupError):
+            self.backup.upload()
+        path = self.backup.state / "last-success.json"
+        evidence = path.read_bytes()
+        self.runner.fail = None
+        self.backup.upload()
+        self.assertEqual(path.read_bytes(), evidence)
+
+    def test_test_archive_never_writes_production_evidence(self):
+        self.backup.testing = True
+        self.backup.capture()
+        self.backup.upload()
+        self.assertFalse((self.backup.state / "last-success.json").exists())
+
+    def test_crash_reconciled_archive_writes_success_evidence(self):
+        self.backup.capture()
+        run = self.backup.load()
+        self.runner.archives.add(self.c["borg"]["prefix"] + "-" + run["id"])
+        self.backup.upload()
+        self.assertTrue((self.backup.state / "last-success.json").exists())
+        self.assertFalse(any(a[0] == "borg" and a[3] == "create" for a in self.runner.calls))
+
+    def test_older_archive_does_not_replace_newer_success_evidence(self):
+        self.backup.capture()
+        self.backup.upload()
+        run = self.backup.load()
+        path = self.backup.state / "last-success.json"
+        evidence = path.read_bytes()
+        run["createdEpoch"] -= 86400
+        self.backup.record_archive_success(run)
+        self.assertEqual(path.read_bytes(), evidence)
+
+    def test_success_evidence_write_failure_keeps_capture_for_retry(self):
+        self.backup.capture()
+        atomic = m.atomic_json
+        def fail_evidence(path, value):
+            if Path(path).name == "last-success.json":
+                raise OSError("injected evidence write failure")
+            return atomic(path, value)
+        with patch.object(m, "atomic_json", side_effect=fail_evidence):
+            with self.assertRaises(OSError):
+                self.backup.upload()
+        self.assertFalse(self.runner.mounts)
+        self.assertTrue(self.runner.snapshots)
+        self.backup.upload()
+        self.assertTrue((self.backup.state / "last-success.json").exists())
+        self.assertEqual(sum(a[0] == "borg" and a[3] == "create" for a in self.runner.calls), 1)
+
     def test_snapshot_manifest_and_dump_mismatch_prevent_borg(self):
         for corrupt in ("capture.json", "first.sql"):
             with self.subTest(corrupt=corrupt):

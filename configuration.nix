@@ -17,6 +17,7 @@ in
     impermanence.nixosModule
     ./hardware-configuration.nix
     ./modules/actual.nix
+    ./modules/alerts.nix
     ./modules/backup-orchestration.nix
     ./modules/authentik.nix
     ./modules/matrix-synapse.nix
