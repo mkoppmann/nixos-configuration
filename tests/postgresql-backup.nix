@@ -67,8 +67,7 @@ assert lib.all (
   unit.enable
   && lib.hasInfix "pg_dump --format=custom ${db}" unit.script
   && unit.startAt == schedule
-  && config.systemd.timers."postgresqlBackup-${db}".enable
-  && config.systemd.timers."postgresqlBackup-${db}".timerConfig.OnCalendar == schedule
+  && !(builtins.hasAttr "postgresqlBackup-${db}" config.systemd.timers)
 ) declared;
 assert globals.enable;
 assert globals.startAt == schedule;
@@ -83,12 +82,12 @@ assert globals.environment.PGPORT == toString config.services.postgresql.setting
 assert globals.environment.PGUSER == "postgres";
 assert builtins.elem (toString config.services.postgresql.package) (map toString globals.path);
 assert builtins.elem "d '${backup.location}/globals' 0700 postgres postgres - -" config.systemd.tmpfiles.rules;
-assert config.systemd.timers.postgresql-globals-backup.enable;
-assert config.systemd.timers.postgresql-globals-backup.timerConfig.OnCalendar == schedule;
+assert schedule == [ ];
+assert !(builtins.hasAttr "postgresql-globals-backup" config.systemd.timers);
 {
   declaredDatabases = lib.sort builtins.lessThan declared;
   backupDatabases = lib.sort builtins.lessThan backup.databases;
-  globalsTimer = config.systemd.timers.postgresql-globals-backup.timerConfig;
+  automaticDumpSchedule = schedule;
   scenarios = {
     baseline = true;
     addedDatabase =
@@ -98,7 +97,7 @@ assert config.systemd.timers.postgresql-globals-backup.timerConfig.OnCalendar ==
         lib.filter (db: db == "t02-coverage-check") added.services.postgresqlBackup.databases
       ) == 1;
       assert added.systemd.services.postgresqlBackup-t02-coverage-check.enable;
-      assert added.systemd.timers.postgresqlBackup-t02-coverage-check.enable;
+      assert !(builtins.hasAttr "postgresqlBackup-t02-coverage-check" added.systemd.timers);
       true;
     additionalBackupAllowed =
       assert evaluates additionalBackup;

@@ -139,9 +139,10 @@ assert borg.prune.keep == {
   monthly = 6;
 };
 assert !borg.persistentTimer;
-assert timerSettings.borgbackup-job-sidechest.Persistent == false;
-assert lib.toList timerSettings.borgbackup-job-sidechest.OnCalendar == [ "daily" ];
-assert lib.toList config.services.postgresqlBackup.startAt == [ "*-*-* 23:05:00" ];
+assert !(builtins.hasAttr "borgbackup-job-sidechest" timerSettings);
+assert timerSettings.apollo-backup.Persistent == false;
+assert timerSettings.apollo-backup.OnCalendar == "*-*-* 03:00:00 Europe/Vienna";
+assert config.services.postgresqlBackup.startAt == [ ];
 assert timerSettings.nix-gc.Persistent && timerSettings.nix-optimise.Persistent;
 assert lib.toList timerSettings.logrotate.OnCalendar == [ "hourly" ];
 assert config.system.stateVersion == "23.11";

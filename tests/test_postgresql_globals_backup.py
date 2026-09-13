@@ -8,7 +8,7 @@ import tempfile
 import unittest
 
 
-SCRIPT = Path(__file__).resolve().parents[1] / "modules/postgresql-globals-backup.sh"
+SCRIPT = Path(__file__).resolve().parents[1] / "scripts/postgresql-globals-backup.sh"
 
 
 class GlobalsBackupTests(unittest.TestCase):

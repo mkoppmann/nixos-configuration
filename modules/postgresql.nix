@@ -78,7 +78,7 @@ in
   services.postgresqlBackup = {
     enable = true;
     backupAll = false;
-    startAt = "*-*-* 23:05:00";
+    startAt = [ ];
     location = "/var/backup/postgresql";
     compression = "none";
     pgdumpOptions = "--format=custom";
@@ -108,7 +108,7 @@ in
       PGUSER = "postgres";
       PG_BACKUP_DIR = globalsDirectory;
     };
-    script = builtins.readFile ./postgresql-globals-backup.sh;
+    script = builtins.readFile ../scripts/postgresql-globals-backup.sh;
 
     serviceConfig = {
       Type = "oneshot";
