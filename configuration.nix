@@ -2,10 +2,15 @@
   config,
   lib,
   pkgs,
+  utils,
   authentik-nix,
   impermanence,
   ...
 }:
+let
+  randomSeedPersistenceUnit =
+    "persist-${utils.escapeSystemdPath "/persist/var/lib/systemd/random-seed"}.service";
+in
 {
   imports = [
     authentik-nix.nixosModules.default
@@ -173,11 +178,23 @@
         hideMounts = true;
         directories = [
           "/etc/nixos"
+          {
+            directory = "/root/.config/borg";
+            mode = "0700";
+          }
+          {
+            directory = "/root/.cache/borg";
+            mode = "0700";
+          }
           "/root/.ssh"
           "/srv/www"
           "/var/backup"
           "/var/lib/acme"
           "/var/lib/bitwarden_rs"
+          {
+            directory = "/var/lib/logrotate";
+            mode = "0700";
+          }
           "/var/lib/matrix-synapse"
           "/var/lib/nextcloud"
           "/var/lib/nixos"
@@ -187,13 +204,52 @@
           "/var/lib/private/actual"
           "/var/lib/private/authentik"
           "/var/lib/private/matrix-authentication-service"
+          {
+            directory = "/var/lib/rabbitmq";
+            user = "rabbitmq";
+            group = "rabbitmq";
+            mode = "0700";
+          }
+          {
+            directory = "/var/lib/systemd/timers";
+            mode = "0755";
+          }
+          {
+            directory = "/var/lib/systemd/timesync";
+            user = "systemd-timesync";
+            group = "systemd-timesync";
+            mode = "0755";
+          }
           "/var/lib/wireguard"
         ];
+        files = [ "/var/lib/systemd/random-seed" ];
         users.mcp = {
           files = [ ".local/share/fish/fish_history" ];
         };
       };
     };
+  };
+
+  # Protect the backing tree too: DynamicUser's host-side private directory
+  # must not become traversable through /persist. Do not chown its children.
+  system.activationScripts.apollo-private-state-permissions = {
+    deps = [ "createPersistentStorageDirs" ];
+    text = ''
+      ${pkgs.coreutils}/bin/install -d -o root -g root -m 0700 \
+        /persist/var/lib/private /var/lib/private
+    '';
+  };
+
+  systemd.services = {
+    # Impermanence represents file persistence with a service, not a .mount
+    # unit. RequiresMountsFor on random-seed alone cannot order that service.
+    systemd-random-seed = {
+      requires = [ randomSeedPersistenceUnit ];
+      after = [ randomSeedPersistenceUnit ];
+    };
+    "${lib.removeSuffix ".service" randomSeedPersistenceUnit}".unitConfig.RequiresMountsFor = [
+      "/persist/var/lib/systemd"
+    ];
   };
 
   networking = {
@@ -289,6 +345,8 @@
         ];
         exclude = [
           "/persist/var/lib/postgresql"
+          "/persist/root/.cache/borg"
+          "/persist/var/lib/systemd/random-seed"
           "/var/log/audit/audit.log"
           "/var/log/journal/e538f1c97e5f472581a47d4a0acd816c/system.journal"
           "/var/log/nginx/access.log"
@@ -308,6 +366,12 @@
         };
       };
     };
+
+    # Logrotate atomically replaces its state file; persist its directory.
+    logrotate.extraArgs = [
+      "--state"
+      "/var/lib/logrotate/status"
+    ];
 
     openssh = {
       enable = true;
