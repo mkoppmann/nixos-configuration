@@ -30,8 +30,7 @@ in
     ./modules/vaultwarden.nix
     ./modules/wireguard.nix
     ./nixos-modules/matrix-authentication-service.nix
-  ]
-  ++ lib.optionals (builtins.pathExists ./private) [ ./private ];
+  ];
 
   nix = {
     gc = {
