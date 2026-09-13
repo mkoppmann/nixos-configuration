@@ -1,9 +1,4 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}:
+{ ... }:
 {
   networking.wireguard = {
     enable = true;
@@ -11,14 +6,6 @@
       ips = [ "10.100.0.1/24" ];
       listenPort = 51820;
       privateKeyFile = "/var/lib/wireguard/private_key";
-
-      postSetup = ''
-        ${pkgs.iptables}/bin/iptables -t nat -A POSTROUTING -s 10.100.0.0/24 -o ens3 -j MASQUERADE
-      '';
-
-      postShutdown = ''
-        "${pkgs.iptables}/bin/iptables -t nat -D POSTROUTING -s 10.100.0.0/24 -o ens3 -j MASQUERADE 2>/dev/null || true"
-      '';
 
       peers = [
         {
