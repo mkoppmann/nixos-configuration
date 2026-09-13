@@ -7,7 +7,7 @@
 let
   hsts = ''
     # Add HSTS header with preloading to HTTPS requests.
-    add_header Strict-Transport-Security "max-age=31536000; includeSubdomains; preload";
+    add_header Strict-Transport-Security "max-age=31536000; includeSubdomains; preload" always;
   '';
 
   csp = ''
@@ -17,28 +17,43 @@ let
 
   referrer-policy = ''
     # Minimize information leaked to other domains
-    add_header 'Referrer-Policy' 'no-referrer';
+    add_header 'Referrer-Policy' 'no-referrer' always;
   '';
 
   x-frame-options = ''
     # Disable embedding as a frame
-    add_header X-Frame-Options DENY;
+    add_header X-Frame-Options DENY always;
   '';
 
   x-content-type-options = ''
     # Prevent injection of code in other mime types (XSS Attacks)
-    add_header X-Content-Type-Options nosniff;
+    add_header X-Content-Type-Options nosniff always;
   '';
 
   default-headers = hsts + csp + referrer-policy + x-frame-options + x-content-type-options;
 
   default-headers-without-csp = hsts + referrer-policy + x-frame-options + x-content-type-options;
 
+  # A location with add_header must repeat its complete response-header policy.
+  actual-headers = hsts + referrer-policy + ''
+    add_header Cross-Origin-Embedder-Policy "require-corp" always;
+    add_header Cross-Origin-Opener-Policy "same-origin" always;
+    add_header Origin-Agent-Cluster "?1" always;
+  '';
+
+  # Range in the media location prevents inheritance of all parent proxy headers.
+  pleroma-proxy-headers = ''
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  '';
+
   synapse-client-config."m.homeserver".base_url = "https://matrix.ncrypt.at";
 
   synapse-server-config."m.server" = "matrix.ncrypt.at:443";
 
-  synapse-mk-well-known = data: ''
+  synapse-mk-well-known = data: hsts + ''
     default_type application/json;
     add_header Access-Control-Allow-Origin *;
     return 200 '${builtins.toJSON data}';
@@ -92,10 +107,7 @@ in
         etag on;
 
         proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        ${pleroma-proxy-headers}
 
         client_max_body_size 100m;
       '';
@@ -120,11 +132,7 @@ in
 
       extraConfig = ''
         proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-      '';
+      '' + pleroma-proxy-headers;
 
       locations."/" = {
         return = "404";
@@ -134,7 +142,7 @@ in
         recommendedProxySettings = false;
         proxyPass = "http://phoenix";
 
-        extraConfig = ''
+        extraConfig = pleroma-proxy-headers + ''
           proxy_cache        pleroma_media_cache;
           slice              1m;
           proxy_cache_key    $host$uri$is_args$args$slice_range;
@@ -286,18 +294,13 @@ in
       locations."/" = {
         proxyPass = "http://127.0.0.1:5006";
 
-        extraConfig = ''
-          # Prevents header duplication between Upstream and Proxy
+        extraConfig = actual-headers + ''
+          # Nginx owns these headers; preserve the application's CSP and framing.
+          proxy_hide_header Strict-Transport-Security;
+          proxy_hide_header Referrer-Policy;
           proxy_hide_header Cross-Origin-Embedder-Policy;
           proxy_hide_header Cross-Origin-Opener-Policy;
-
-          # Explicitly set mandatory security headers
-          add_header Cross-Origin-Embedder-Policy "require-corp" always;
-          add_header Cross-Origin-Opener-Policy "same-origin" always;
-          add_header Origin-Agent-Cluster "?1" always;
-
-          proxy_set_header Host $host;
-          proxy_set_header X-Real-IP $remote_addr;
+          proxy_hide_header Origin-Agent-Cluster;
         '';
       };
     };
