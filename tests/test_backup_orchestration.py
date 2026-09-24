@@ -1,5 +1,6 @@
 """Portable state-machine tests: no systemd, PostgreSQL, ZFS or Borg invoked."""
 import importlib.util
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -88,7 +89,11 @@ class FakeRunner:
         if args[0] == "runuser":
             if "psql" in args:
                 return "\n".join(self.config["databases"] + ["postgres"])
-            kwargs["stdout"].write(b"private test export\n")
+            content = b"private test export\n"
+            kwargs["stdout"].write(content)
+            if kwargs.get("hasher") is not None:
+                kwargs["hasher"].update(content)
+                return len(content)
             return ""
         if args[0] == "pg_restore":
             return ""
@@ -165,10 +170,13 @@ class BackupTests(unittest.TestCase):
         self.assertTrue(all("--format=custom" in a and "--compress=0" in a for a in dumps))
         messages = "\n".join(call.args[0] for call in self.backup.log.call_args_list)
         for relative in self.backup.load()["manifest"]["files"]:
-            self.assertIn(f"{relative}: dump and sync started", messages)
-            self.assertRegex(messages, rf"{relative}: dump and sync completed in \d+\.\d{{3}} seconds")
-            self.assertRegex(messages, rf"{relative}: validation and checksum completed in \d+\.\d{{3}} seconds")
+            self.assertIn(f"{relative}: dump, checksum and sync started", messages)
+            self.assertRegex(messages, rf"{relative}: dump, checksum and sync completed in \d+\.\d{{3}} seconds")
+            self.assertRegex(messages, rf"{relative}: validation completed in \d+\.\d{{3}} seconds")
             self.assertRegex(messages, rf"{relative}: publication completed in \d+\.\d{{3}} seconds")
+            path = Path(self.c["dumpDirectory"]) / relative
+            self.assertEqual(self.backup.load()["manifest"]["files"][relative]["sha256"],
+                             hashlib.sha256(path.read_bytes()).hexdigest())
         self.assertIn("capture.json: publication completed", messages)
         self.assertNotIn("private test export", messages)
         self.backup.upload()
@@ -195,19 +203,19 @@ class BackupTests(unittest.TestCase):
         self.backup.upload()
         self.assertFalse(any(a[0] == "borg" for a in self.runner.calls))
 
-    def test_checksum_deadline_reports_export_and_recovers_without_publication(self):
+    def test_stream_timeout_reports_export_and_recovers_without_publication(self):
         target = Path(self.c["dumpDirectory"]) / "first.sql"
         target.write_bytes(b"old export")
         original = self.runner.run
 
         def run(args, **kwargs):
-            result = original(args, **kwargs)
-            if args[0] == "pg_restore":
-                self.backup.deadline = time.monotonic() - 1
-            return result
+            if args[0] == "runuser" and "--dbname=first" in args:
+                kwargs["stdout"].write(b"partial export")
+                raise subprocess.TimeoutExpired(args, kwargs["timeout"])
+            return original(args, **kwargs)
 
         with patch.object(self.runner, "run", side_effect=run):
-            with self.assertRaisesRegex(m.BackupError, "Capture deadline reached during dump validation"):
+            with self.assertRaisesRegex(m.BackupError, "timed out"):
                 self.backup.capture()
         self.assert_resumed()
         self.assertEqual(self.backup.load()["phase"], "failed")
@@ -215,8 +223,8 @@ class BackupTests(unittest.TestCase):
         self.assertFalse(self.runner.snapshots)
         self.assertEqual(list(Path(self.c["dumpDirectory"]).glob(".capture-*")), [])
         messages = "\n".join(call.args[0] for call in self.backup.log.call_args_list)
-        self.assertIn("first.sql: validation and checksum failed after", messages)
-        self.assertNotIn("second.sql: dump and sync started", messages)
+        self.assertIn("first.sql: dump, checksum and sync failed after", messages)
+        self.assertNotIn("second.sql: dump, checksum and sync started", messages)
         self.backup.external_recover()
         self.assertEqual(self.backup.load()["phase"], "failed")
         self.backup.upload()
@@ -228,7 +236,7 @@ class BackupTests(unittest.TestCase):
             with self.subTest(failure=failure):
                 def run(args, **kwargs):
                     if args[0] == "runuser" and "psql" not in args and failure == "empty":
-                        return ""
+                        return 0
                     if args[0] == "pg_restore" and failure == "unreadable":
                         raise m.BackupError("invalid archive")
                     return original(args, **kwargs)
@@ -379,7 +387,11 @@ class BackupTests(unittest.TestCase):
             with self.subTest(corrupt=corrupt):
                 self.backup.capture()
                 path = self.base / "snapshot-data" / corrupt
-                path.write_text("{}" if corrupt.endswith("json") else "corrupted dump")
+                if corrupt.endswith("json"):
+                    path.write_text("{}")
+                else:
+                    content = path.read_bytes()
+                    path.write_bytes(bytes([content[0] ^ 1]) + content[1:])
                 with self.assertRaises(m.BackupError):
                     self.backup.upload()
                 self.assertFalse(any(a[0] == "borg" for a in self.runner.calls))
@@ -710,6 +722,26 @@ class BackupTests(unittest.TestCase):
     def test_runner_timeout_terminates_process_group(self):
         with self.assertRaises(subprocess.TimeoutExpired):
             m.Runner().run(["/bin/sh", "-c", "sleep 20 & wait"], timeout=0.05)
+
+    def test_runner_streams_and_hashes_exact_export_bytes(self):
+        content = b"a" * (1024 * 1024 + 13) + b"\0private test export\n"
+        target = self.base / "streamed.sql"
+        hasher = hashlib.sha256()
+        with target.open("wb") as output:
+            size = m.Runner().run(
+                [sys.executable, "-c",
+                 "import sys; sys.stdout.buffer.write(b'a' * (1024 * 1024 + 13) + b'\\0private test export\\n')"],
+                stdout=output, hasher=hasher, timeout=5,
+            )
+        self.assertEqual(size, len(content))
+        self.assertEqual(target.read_bytes(), content)
+        self.assertEqual(hasher.hexdigest(), hashlib.sha256(content).hexdigest())
+
+    def test_runner_stream_timeout_terminates_process_group(self):
+        with (self.base / "partial.sql").open("wb") as output:
+            with self.assertRaises(subprocess.TimeoutExpired):
+                m.Runner().run(["/bin/sh", "-c", "printf partial; sleep 20 & wait"],
+                               stdout=output, hasher=hashlib.sha256(), timeout=0.05)
 
     def test_failed_ledger_write_preserves_record_and_removes_temporary(self):
         m.atomic_json(self.backup.ledger, {"previous": "record"})

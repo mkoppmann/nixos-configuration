@@ -15,6 +15,7 @@ import os
 from pathlib import Path
 import pwd
 import re
+import select
 import shutil
 import signal
 import socket
@@ -40,15 +41,36 @@ def boot_id():
 
 
 class Runner:
-    def run(self, args, *, timeout=30, stdout=None, env=None, cwd=None):
+    def run(self, args, *, timeout=30, stdout=None, env=None, cwd=None, hasher=None):
         # New process groups let a deadline terminate runuser AND its children.
+        if hasher is not None and stdout is None:
+            raise ValueError("A checksum requires an output file")
         with subprocess.Popen(
-            args, stdout=stdout if stdout is not None else subprocess.PIPE,
+            args, stdout=subprocess.PIPE if hasher is not None or stdout is None else stdout,
             stderr=None, text=stdout is None, env=env, cwd=cwd,
             start_new_session=True,
         ) as proc:
             try:
-                output, _ = proc.communicate(timeout=timeout)
+                if hasher is None:
+                    output, _ = proc.communicate(timeout=timeout)
+                else:
+                    # Hash the exact bytes written to the staging file. A
+                    # bounded pipe avoids a second read of large dumps.
+                    end = time.monotonic() + timeout
+                    size = 0
+                    while True:
+                        remaining = end - time.monotonic()
+                        if remaining <= 0 or not select.select([proc.stdout], [], [], remaining)[0]:
+                            raise subprocess.TimeoutExpired(args, timeout)
+                        chunk = os.read(proc.stdout.fileno(), 1024 * 1024)
+                        if not chunk:
+                            break
+                        if stdout.write(chunk) != len(chunk):
+                            raise BackupError("Short write while exporting a database")
+                        hasher.update(chunk)
+                        size += len(chunk)
+                    proc.wait(timeout=max(0, end - time.monotonic()))
+                    output = None
             except BaseException:
                 with contextlib.suppress(ProcessLookupError):
                     os.killpg(proc.pid, signal.SIGKILL)
@@ -57,7 +79,7 @@ class Runner:
             if proc.returncode:
                 # Do not log SQL, credentials, or command output.
                 raise BackupError(f"{args[0]} failed (exit {proc.returncode})")
-            return output.strip() if output is not None else ""
+            return size if hasher is not None else output.strip() if output is not None else ""
 
 
 def sync_directory(path):
@@ -293,10 +315,10 @@ class Backup:
             raise BackupError("Capture deadline reached")
         time.sleep(0.2)
 
-    def pg(self, *args, stdout=None):
+    def pg(self, *args, stdout=None, hasher=None):
         env = os.environ.copy()
         env.update(PGHOST="/run/postgresql", PGPORT=self.c["pgPort"], PGUSER="postgres")
-        return self.call("runuser", "-u", "postgres", "--", *args, stdout=stdout, env=env,
+        return self.call("runuser", "-u", "postgres", "--", *args, stdout=stdout, hasher=hasher, env=env,
                          timeout=self.capture_work_seconds)
 
     def digest(self, path):
@@ -340,20 +362,23 @@ class Backup:
                 os.chown(target.parent, postgres.pw_uid, postgres.pw_gid)
                 # Root opens the output privately; only the configured PostgreSQL
                 # client gets the descriptor. No password hashes reach the journal.
-                with self.timed_export_step(relative, "dump and sync"):
+                hasher = hashlib.sha256()
+                with self.timed_export_step(relative, "dump, checksum and sync"):
                     with open(target, "xb") as output:
                         os.fchmod(output.fileno(), 0o600)
                         os.fchown(output.fileno(), postgres.pw_uid, postgres.pw_gid)
-                        self.pg(*command, stdout=output)
+                        size = self.pg(*command, stdout=output, hasher=hasher)
                         output.flush()
                         os.fsync(output.fileno())
-                self.log(f"{relative}: {target.stat().st_size} bytes")
-                with self.timed_export_step(relative, "validation and checksum"):
-                    if not target.stat().st_size:
+                self.log(f"{relative}: {size} bytes")
+                with self.timed_export_step(relative, "validation"):
+                    if not size:
                         raise BackupError(f"Empty export: {relative}")
+                    if target.stat().st_size != size:
+                        raise BackupError(f"Export size changed before publication: {relative}")
                     if relative != "globals/globals.sql":
                         self.call("pg_restore", "--list", str(target), stdout=subprocess.DEVNULL)
-                    records[relative] = {"size": target.stat().st_size, "sha256": self.digest(target)}
+                    records[relative] = {"size": size, "sha256": hasher.hexdigest()}
             # Publish only after every new output has passed validation.
             self.phase(run, "publishing")
             for relative, _ in exports:
