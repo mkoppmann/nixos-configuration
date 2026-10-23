@@ -15,7 +15,11 @@
     notify_push.enable = true;
     secretFile = "/var/lib/nextcloud/secrets.json";
 
-    phpOptions."opcache.interned_strings_buffer" = "16";
+    phpOptions = {
+      "opcache.interned_strings_buffer" = "16";
+      "session.upload_progress.enabled" = "0";
+    };
+
     maxUploadSize = "16G";
     https = true;
 
