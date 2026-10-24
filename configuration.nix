@@ -18,6 +18,7 @@ in
     ./hardware-configuration.nix
     ./modules/actual.nix
     ./modules/alerts.nix
+    ./modules/auto-upgrade.nix
     ./modules/backup-orchestration.nix
     ./modules/authentik.nix
     ./modules/matrix-synapse.nix
