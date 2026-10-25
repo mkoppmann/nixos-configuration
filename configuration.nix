@@ -226,7 +226,7 @@ in
         ];
         files = [ "/var/lib/systemd/random-seed" ];
         users.mcp = {
-          files = [ ".local/share/fish/fish_history" ];
+          directories = [ ".local/share/fish" ];
         };
       };
     };
