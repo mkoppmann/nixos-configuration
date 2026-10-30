@@ -2,8 +2,8 @@
   description = "Apollo’s NixOS Flake";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
-    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05-small";
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable-small";
     authentik-nix = {
       url = "github:nix-community/authentik-nix";
     };
