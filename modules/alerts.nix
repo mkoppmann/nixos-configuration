@@ -12,6 +12,8 @@ let
     recipient = "admin@ncrypt.at";
     caFile = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
     backupState = "/persist/var/lib/apollo-backup";
+    serviceGraceSeconds = 1800;
+    backupUploadGraceSeconds = 1800;
     archivePrefix = config.services.borgbackup.jobs.sidechest.archiveBaseName;
     filesystems = [ "/" "/nix" "/persist" "/var/log" "/boot" ];
     certificates = lib.mapAttrs (_: cert: "${cert.directory}/fullchain.pem") config.security.acme.certs;

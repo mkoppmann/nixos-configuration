@@ -132,7 +132,7 @@ class Alerts:
         cutoff = self.clock() - 30 * DAY
         data["history"] = [h for h in data["history"] if h["time"] >= cutoff]
         data["incidents"] = {k: v for k, v in data["incidents"].items()
-                             if v["active"] or self.due(v) or v["lastSeen"] >= cutoff}
+                             if v["active"] or self.due(k, v) or v["lastSeen"] >= cutoff}
 
     def history(self, data, key, event, detail):
         data["history"].append({"time": self.clock(), "key": key, "event": event, "detail": detail})
@@ -162,7 +162,32 @@ class Alerts:
             if changed:
                 self.history(data, key, "observed", summary)
 
-    def due(self, item):
+    def grace(self, key):
+        if key == BACKUP_RECOVER:
+            # Applications may still be offline; the maintenance deadline is
+            # already a grace period and must not acquire another delay.
+            return 0
+        if key == BACKUP_UPLOAD:
+            return self.c.get("backupUploadGraceSeconds", 1800)
+        if key.startswith("service:"):
+            return self.c.get("serviceGraceSeconds", 600)
+        return 0
+
+    def deferred_until(self, key, item):
+        if (item["active"] and item["generation"] != item["sentGeneration"]
+                and not item.get("once")):
+            return item["firstSeen"] + self.grace(key)
+        return 0
+
+    def due(self, key, item):
+        if not item.get("acknowledged") and not item.get("once"):
+            if self.clock() < self.deferred_until(key, item):
+                return False
+            if (not item["active"] and item["generation"] != item["sentGeneration"]
+                    and not item["sentActive"] and self.grace(key) > 0):
+                # Recovered service incidents that never reached email stay
+                # local. Never hide recovery of a mailed failure.
+                return False
         return (item["lastSent"] is None
                 or item["generation"] != item["sentGeneration"]
                 or item["active"] != item["sentActive"]
@@ -174,7 +199,9 @@ class Alerts:
     def status(self):
         with self.transaction() as data:
             result = copy.deepcopy(data)
-        result["pending"] = [k for k, v in result["incidents"].items() if self.due(v)]
+        result["pending"] = [k for k, v in result["incidents"].items() if self.due(k, v)]
+        result["deferred"] = {k: self.deferred_until(k, v) for k, v in result["incidents"].items()
+                              if self.clock() < self.deferred_until(k, v)}
         return result
 
     def acknowledge(self, key):
@@ -340,6 +367,18 @@ class Alerts:
             if refused:
                 raise RuntimeError("Recipient refused")
 
+    def refresh_due_services(self):
+        # The sender ticks more often than the collector. Recheck eligible
+        # failures before mailing so a recovery near the deadline is not missed.
+        with self.transaction() as data:
+            services = {k: copy.deepcopy(v) for k, v in data["incidents"].items()
+                        if k.startswith("service:") and v["active"] and self.due(k, v)}
+        for item in services.values():
+            if item.get("unit"):
+                self.probe("unit:" + item["unit"], lambda item=item: self.unit(item["unit"]))
+        if services.keys() & {BACKUP_CAPTURE, BACKUP_UPLOAD, BACKUP_RECOVER}:
+            self.probe("backup-state", self.backup)
+
     def deliver(self, transport=None, force=False):
         # A separate worker lock prevents duplicate concurrent sends. Collection
         # remains available throughout DNS, TLS and SMTP operations.
@@ -352,7 +391,9 @@ class Alerts:
             with self.transaction() as data:
                 if not force and self.clock() < data["deliveryNext"]:
                     return False
-                batch = {k: copy.deepcopy(v) for k, v in data["incidents"].items() if self.due(v)}
+            self.refresh_due_services()
+            with self.transaction() as data:
+                batch = {k: copy.deepcopy(v) for k, v in data["incidents"].items() if self.due(k, v)}
                 if not batch:
                     return False
                 # Also survives a worker timeout or crash before SMTP returns.
@@ -436,3 +477,4 @@ if __name__ == "__main__":
     except Exception as error:
         print("apollo-alert: " + safe_error(error), file=sys.stderr)
         sys.exit(1)
+
