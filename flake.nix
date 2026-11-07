@@ -59,6 +59,14 @@
               find ${self} -name '*.nix' -exec nixfmt --check {} +
               touch $out
             '';
+            deadnix = pkgs.runCommand "deadnix" { nativeBuildInputs = [ pkgs.deadnix ]; } ''
+              deadnix --fail ${self}
+              touch $out
+            '';
+            statix = pkgs.runCommand "statix" { nativeBuildInputs = [ pkgs.statix ]; } ''
+              statix check --config ${self}/statix.toml ${self}
+              touch $out
+            '';
           }))
           {
             # VM tests are added here as they are written.

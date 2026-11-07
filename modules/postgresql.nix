@@ -66,7 +66,7 @@ in
     requires = [ "postgresql.target" ];
     after = [ "postgresql.target" ];
     unitConfig.RequiresMountsFor = [ globalsDirectory ];
-    startAt = backup.startAt;
+    inherit (backup) startAt;
 
     path = [
       pkgs.coreutils
