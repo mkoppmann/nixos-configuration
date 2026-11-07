@@ -121,13 +121,13 @@ recovery_units=(
   nextcloud-setup.service nextcloud-update-db.service nextcloud-cron.service
   phpfpm-nextcloud.service nextcloud-notify_push.service nextcloud-notify_push_setup.service
   pleroma.service pleroma-migrations.service vaultwarden.service
-  onlyoffice-docservice.service onlyoffice-converter.service rabbitmq.service redis-nextcloud.service
+  redis-nextcloud.service
   apollo-backup.service apollo-backup-upload.service apollo-backup-recover.service
   apollo-backup-boot-recovery.service apollo-backup-watchdog.service borgbackup-job-sidechest.service
   apollo-alert-check.service apollo-alert-send.service apollo-alert-failure@.service
   postgresqlBackup-authentik.service postgresqlBackup-matrix-authentication-service.service
   postgresqlBackup-matrix-synapse.service postgresqlBackup-nextcloud.service
-  postgresqlBackup-onlyoffice.service postgresqlBackup-pleroma.service
+  postgresqlBackup-pleroma.service
   postgresqlBackup-vaultwarden.service postgresql-globals-backup.service
 )
 printf 'systemd.mask=%s ' "${recovery_units[@]}"
@@ -138,7 +138,7 @@ Retain existing boot arguments. Confirm the provider console accepts the complet
 
 Keep writers stopped while checking file ownership and [dynamic-user access](secrets.md#provisioning-and-access), then restore [PostgreSQL globals and databases](postgresql-restore.md). Do not start an application just to create directories or users: setup can migrate or overwrite data.
 
-Release successive groups through later boots with only the appropriate masks removed: shared dependencies and controlled Nginx/ACME, Authentik, Matrix/MAS, then other applications. Verify logins, media/files, SMTP and cross-service shared secrets privately. **Keep OnlyOffice held until its table-resetting startup behavior and inconsistent capture boundary have been assessed for the recovered data.** Preserve its extracted database, broker and working files before any start.
+Release successive groups through later boots with only the appropriate masks removed: shared dependencies and controlled Nginx/ACME, Authentik, Matrix/MAS, then other applications. Verify logins, media/files, SMTP and cross-service shared secrets privately.
 
 Kernel-command-line masks are recreated for that boot; remove them from subsequent boot arguments rather than relying on `systemctl unmask`. Keep backup, update and scheduled writer units held until restored application data is accepted. Then verify normal timer schedules, a new production backup/upload and alert delivery. Missing local backup-success evidence remains unknown until a new production upload; do not fabricate it to clear alerts.
 

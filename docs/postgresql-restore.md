@@ -73,6 +73,6 @@ sudo -u postgres psql -X --host=/run/postgresql --dbname="$restore_database" \
 
 `--create` selects the original name recorded in the archive; `--dbname=postgres` is the initial maintenance connection. Do not combine this restore with `--single-transaction`. A failure can leave partial state: keep clients stopped, correct the prerequisite and retry deliberately from the unchanged dump. See the [PostgreSQL 16 restore reference](https://www.postgresql.org/docs/16/app-pgrestore.html).
 
-Check expected tables/records, owners, extensions, database properties and application file/key alignment before releasing the service. Repeat for each required database. Keep OnlyOffice stopped until its [startup caveat](services.md#startup-and-certificate-behavior) is addressed for the recovered data.
+Check expected tables/records, owners, extensions, database properties and application file/key alignment before releasing the service. Repeat for each required database.
 
 For a database-only exercise under a different name, create a separate empty database with matching source properties and restore without `--create`; otherwise the archive will select the original name. A database-only exercise does not validate application login, files or encryption keys.

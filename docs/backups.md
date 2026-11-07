@@ -30,7 +30,7 @@ Capture has a 480-second budget, with work cut off at 475 seconds to allow cance
 
 Covered applications are Actual, Authentik server/worker, Synapse, MAS, Nextcloud PHP-FPM/notify-push, Pleroma and Vaultwarden. Their migration/setup units are checked and held back during capture. Covered hosts return 503 during the application pause; ACME challenge paths and unrelated sites remain available.
 
-PostgreSQL, Redis, Nginx, OnlyOffice and RabbitMQ remain running. **OnlyOffice and RabbitMQ files are included, but consistency across their database, broker and working files is not guaranteed.** OnlyOffice callbacks cannot save into Nextcloud while Nextcloud is paused. Other unpaused host state and logs have filesystem-snapshot consistency. Actual's SQLite files are captured with its server stopped.
+PostgreSQL, Redis and Nginx remain running. Other unpaused host state and logs have filesystem-snapshot consistency. Actual's SQLite files are captured with its server stopped.
 
 | PostgreSQL database / owning role | Export beneath `/var/backup/postgresql` |
 | --- | --- |
@@ -38,11 +38,10 @@ PostgreSQL, Redis, Nginx, OnlyOffice and RabbitMQ remain running. **OnlyOffice a
 | `matrix-authentication-service` | `matrix-authentication-service.sql` |
 | `matrix-synapse` | `matrix-synapse.sql` |
 | `nextcloud` | `nextcloud.sql` |
-| `onlyoffice` | `onlyoffice.sql` |
 | `pleroma` | `pleroma.sql` |
 | `vaultwarden` | `vaultwarden.sql` |
 
-Selection uses the unique merged `services.postgresql.ensureDatabases`, including OnlyOffice's upstream declaration. Assertions reject disabled backups, `backupAll` mode or missing declared databases. Adding a database does not automatically identify its application writers, listeners, maintenance hosts or persistent files; those lists are explicit in the orchestration module.
+Selection uses the unique merged `services.postgresql.ensureDatabases`. Assertions reject disabled backups, `backupAll` mode or missing declared databases. Adding a database does not automatically identify its application writers, listeners, maintenance hosts or persistent files; those lists are explicit in the orchestration module.
 
 Despite their `.sql` suffix, application exports are custom-format **`pg_restore` archives**. Coordinated exports disable internal compression; Borg compresses during upload. `globals/globals.sql` is **plain SQL for `psql`**, including role password hashes, memberships, attributes and tablespace definitions. It does not supply extension binaries or tablespace directories. See [PostgreSQL restoration](postgresql-restore.md).
 

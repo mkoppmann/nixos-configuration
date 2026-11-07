@@ -35,13 +35,11 @@ Impermanence binds the following directory trees to corresponding paths under `/
 | `/var/lib/matrix-synapse` | Synapse media, keys and secrets |
 | `/var/lib/nextcloud` | Nextcloud files, configuration and secrets |
 | `/var/lib/nixos` | NixOS account mappings and other module state |
-| `/var/lib/onlyoffice` | OnlyOffice working files and secrets |
 | `/var/lib/pleroma` | Pleroma uploads, static files and secrets |
 | `/var/lib/postgresql` | Live PostgreSQL cluster; excluded from Borg |
 | `/var/lib/private/actual` | Actual dynamic-user state |
 | `/var/lib/private/authentik` | Authentik dynamic-user state |
 | `/var/lib/private/matrix-authentication-service` | MAS dynamic-user state and secrets |
-| `/var/lib/rabbitmq` | Broker state; top directory `rabbitmq:rabbitmq 0700` |
 | `/var/lib/systemd/timers` | Persistent system timer timestamps; `root:root 0755` |
 | `/var/lib/systemd/timesync` | Saved clock state; `systemd-timesync:systemd-timesync 0755` |
 | `/var/lib/wireguard` | WireGuard private key |

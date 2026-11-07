@@ -32,7 +32,6 @@
         calendar
         contacts
         notes
-        onlyoffice
         tasks
         user_oidc
         ;
