@@ -70,4 +70,29 @@ in
   };
 
   services.postgresql.package = mkOverride 998 pkgs.postgresql_16_jit;
+
+  environment.persistence."/persist".directories = [
+    "/var/lib/private/authentik"
+  ];
+
+  services.postgresql = {
+    ensureDatabases = [ "authentik" ];
+    ensureUsers = [
+      {
+        name = "authentik";
+        ensureDBOwnership = true;
+      }
+    ];
+  };
+
+  services.nginx = {
+    virtualHosts."idp.ncrypt.at" = {
+      enableACME = true;
+      forceSSL = true;
+      locations."/" = {
+        proxyWebsockets = true;
+        proxyPass = "https://localhost:9443";
+      };
+    };
+  };
 }

@@ -76,4 +76,25 @@
     requires = [ "postgresql.service" ];
     after = [ "postgresql.service" ];
   };
+
+  environment.persistence."/persist".directories = [
+    "/var/lib/nextcloud"
+  ];
+
+  services.postgresql = {
+    ensureDatabases = [ "nextcloud" ];
+    ensureUsers = [
+      {
+        name = "nextcloud";
+        ensureDBOwnership = true;
+      }
+    ];
+  };
+
+  services.nginx = {
+    virtualHosts."cloud.ncrypt.at" = {
+      enableACME = true;
+      forceSSL = true;
+    };
+  };
 }

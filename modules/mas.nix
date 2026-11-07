@@ -101,4 +101,29 @@ in
       };
     };
   };
+
+  environment.persistence."/persist".directories = [
+    "/var/lib/private/matrix-authentication-service"
+  ];
+
+  services.postgresql = {
+    ensureDatabases = [ "matrix-authentication-service" ];
+    ensureUsers = [
+      {
+        name = "matrix-authentication-service";
+        ensureDBOwnership = true;
+      }
+    ];
+  };
+
+  services.nginx = {
+    virtualHosts."auth.matrix.ncrypt.at" = {
+      enableACME = true;
+      forceSSL = true;
+
+      locations."/" = {
+        proxyPass = "http://127.0.0.1:8091";
+      };
+    };
+  };
 }
