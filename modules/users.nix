@@ -1,8 +1,11 @@
 {
+  config,
   pkgs,
   ...
 }:
 {
+  sops.secrets.mcp_password_hash.neededForUsers = true;
+
   environment = {
     enableAllTerminfo = true;
 
@@ -27,7 +30,7 @@
         openssh.authorizedKeys.keys = [
           "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAID2aEPKcElIy1hJbiBjAa2wil6AYqWydtORxl0ErfBOT"
         ];
-        hashedPasswordFile = "/persist/credentials/user_mcp";
+        hashedPasswordFile = config.sops.secrets.mcp_password_hash.path;
         shell = pkgs.fish;
       };
 

@@ -34,19 +34,19 @@ Paths below are configured readers or boot inputs. Files beneath persisted servi
 
 | Path | Format and consumer | Access requirement |
 | --- | --- | --- |
-| `/persist/credentials/user_mcp` | Password hash for `mcp`, not plaintext or a full shadow entry | `root:root 0600`; retain the actual sudo password independently |
+| `/run/secrets-for-users/mcp_password_hash` | sops secret `mcp_password_hash`: yescrypt hash for `mcp`, decrypted before users are created | `root:root 0400`; retain the actual sudo password independently |
 | `/persist/credentials/initrd_host_ed25519_key` | Dedicated unencrypted Ed25519 SSH host key for initrd | `root:root 0600`; required when boot secrets are installed |
 | `/persist/credentials/borg_sidechest_passphrase` | Raw passphrase for the existing Borg repository | `root:root 0600`; a new random value cannot unlock existing archives |
 | `/persist/credentials/borg_sidechest_ssh` | Unencrypted SSH client key authorised on the Storage Box | `root:root 0600`; backup job supplies no interactive key passphrase |
 | `/run/secrets/reporting_smtp_password` | sops secret `reporting_smtp_password`: password for `reporting@ncrypt.at` | `root:root 0400`; loaded into the SMTP worker using systemd credentials |
-| `/var/lib/wireguard/private_key` | WireGuard private key | Root-readable, `0600`; changing it requires peer coordination |
-| `/var/lib/actual/openid_client_secret` | Raw secret for Actual's configured Authentik OIDC client | Dynamic `actual` reader, `0600` |
+| `/run/secrets/wireguard_private_key` | sops secret `wireguard_private_key` | `root:root 0400`; changing it requires peer coordination |
+| `/run/secrets/actual_openid_client_secret` | sops secret `actual_openid_client_secret` for Actual's Authentik OIDC client | `root:root 0400`; passed to the dynamic user with `LoadCredential` |
 | `/persist/var/lib/authentik/authentik-env` | systemd environment file, including application secret and SMTP password | `root:root 0600`; preserve the original secret with the database |
 | `/var/lib/matrix-synapse/secrets.yaml` | YAML merged into Synapse configuration | `matrix-synapse`-readable, `0600`; preserve every field and referenced file |
 | `/var/lib/private/matrix-authentication-service/secrets.yaml` | YAML containing MAS encryption/signing keys, provider/client settings and SMTP password | Dynamic MAS reader, `0600` |
 | `/var/lib/private/matrix-authentication-service/homeserver_secret` | Raw MAS/Synapse integration secret | Dynamic MAS reader, `0600`; match Synapse's runtime configuration |
 | `/var/lib/nextcloud/secrets.json` | JSON merged into Nextcloud configuration, including SMTP credentials | Root-readable credential source, `0600` |
-| `/var/lib/nextcloud/adminpass` | Raw password for initial creation of administrator `ncroot` | Root-readable credential source, `0600`; must remain nonempty for the setup service |
+| `/run/secrets/nextcloud_admin_password` | sops secret `nextcloud_admin_password` for initial creation of administrator `ncroot` | `root:root 0400`; must remain nonempty for the setup service |
 | `/var/lib/pleroma/secret.exs` | Elixir configuration imported by Pleroma | `pleroma`-readable, `0600`; preserve endpoint secrets, matching VAPID keys and overrides |
 | `/var/lib/bitwarden_rs/.env` | systemd environment assignments, including deployed SMTP/admin credentials | `root:root 0600` |
 | `/var/lib/acme/idp.ncrypt.at/fullchain.pem` and `key.pem` | ACME-managed certificate/key loaded by the Authentik worker | Preserve module-managed ownership and restrictive permissions |

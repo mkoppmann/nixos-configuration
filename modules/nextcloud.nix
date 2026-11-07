@@ -4,6 +4,8 @@
   ...
 }:
 {
+  sops.secrets.nextcloud_admin_password = { };
+
   services.nextcloud = {
     enable = true;
     hostName = "cloud.ncrypt.at";
@@ -38,7 +40,7 @@
 
     config = {
       adminuser = "ncroot";
-      adminpassFile = "/var/lib/nextcloud/adminpass";
+      adminpassFile = config.sops.secrets.nextcloud_admin_password.path;
 
       dbtype = "pgsql";
       dbhost = "/run/postgresql";
