@@ -94,6 +94,11 @@
     virtualHosts."cloud.ncrypt.at" = {
       enableACME = true;
       forceSSL = true;
+      # Same routing as the module's `location /`.
+      locations."= /login".extraConfig = ''
+        limit_req zone=login burst=20 nodelay;
+        try_files $uri $uri/ /index.php$request_uri;
+      '';
     };
   };
 }

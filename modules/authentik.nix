@@ -93,6 +93,10 @@ in
         proxyWebsockets = true;
         proxyPass = "https://localhost:9443";
       };
+      locations."/api/v3/flows/executor/" = {
+        proxyPass = "https://localhost:9443";
+        extraConfig = "limit_req zone=login burst=20 nodelay;";
+      };
     };
   };
 }

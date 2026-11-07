@@ -51,6 +51,10 @@
         proxyPass = "http://127.0.0.1:${toString config.services.vaultwarden.config.ROCKET_PORT}";
         proxyWebsockets = true;
       };
+      locations."= /identity/connect/token" = {
+        proxyPass = "http://127.0.0.1:${toString config.services.vaultwarden.config.ROCKET_PORT}";
+        extraConfig = "limit_req zone=login burst=20 nodelay;";
+      };
     };
   };
 }
