@@ -33,7 +33,7 @@ Nextcloud's `config.adminuser` and `config.adminpassFile` set administrator cred
 
 ## Identity and shared keys
 
-Normal SSH host keys and machine ID are sourced from `/persist/etc`, as listed in [storage](storage.md#retained-paths). Keep private SSH host keys root-owned `0600` and public keys `0644`. The initrd host key is separate; reinstall boot artifacts after changing its source, and verify the resulting fingerprint. Its inclusion in boot artifacts means it may reside on the unencrypted ESP.
+The normal Ed25519 SSH host key and the machine ID are sourced from `/persist/etc`, as listed in [storage](storage.md#retained-paths). Keep the private host key root-owned `0600` and the public key `0644`. The initrd host key is separate; reinstall boot artifacts after changing its source, and verify the resulting fingerprint. Its inclusion in boot artifacts means it may reside on the unencrypted ESP.
 
 Restore generated identities with their containing state: Synapse signing keys, MAS encryption/signing keys, Nextcloud instance configuration, Vaultwarden keys, Pleroma secrets/cookie and ACME account keys. Restoring database contents alone does not recover an application's identity or encrypted data.
 
