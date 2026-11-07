@@ -41,7 +41,6 @@ Impermanence binds the following directory trees to corresponding paths under `/
 | `/var/lib/private/matrix-authentication-service` | MAS dynamic-user state and secrets |
 | `/var/lib/systemd/timers` | Persistent system timer timestamps; `root:root 0755` |
 | `/var/lib/systemd/timesync` | Saved clock state; `systemd-timesync:systemd-timesync 0755` |
-| `/var/lib/wireguard` | WireGuard private key |
 | `/home/mcp/.local/share/fish` | Fish history and other Fish data; directory persisted to permit atomic file replacement |
 
 The OS random seed at `/var/lib/systemd/random-seed` is retained as a file. It is excluded from Borg and must not be restored from a historical archive or cloned to another host.

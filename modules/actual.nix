@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   inputs,
   ...
@@ -30,12 +31,17 @@ in
       openId = {
         discoveryURL = "https://idp.ncrypt.at/application/o/actual-budget/";
         client_id = "6Q2OZAPVXR23GFP2Nun4ThngMEyDXx8ViBPNQe2p";
-        client_secret._secret = "/var/lib/actual/openid_client_secret";
+        client_secret._secret = "/run/credentials/actual.service/openid_client_secret";
         server_hostname = "https://budget.ncrypt.at";
         authMethod = "openid";
       };
     };
   };
+
+  sops.secrets.actual_openid_client_secret.restartUnits = [ "actual.service" ];
+  # The config generator runs as the dynamic user and cannot read /run/secrets.
+  systemd.services.actual.serviceConfig.LoadCredential =
+    "openid_client_secret:${config.sops.secrets.actual_openid_client_secret.path}";
 
   environment.persistence."/persist".directories = [
     "/var/lib/private/actual"

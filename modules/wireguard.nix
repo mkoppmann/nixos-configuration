@@ -1,11 +1,13 @@
-{ ... }:
+{ config, ... }:
 {
+  sops.secrets.wireguard_private_key.restartUnits = [ "wireguard-wg0.service" ];
+
   networking.wireguard = {
     enable = true;
     interfaces.wg0 = {
       ips = [ "10.100.0.1/24" ];
       listenPort = 51820;
-      privateKeyFile = "/var/lib/wireguard/private_key";
+      privateKeyFile = config.sops.secrets.wireguard_private_key.path;
 
       peers = [
         {
@@ -36,8 +38,4 @@
       ];
     };
   };
-
-  environment.persistence."/persist".directories = [
-    "/var/lib/wireguard"
-  ];
 }
