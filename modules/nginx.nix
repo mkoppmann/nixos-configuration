@@ -1,5 +1,4 @@
 {
-  pkgs,
   ...
 }:
 let
@@ -39,8 +38,6 @@ in
 
   services.nginx = {
     enable = true;
-
-    package = pkgs.nginxMainline.override { withSlice = true; };
 
     recommendedGzipSettings = true;
     recommendedOptimisation = true;

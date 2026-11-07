@@ -22,10 +22,10 @@ Nextcloud's packaged apps are Calendar, Contacts, Notes, Tasks and User OIDC; au
 
 ## HTTP routing and limits
 
-[Nginx configuration](../modules/nginx.nix) terminates HTTPS using ACME certificates and holds the static sites and redirects; each service module declares its own virtual host. It enables the recommended proxy, TLS, gzip and optimisation settings and uses mainline Nginx with the slice module.
+[Nginx configuration](../modules/nginx.nix) terminates HTTPS using ACME certificates and holds the static sites and redirects; each service module declares its own virtual host. It enables the recommended proxy, TLS, gzip and optimisation settings and uses the stable Nginx package.
 
 - Matrix discovery is served on `ncrypt.at`. Login/logout/refresh compatibility routes go to MAS; other Matrix and Synapse client/MAS routes go to Synapse. Other requests to the Matrix host return 404.
-- Pleroma media redirects to `media.communicating.cypherpunk.observer`, which proxies media and caches sliced responses. `/proxy` on the main Pleroma host returns 404.
+- Pleroma media redirects to `media.communicating.cypherpunk.observer`, which proxies and caches media. `/proxy` on the main Pleroma host returns 404.
 - Authentik, Vaultwarden and the photo proxy enable WebSocket forwarding. Actual has its own cross-origin isolation headers and retains the application's CSP. Header policies vary by host and location.
 - The configured limits differ: Nextcloud `16G`, Synapse `100M` with unlimited Nginx request bodies on its proxy locations, Pleroma's main virtual host `100m`, and the photo proxy `50000M` with 600-second proxy/send timeouts. Other limits come from application and module defaults.
 

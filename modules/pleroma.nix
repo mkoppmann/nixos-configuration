@@ -3,7 +3,8 @@
   ...
 }:
 let
-  # Range in the media location prevents inheritance of all parent proxy headers.
+  # A location with its own proxy_set_header does not inherit the parent's, so
+  # the media location repeats them.
   pleroma-proxy-headers = ''
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection "upgrade";
@@ -142,10 +143,8 @@ in
 
         extraConfig = pleroma-proxy-headers + ''
           proxy_cache        pleroma_media_cache;
-          slice              1m;
-          proxy_cache_key    $host$uri$is_args$args$slice_range;
-          proxy_set_header   Range $slice_range;
-          proxy_cache_valid  200 206 301 304 1h;
+          proxy_cache_key    $host$uri$is_args$args;
+          proxy_cache_valid  200 301 304 1h;
           proxy_cache_lock   on;
           proxy_ignore_client_abort on;
           proxy_buffering    on;
