@@ -60,6 +60,6 @@
   };
 
   services.synapse-auto-compressor = {
-      enable = true;
+    enable = true;
   };
 }

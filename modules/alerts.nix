@@ -1,24 +1,42 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   state = "/persist/var/lib/apollo-alerts";
   credential = "smtp-password:/persist/credentials/reporting_smtp_password";
-  settings = pkgs.writeText "apollo-alerts.json" (builtins.toJSON {
-    inherit state;
-    host = config.networking.hostName;
-    smtpHost = "smtp.webspace.bz";
-    smtpPort = 465;
-    smtpUser = "reporting@ncrypt.at";
-    sender = "reporting@ncrypt.at";
-    recipient = "admin@ncrypt.at";
-    caFile = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
-    backupState = "/persist/var/lib/apollo-backup";
-    serviceGraceSeconds = 1800;
-    backupUploadGraceSeconds = 1800;
-    archivePrefix = config.services.borgbackup.jobs.sidechest.archiveBaseName;
-    filesystems = [ "/" "/nix" "/persist" "/var/log" "/boot" ];
-    certificates = lib.mapAttrs (_: cert: "${cert.directory}/fullchain.pem") config.security.acme.certs;
-  });
-  path = lib.makeBinPath [ config.systemd.package pkgs.zfs pkgs.util-linux pkgs.openssl ];
+  settings = pkgs.writeText "apollo-alerts.json" (
+    builtins.toJSON {
+      inherit state;
+      host = config.networking.hostName;
+      smtpHost = "smtp.webspace.bz";
+      smtpPort = 465;
+      smtpUser = "reporting@ncrypt.at";
+      sender = "reporting@ncrypt.at";
+      recipient = "admin@ncrypt.at";
+      caFile = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+      backupState = "/persist/var/lib/apollo-backup";
+      serviceGraceSeconds = 1800;
+      backupUploadGraceSeconds = 1800;
+      archivePrefix = config.services.borgbackup.jobs.sidechest.archiveBaseName;
+      filesystems = [
+        "/"
+        "/nix"
+        "/persist"
+        "/var/log"
+        "/boot"
+      ];
+      certificates = lib.mapAttrs (_: cert: "${cert.directory}/fullchain.pem") config.security.acme.certs;
+    }
+  );
+  path = lib.makeBinPath [
+    config.systemd.package
+    pkgs.zfs
+    pkgs.util-linux
+    pkgs.openssl
+  ];
   program = pkgs.writeShellScriptBin "apollo-alert" ''
     export LC_ALL=C
     export PATH=${path}:$PATH
@@ -70,7 +88,10 @@ let
   };
 in
 {
-  environment.systemPackages = [ program verification ];
+  environment.systemPackages = [
+    program
+    verification
+  ];
   systemd.packages = [ hooks ];
   systemd.tmpfiles.rules = [ "d ${state} 0700 root root - -" ];
   systemd.services = {
@@ -82,7 +103,9 @@ in
       description = "Reconcile Apollo service, backup, storage and certificate health";
       serviceConfig.ExecStart = "${command} check";
     };
-    apollo-alert-send = delivery // { description = "Deliver pending Apollo email alerts"; };
+    apollo-alert-send = delivery // {
+      description = "Deliver pending Apollo email alerts";
+    };
     apollo-alert-verify-failure = lib.recursiveUpdate delivery {
       description = "Isolated Apollo SMTP failure verification";
       serviceConfig = {
@@ -100,12 +123,20 @@ in
   systemd.timers = {
     apollo-alert-check = {
       wantedBy = [ "timers.target" ];
-      timerConfig = { OnBootSec = "5min"; OnUnitActiveSec = "5min"; AccuracySec = "1s"; };
+      timerConfig = {
+        OnBootSec = "5min";
+        OnUnitActiveSec = "5min";
+        AccuracySec = "1s";
+      };
     };
     apollo-alert-send = {
       wantedBy = [ "timers.target" ];
       # The durable deliveryNext timestamp enforces the 15-minute retry delay.
-      timerConfig = { OnBootSec = "5min"; OnUnitActiveSec = "1min"; AccuracySec = "1s"; };
+      timerConfig = {
+        OnBootSec = "5min";
+        OnUnitActiveSec = "1min";
+        AccuracySec = "1s";
+      };
     };
   };
 }

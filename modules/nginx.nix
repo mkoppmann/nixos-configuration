@@ -35,11 +35,14 @@ let
   default-headers-without-csp = hsts + referrer-policy + x-frame-options + x-content-type-options;
 
   # A location with add_header must repeat its complete response-header policy.
-  actual-headers = hsts + referrer-policy + ''
-    add_header Cross-Origin-Embedder-Policy "require-corp" always;
-    add_header Cross-Origin-Opener-Policy "same-origin" always;
-    add_header Origin-Agent-Cluster "?1" always;
-  '';
+  actual-headers =
+    hsts
+    + referrer-policy
+    + ''
+      add_header Cross-Origin-Embedder-Policy "require-corp" always;
+      add_header Cross-Origin-Opener-Policy "same-origin" always;
+      add_header Origin-Agent-Cluster "?1" always;
+    '';
 
   # Range in the media location prevents inheritance of all parent proxy headers.
   pleroma-proxy-headers = ''
@@ -53,11 +56,14 @@ let
 
   synapse-server-config."m.server" = "matrix.ncrypt.at:443";
 
-  synapse-mk-well-known = data: hsts + ''
-    default_type application/json;
-    add_header Access-Control-Allow-Origin *;
-    return 200 '${builtins.toJSON data}';
-  '';
+  synapse-mk-well-known =
+    data:
+    hsts
+    + ''
+      default_type application/json;
+      add_header Access-Control-Allow-Origin *;
+      return 200 '${builtins.toJSON data}';
+    '';
 
 in
 {
@@ -132,7 +138,8 @@ in
 
       extraConfig = ''
         proxy_http_version 1.1;
-      '' + pleroma-proxy-headers;
+      ''
+      + pleroma-proxy-headers;
 
       locations."/" = {
         return = "404";
@@ -287,9 +294,7 @@ in
       enableACME = true;
       forceSSL = true;
 
-      extraConfig =
-        hsts
-        + referrer-policy;
+      extraConfig = hsts + referrer-policy;
 
       locations."/" = {
         proxyPass = "http://127.0.0.1:5006";

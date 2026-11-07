@@ -8,8 +8,7 @@
   ...
 }:
 let
-  randomSeedPersistenceUnit =
-    "persist-${utils.escapeSystemdPath "/persist/var/lib/systemd/random-seed"}.service";
+  randomSeedPersistenceUnit = "persist-${utils.escapeSystemdPath "/persist/var/lib/systemd/random-seed"}.service";
 in
 {
   imports = [
