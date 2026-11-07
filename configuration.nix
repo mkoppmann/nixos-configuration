@@ -18,6 +18,7 @@ in
     ./modules/alerts.nix
     ./modules/auto-upgrade.nix
     ./modules/backup-orchestration.nix
+    ./modules/element-web.nix
     ./modules/authentik.nix
     ./modules/matrix-synapse.nix
     ./modules/mas.nix
@@ -186,22 +187,11 @@ in
             mode = "0700";
           }
           "/root/.ssh"
-          "/srv/www"
-          "/var/backup"
-          "/var/lib/acme"
-          "/var/lib/bitwarden_rs"
           {
             directory = "/var/lib/logrotate";
             mode = "0700";
           }
-          "/var/lib/matrix-synapse"
-          "/var/lib/nextcloud"
           "/var/lib/nixos"
-          "/var/lib/pleroma"
-          "/var/lib/postgresql"
-          "/var/lib/private/actual"
-          "/var/lib/private/authentik"
-          "/var/lib/private/matrix-authentication-service"
           {
             directory = "/var/lib/systemd/timers";
             mode = "0755";
@@ -212,7 +202,6 @@ in
             group = "systemd-timesync";
             mode = "0755";
           }
-          "/var/lib/wireguard"
         ];
         files = [ "/var/lib/systemd/random-seed" ];
         users.mcp = {

@@ -2,7 +2,7 @@
 
 [Repository overview](../README.md) · [Secrets](secrets.md) · [Backups](backups.md) · [Recovery](recovery.md)
 
-Storage is declared in [hardware configuration](../hardware-configuration.nix) and [host configuration](../configuration.nix). The repository defines mounts and retained paths; it does not define disk partition sizes, pool/vdev creation, encryption roots or encryption-key storage.
+Storage is declared in [hardware configuration](../hardware-configuration.nix) and [host configuration](../configuration.nix); each [service module](../modules/) declares its own retained paths. The repository defines mounts and retained paths; it does not define disk partition sizes, pool/vdev creation, encryption roots or encryption-key storage.
 
 ## Filesystems and boot
 

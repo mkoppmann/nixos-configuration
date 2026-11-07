@@ -26,6 +26,12 @@ in
     }
   ];
 
+  # Databases and roles are declared by the modules of their services.
+  environment.persistence."/persist".directories = [
+    "/var/backup"
+    "/var/lib/postgresql"
+  ];
+
   services.postgresql = {
     enable = true;
     package = pkgs.postgresql_16_jit;
@@ -37,42 +43,6 @@ in
       local sameuser  all      peer
       local all       postgres peer
     '';
-
-    ensureDatabases = [
-      "authentik"
-      "matrix-authentication-service"
-      "matrix-synapse"
-      "nextcloud"
-      "pleroma"
-      "vaultwarden"
-    ];
-
-    ensureUsers = [
-      {
-        name = "authentik";
-        ensureDBOwnership = true;
-      }
-      {
-        name = "matrix-authentication-service";
-        ensureDBOwnership = true;
-      }
-      {
-        name = "matrix-synapse";
-        ensureDBOwnership = true;
-      }
-      {
-        name = "nextcloud";
-        ensureDBOwnership = true;
-      }
-      {
-        name = "pleroma";
-        ensureDBOwnership = true;
-      }
-      {
-        name = "vaultwarden";
-        ensureDBOwnership = true;
-      }
-    ];
   };
 
   services.postgresqlBackup = {
