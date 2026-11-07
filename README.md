@@ -12,7 +12,6 @@
 | [scripts/](scripts/) | Backup and alert programs; Nix supplies their runtimes |
 | [tests/](tests/) | Python unit tests for the backup and alert scripts |
 | [.github/workflows/](.github/workflows/) | CI: secret scan, tests and system build on every push |
-| [home.nix](home.nix) | Home Manager configuration for administrator `mcp` |
 
 ## Documentation
 
