@@ -13,6 +13,9 @@
     };
     impermanence = {
       url = "github:nix-community/impermanence";
+      # Both are only used by impermanence's own tests.
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "";
     };
   };
 
@@ -33,7 +36,7 @@
     {
       nixosConfigurations.apollo = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
-        specialArgs = inputs;
+        specialArgs = { inherit inputs; };
         modules = [
           ./configuration.nix
 
