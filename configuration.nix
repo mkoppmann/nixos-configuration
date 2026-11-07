@@ -53,7 +53,6 @@ in
   boot = {
     loader.systemd-boot.enable = true;
     loader.efi.canTouchEfiVariables = true;
-    kernelPackages = pkgs.linuxPackages;
     supportedFilesystems = [ "zfs" ];
     initrd = {
       availableKernelModules = [
@@ -74,6 +73,7 @@ in
         };
       };
       systemd = {
+        enable = true;
         network = {
           enable = true;
 
@@ -253,10 +253,8 @@ in
     firewall = {
       enable = true;
       allowedTCPPorts = [
-        22
         80
         443
-        2222
       ];
       allowedUDPPorts = [ 51820 ];
     };
