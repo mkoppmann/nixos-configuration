@@ -71,6 +71,12 @@
               statix check --config ${self}/statix.toml ${self}
               touch $out
             '';
+            secrets-encrypted = pkgs.runCommand "secrets-encrypted" { nativeBuildInputs = [ pkgs.sops ]; } ''
+              for file in ${self}/secrets/*; do
+                sops filestatus "$file" | grep -q '"encrypted":true' || { echo "$file is not encrypted"; exit 1; }
+              done
+              touch $out
+            '';
           }))
           {
             x86_64-linux = {

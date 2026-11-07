@@ -26,7 +26,7 @@ Capacity checks cover `rpool` and the actual mounts `/`, `/nix`, `/persist`, `/v
 | SMTP | `smtp.webspace.bz:465`, implicit TLS with CA and hostname verification |
 | Sender / login | `reporting@ncrypt.at` |
 | Recipient | `admin@ncrypt.at` |
-| Password source | `/persist/credentials/reporting_smtp_password`, loaded through systemd credentials |
+| Password source | sops secret `reporting_smtp_password`, loaded through systemd credentials |
 | Failed delivery | Durable retry eligibility after 15 minutes; picked up by the one-minute sender |
 | Reminders | Daily for unresolved incidents |
 | Local retention | 30 days for sanitized history and completed incidents; pending/unresolved incidents retained |
