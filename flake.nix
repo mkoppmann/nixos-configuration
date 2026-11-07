@@ -69,8 +69,13 @@
             '';
           }))
           {
-            # VM tests are added here as they are written.
-            x86_64-linux.toplevel = self.nixosConfigurations.apollo.config.system.build.toplevel;
+            x86_64-linux = {
+              toplevel = self.nixosConfigurations.apollo.config.system.build.toplevel;
+              hardening = import ./tests/hardening.nix {
+                pkgs = nixpkgs.legacyPackages.x86_64-linux;
+                inherit inputs;
+              };
+            };
           };
     };
 }

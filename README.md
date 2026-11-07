@@ -11,7 +11,7 @@
 | [lib/](lib/) | Shared Nginx response-header snippets |
 | [nixos-modules/](nixos-modules/) | Local Matrix Authentication Service module |
 | [scripts/](scripts/) | Backup and alert programs; Nix supplies their runtimes |
-| [tests/](tests/) | Python unit tests for the backup and alert scripts |
+| [tests/](tests/) | NixOS VM test of SSH, Nginx and kernel hardening; Python unit tests for the backup and alert scripts |
 | [.github/workflows/](.github/workflows/) | CI: secret scan, tests and system build on every push |
 
 ## Documentation
