@@ -296,12 +296,15 @@ in
   time.timeZone = "Europe/Vienna";
 
   environment.systemPackages = with pkgs; [
+    fishPlugins.done
+    fishPlugins.forgit
+    fishPlugins.sponge
     fzf
-    git
-    neovim
     tmux
     wireguard-tools
   ];
+
+  environment.shellAliases.vimdiff = "nvim -d";
 
   users = {
     mutableUsers = false;
@@ -322,7 +325,33 @@ in
     };
   };
 
-  programs.fish.enable = true;
+  programs = {
+    fish = {
+      enable = true;
+      interactiveShellInit = "set fish_greeting";
+    };
+
+    git = {
+      enable = true;
+      config.user = {
+        name = "mkoppmann";
+        email = "dev@mkoppmann.at";
+      };
+    };
+
+    neovim = {
+      enable = true;
+      defaultEditor = true;
+      viAlias = true;
+      vimAlias = true;
+      withRuby = false;
+      withPython3 = false;
+      configure.customRC = ''
+        set relativenumber
+        set number
+      '';
+    };
+  };
 
   services = {
     borgbackup.jobs = {
