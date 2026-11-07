@@ -2,7 +2,31 @@
 
 [Repository overview](../README.md) · [Storage](storage.md) · [Recovery](recovery.md)
 
-Secrets are provisioned manually at runtime paths. There is no secret-management module or automatic import of a checkout-local private directory. Keep secret values outside Git and Nix expressions: Nix-store files are normally readable by other users.
+Service secrets are moving to [sops-nix](https://github.com/Mic92/sops-nix): `secrets/apollo.yaml` is encrypted to two post-quantum age recipients listed in `.sops.yaml`, the admin key and Apollo's host key. At activation, sops-nix decrypts the declared secrets to `/run/secrets` with the owner and mode each module declares. Secrets not yet migrated are still provisioned manually at the runtime paths below. Never put secret values into Nix expressions: Nix-store files are readable by every user.
+
+## Keys
+
+| Key | Location |
+| --- | --- |
+| Admin (`age1pq1jqjfqh…`) | KeePass only, never as a file |
+| Apollo host (`age1pq1sy6n0…`) | `/persist/var/lib/sops-nix/key.txt`, `root:root 0600`; copy in KeePass |
+
+Both are post-quantum (`age-keygen -pq`). The SSH host keys are deliberately not used as age identities: they are classical keys.
+
+## Editing secrets
+
+Run this in a terminal without an agent session; while `sops edit` runs, the plaintext sits in a temporary file readable by your user.
+
+```sh
+nix develop
+read -rsp "Admin key: " SOPS_AGE_KEY && export SOPS_AGE_KEY; echo   # paste from KeePass
+sops edit secrets/apollo.yaml
+unset SOPS_AGE_KEY
+```
+
+After changing `.sops.yaml` recipients, re-encrypt with `sops updatekeys secrets/apollo.yaml`. The `secrets-encrypted` flake check fails if any file in `secrets/` is not encrypted.
+
+A new server can only decrypt the secrets once its host key is restored from KeePass to `/persist/var/lib/sops-nix/key.txt`, or after a new host key is added as a recipient with `sops updatekeys`.
 
 ## Credential inventory
 
@@ -14,7 +38,7 @@ Paths below are configured readers or boot inputs. Files beneath persisted servi
 | `/persist/credentials/initrd_host_ed25519_key` | Dedicated unencrypted Ed25519 SSH host key for initrd | `root:root 0600`; required when boot secrets are installed |
 | `/persist/credentials/borg_sidechest_passphrase` | Raw passphrase for the existing Borg repository | `root:root 0600`; a new random value cannot unlock existing archives |
 | `/persist/credentials/borg_sidechest_ssh` | Unencrypted SSH client key authorised on the Storage Box | `root:root 0600`; backup job supplies no interactive key passphrase |
-| `/persist/credentials/reporting_smtp_password` | Raw single-line password for `reporting@ncrypt.at` | `root:root 0600`; loaded into the SMTP worker using systemd credentials |
+| `/run/secrets/reporting_smtp_password` | sops secret `reporting_smtp_password`: password for `reporting@ncrypt.at` | `root:root 0400`; loaded into the SMTP worker using systemd credentials |
 | `/var/lib/wireguard/private_key` | WireGuard private key | Root-readable, `0600`; changing it requires peer coordination |
 | `/var/lib/actual/openid_client_secret` | Raw secret for Actual's configured Authentik OIDC client | Dynamic `actual` reader, `0600` |
 | `/persist/var/lib/authentik/authentik-env` | systemd environment file, including application secret and SMTP password | `root:root 0600`; preserve the original secret with the database |

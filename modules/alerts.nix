@@ -6,7 +6,7 @@
 }:
 let
   state = "/persist/var/lib/apollo-alerts";
-  credential = "smtp-password:/persist/credentials/reporting_smtp_password";
+  credential = "smtp-password:${config.sops.secrets.reporting_smtp_password.path}";
   settings = pkgs.writeText "apollo-alerts.json" (
     builtins.toJSON {
       inherit state;
@@ -88,6 +88,8 @@ let
   };
 in
 {
+  sops.secrets.reporting_smtp_password = { };
+
   environment.systemPackages = [
     program
     verification
