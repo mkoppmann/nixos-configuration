@@ -1,14 +1,4 @@
-{
-  config,
-  lib,
-  pkgs,
-  utils,
-  inputs,
-  ...
-}:
-let
-  randomSeedPersistenceUnit = "persist-${utils.escapeSystemdPath "/persist/var/lib/systemd/random-seed"}.service";
-in
+{ inputs, ... }:
 {
   imports = [
     inputs.authentik-nix.nixosModules.default
@@ -16,405 +6,72 @@ in
     ./hardware-configuration.nix
     ./modules/actual.nix
     ./modules/alerts.nix
+    ./modules/authentik.nix
     ./modules/auto-upgrade.nix
     ./modules/backup-orchestration.nix
+    ./modules/boot.nix
     ./modules/element-web.nix
-    ./modules/authentik.nix
-    ./modules/matrix-synapse.nix
+    ./modules/impermanence.nix
     ./modules/mas.nix
+    ./modules/matrix-synapse.nix
+    ./modules/networking.nix
     ./modules/nextcloud.nix
     ./modules/nginx.nix
+    ./modules/nix.nix
     ./modules/pleroma.nix
     ./modules/postgresql.nix
+    ./modules/users.nix
     ./modules/vaultwarden.nix
     ./modules/wireguard.nix
     ./nixos-modules/matrix-authentication-service.nix
   ];
 
-  nix = {
-    gc = {
-      automatic = true;
-      dates = "weekly";
-      options = "--delete-older-than 30d";
-    };
-    optimise.automatic = true;
-    settings = {
-      allowed-users = [ "@wheel" ];
-      extra-substituters = [ "https://nix-community.cachix.org" ];
-      extra-trusted-public-keys = [
-        "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
-      ];
-      experimental-features = [
-        "nix-command"
-        "flakes"
-      ];
-    };
-  };
-
-  boot = {
-    loader.systemd-boot.enable = true;
-    loader.efi.canTouchEfiVariables = true;
-    supportedFilesystems = [ "zfs" ];
-    initrd = {
-      availableKernelModules = [
-        "virtio_pci"
-        "virtio_net"
-      ];
-      kernelModules = [
-        "virtio_pci"
-        "virtio_net"
-      ];
-      network = {
-        enable = true;
-        ssh = {
-          enable = true;
-          port = 2222;
-          hostKeys = [ /persist/credentials/initrd_host_ed25519_key ];
-          authorizedKeys = config.users.users.mcp.openssh.authorizedKeys.keys;
-        };
-      };
-      systemd = {
-        enable = true;
-        network = {
-          enable = true;
-
-          networks."10-ens3" = {
-            matchConfig.Name = "ens3";
-
-            address = [
-              "152.53.35.165/22"
-            ];
-
-            routes = [
-              {
-                Gateway = "152.53.32.1";
-              }
-            ];
-
-            networkConfig = {
-              DNS = [
-                "1.1.1.1"
-                "1.0.0.1"
-              ];
-              IPv6AcceptRA = false;
-            };
-
-            linkConfig.RequiredForOnline = "routable";
-          };
-
-          wait-online.enable = true;
-        };
-        services = {
-          sshd = {
-            wants = [ "network-online.target" ];
-            after = [
-              "network-online.target"
-              "initrd-nixos-copy-secrets.service"
-            ];
-          };
-          zfs-unlock-profile = {
-            description = "Prepare root profile for ZFS remote unlock";
-            wantedBy = [ "initrd.target" ];
-            before = [ "initrd-root-fs.target" ];
-            unitConfig.DefaultDependencies = false;
-            serviceConfig.Type = "oneshot";
-            script = ''
-              mkdir -p /var/empty
-              echo "systemd-tty-ask-password-agent --watch" > /var/empty/.profile
-            '';
-          };
-
-          zfs-rollback = {
-            description = "Rollback root ZFS dataset to blank snapshot";
-            wantedBy = [ "initrd.target" ];
-            after = [ "zfs-import-rpool.service" ];
-            before = [ "sysroot.mount" ];
-            unitConfig.DefaultDependencies = false;
-            serviceConfig.Type = "oneshot";
-            path = [ pkgs.zfs ];
-            script = ''
-              zfs rollback -r "rpool/local/root@blank"
-            '';
-          };
-        };
-      };
-    };
-
-    zfs = {
-      devNodes = "/dev/disk/by-partuuid";
-      forceImportRoot = false;
-      requestEncryptionCredentials = true;
-    };
-  };
-
-  fileSystems = {
-    "/".options = [
-      "noatime"
-      "x-systemd.device-timeout=infinity"
-    ];
-    "/boot".options = [ "umask=0077" ];
-    "/var/log".options = [ "noatime" ];
-    "/var/log".neededForBoot = true;
-    "/nix".options = [ "noatime" ];
-    "/persist".options = [ "noatime" ];
-    "/persist".neededForBoot = true;
-  };
-
-  zramSwap.enable = true;
-
-  environment = {
-    enableAllTerminfo = true;
-
-    etc = {
-      "machine-id".source = "/persist/etc/machine-id";
-      "ssh/ssh_host_ed25519_key".source = "/persist/etc/ssh/ssh_host_ed25519_key";
-      "ssh/ssh_host_ed25519_key.pub".source = "/persist/etc/ssh/ssh_host_ed25519_key.pub";
-      "ssh/ssh_host_rsa_key".source = "/persist/etc/ssh/ssh_host_rsa_key";
-      "ssh/ssh_host_rsa_key.pub".source = "/persist/etc/ssh/ssh_host_rsa_key.pub";
-    };
-
-    persistence = {
-      "/persist" = {
-        hideMounts = true;
-        directories = [
-          "/etc/nixos"
-          {
-            directory = "/root/.config/borg";
-            mode = "0700";
-          }
-          {
-            directory = "/root/.cache/borg";
-            mode = "0700";
-          }
-          "/root/.ssh"
-          {
-            directory = "/var/lib/logrotate";
-            mode = "0700";
-          }
-          "/var/lib/nixos"
-          {
-            directory = "/var/lib/systemd/timers";
-            mode = "0755";
-          }
-          {
-            directory = "/var/lib/systemd/timesync";
-            user = "systemd-timesync";
-            group = "systemd-timesync";
-            mode = "0755";
-          }
-        ];
-        files = [ "/var/lib/systemd/random-seed" ];
-        users.mcp = {
-          directories = [ ".local/share/fish" ];
-        };
-      };
-    };
-  };
-
-  # Protect the backing tree too: DynamicUser's host-side private directory
-  # must not become traversable through /persist. Do not chown its children.
-  system.activationScripts.apollo-private-state-permissions = {
-    deps = [ "createPersistentStorageDirs" ];
-    text = ''
-      ${pkgs.coreutils}/bin/install -d -o root -g root -m 0700 \
-        /persist/var/lib/private /var/lib/private
-    '';
-  };
-
-  systemd.services = {
-    # Impermanence represents file persistence with a service, not a .mount
-    # unit. RequiresMountsFor on random-seed alone cannot order that service.
-    systemd-random-seed = {
-      requires = [ randomSeedPersistenceUnit ];
-      after = [ randomSeedPersistenceUnit ];
-    };
-    "${lib.removeSuffix ".service" randomSeedPersistenceUnit}".unitConfig.RequiresMountsFor = [
-      "/persist/var/lib/systemd"
-    ];
-  };
-
-  networking = {
-    hostId = "e538f1c9";
-    hostName = "apollo";
-    networkmanager.enable = false;
-    useDHCP = false;
-
-    firewall = {
-      enable = true;
-      allowedTCPPorts = [
-        80
-        443
-      ];
-      allowedUDPPorts = [ 51820 ];
-    };
-
-    nameservers = [
-      "2606:4700:4700::1111"
-      "2606:4700:4700::1001"
-      "1.1.1.1"
-      "1.0.0.1"
-    ];
-
-    nat = {
-      enable = true;
-      externalInterface = "ens3";
-      internalInterfaces = [ "wg0" ];
-    };
-
-    interfaces.ens3 = {
-      useDHCP = false;
-
-      ipv4.addresses = [
-        {
-          address = "152.53.35.165";
-          prefixLength = 22;
-        }
-      ];
-
-      ipv6.addresses = [
-        {
-          address = "2a0a:4cc0:100:23::bad:c0de";
-          prefixLength = 64;
-        }
-      ];
-    };
-
-    defaultGateway = "152.53.32.1";
-  };
-
   time.timeZone = "Europe/Vienna";
 
-  environment.systemPackages = with pkgs; [
-    fishPlugins.done
-    fishPlugins.forgit
-    fishPlugins.sponge
-    fzf
-    tmux
-    wireguard-tools
+  environment.persistence."/persist".directories = [
+    {
+      directory = "/root/.config/borg";
+      mode = "0700";
+    }
+    {
+      directory = "/root/.cache/borg";
+      mode = "0700";
+    }
   ];
 
-  environment.shellAliases.vimdiff = "nvim -d";
-
-  users = {
-    mutableUsers = false;
-    users = {
-      mcp = {
-        extraGroups = [ "wheel" ];
-        isNormalUser = true;
-        openssh.authorizedKeys.keys = [
-          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAID2aEPKcElIy1hJbiBjAa2wil6AYqWydtORxl0ErfBOT"
-        ];
-        hashedPasswordFile = "/persist/credentials/user_mcp";
-        shell = pkgs.fish;
+  services.borgbackup.jobs = {
+    "sidechest" = {
+      paths = [
+        "/persist"
+        "/var/log"
+      ];
+      exclude = [
+        "/persist/var/lib/postgresql"
+        "/persist/root/.cache/borg"
+        "/persist/var/lib/systemd/random-seed"
+        "/var/log/audit/audit.log"
+        "/var/log/journal/e538f1c97e5f472581a47d4a0acd816c/system.journal"
+        "/var/log/nginx/access.log"
+      ];
+      repo = "ssh://u237324-sub2@u237324-sub2.your-storagebox.de:23/home/borg";
+      encryption = {
+        mode = "repokey-blake2";
+        passCommand = "cat /persist/credentials/borg_sidechest_passphrase";
       };
-
-      root = {
-        initialHashedPassword = "!";
+      environment.BORG_RSH = "ssh -i /persist/credentials/borg_sidechest_ssh";
+      compression = "auto,zstd";
+      startAt = "daily";
+      prune.keep = {
+        daily = 7;
+        weekly = 4;
+        monthly = 6;
       };
-    };
-  };
-
-  programs = {
-    fish = {
-      enable = true;
-      interactiveShellInit = "set fish_greeting";
-    };
-
-    git = {
-      enable = true;
-      config.user = {
-        name = "mkoppmann";
-        email = "dev@mkoppmann.at";
-      };
-    };
-
-    neovim = {
-      enable = true;
-      defaultEditor = true;
-      viAlias = true;
-      vimAlias = true;
-      withRuby = false;
-      withPython3 = false;
-      configure.customRC = ''
-        set relativenumber
-        set number
-      '';
-    };
-  };
-
-  services = {
-    borgbackup.jobs = {
-      "sidechest" = {
-        paths = [
-          "/persist"
-          "/var/log"
-        ];
-        exclude = [
-          "/persist/var/lib/postgresql"
-          "/persist/root/.cache/borg"
-          "/persist/var/lib/systemd/random-seed"
-          "/var/log/audit/audit.log"
-          "/var/log/journal/e538f1c97e5f472581a47d4a0acd816c/system.journal"
-          "/var/log/nginx/access.log"
-        ];
-        repo = "ssh://u237324-sub2@u237324-sub2.your-storagebox.de:23/home/borg";
-        encryption = {
-          mode = "repokey-blake2";
-          passCommand = "cat /persist/credentials/borg_sidechest_passphrase";
-        };
-        environment.BORG_RSH = "ssh -i /persist/credentials/borg_sidechest_ssh";
-        compression = "auto,zstd";
-        startAt = "daily";
-        prune.keep = {
-          daily = 7;
-          weekly = 4;
-          monthly = 6;
-        };
-      };
-    };
-
-    # Logrotate atomically replaces its state file; persist its directory.
-    logrotate.extraArgs = [
-      "--state"
-      "/var/lib/logrotate/status"
-    ];
-
-    openssh = {
-      enable = true;
-      settings = {
-        PasswordAuthentication = false;
-        KbdInteractiveAuthentication = false;
-      };
-      allowSFTP = true;
-      extraConfig = ''
-        AllowTcpForwarding yes
-        X11Forwarding no
-        AllowAgentForwarding no
-        AllowStreamLocalForwarding no
-        AuthenticationMethods publickey
-      '';
-    };
-
-    zfs = {
-      autoScrub.enable = true;
-      autoSnapshot.enable = true;
-      trim.enable = true;
     };
   };
 
   security = {
-    acme = {
-      acceptTerms = true;
-      defaults.email = "acme@ncrypt.at";
-    };
-
     auditd.enable = true;
     audit.enable = true;
-    sudo.execWheelOnly = true;
-    sudo.extraConfig = ''
-      # rollback results in sudo lectures after each reboot
-      Defaults lecture = never
-    '';
   };
 
   # Do NOT change this value unless you have manually inspected all the changes it would make to your configuration,
@@ -422,5 +79,4 @@ in
   #
   # For more information, see `man configuration.nix` or https://nixos.org/manual/nixos/stable/options#opt-system.stateVersion .
   system.stateVersion = "23.11"; # Did you read the comment?
-
 }
