@@ -10,7 +10,8 @@
 | [modules/](modules/) | Applications, reverse proxy, backups, alerts and automatic updates |
 | [nixos-modules/](nixos-modules/) | Local Matrix Authentication Service module |
 | [scripts/](scripts/) | Backup and alert programs; Nix supplies their runtimes |
-| [tests/](tests/) | Python unit tests and Nix evaluation checks |
+| [tests/](tests/) | Python unit tests for the backup and alert scripts |
+| [.github/workflows/](.github/workflows/) | CI: secret scan, tests and system build on every push |
 | [home.nix](home.nix) | Home Manager configuration for administrator `mcp` |
 
 ## Documentation

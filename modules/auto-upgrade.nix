@@ -10,8 +10,19 @@
     flags = [ "--print-build-logs" ];
   };
 
-  systemd.services.nixos-upgrade.preStart = ''
-    cd /etc/nixos
-    nix flake update
-  '';
+  # Audit trail: `nix flake update` logs every changed input revision, and
+  # postStart logs the resulting package changes to the journal.
+  systemd.services.nixos-upgrade = {
+    serviceConfig.RuntimeDirectory = "nixos-upgrade";
+    preStart = ''
+      readlink -f /run/current-system > "$RUNTIME_DIRECTORY/previous-system"
+      cd /etc/nixos
+      nix flake update
+    '';
+    postStart = ''
+      previous=$(cat "$RUNTIME_DIRECTORY/previous-system")
+      echo "Package changes since $previous:"
+      nix store diff-closures "$previous" /run/current-system
+    '';
+  };
 }

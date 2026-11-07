@@ -6,82 +6,38 @@ Commands below run from the checkout in Bash. On Apollo, enter `bash` from the a
 
 ## Local validation
 
-Python tests use temporary files and stubbed system commands/SMTP; they require no production secrets or server:
+On a machine with Nix and flakes enabled:
 
 ```bash
+nix fmt
+nix flake check --no-build --all-systems
 python3 -m unittest discover -s tests -p 'test_*.py'
 ```
 
-On a machine with Nix, evaluate the four existing checks without updating the lockfile:
+`--no-build` evaluates the complete `x86_64-linux` system without building it. [CI](../.github/workflows/check.yml) runs on every push: it scans the Git history for secrets, runs the Python tests and builds every flake check (the system closure and NixOS VM tests). Do not deploy a commit whose CI run failed.
 
-```bash
-(
-  for check in postgresql-backup persistence backup-orchestration alerts; do
-    nix eval --impure --no-update-lock-file --no-write-lock-file \
-      --json --file "tests/$check.nix" || exit
-  done
-)
-```
+## Deployment
 
-Require every check to succeed; stop at the first failure. The checks force evaluation of the NixOS system and assert database coverage, persistence mappings, orchestration and alert wiring. A `path:` flake is used internally so untracked working-tree files are included. Evaluation can fetch locked inputs and is distinct from a build or live verification.
-
-Build on a suitable Linux builder before activation:
-
-```bash
-nix build --no-update-lock-file --no-write-lock-file \
-  'path:.#nixosConfigurations.apollo.config.system.build.toplevel'
-```
-
-The result is an `x86_64-linux` system. A local macOS machine needs a suitable remote builder to build it. The flake does not export a `checks` set; `nix flake check` alone does not replace these explicit evaluation files.
-
-## Manual deployment
-
-Apollo's deployment checkout is `/etc/nixos`. Review its status, diff and lockfile before a whole-system switch; application setup/migration units can run during activation. Coordinate changes with automatic updates and backup maintenance.
-
-For a quiet maintenance window, first check for existing holds or masks and preserve their intended state. The sequence below assumes no existing backup hold or upgrade masks. Stop new scheduled work, temporarily mask automatic upgrades across activation, and create the backup hold:
-
-```bash
-sudo systemctl stop nixos-upgrade.timer apollo-backup.timer apollo-backup-upload.timer
-sudo systemctl mask --runtime nixos-upgrade.service nixos-upgrade.timer
-sudo install -o root -g root -m 0600 /dev/null \
-  /persist/var/lib/apollo-backup/deployment-hold
-systemctl show nixos-upgrade.service apollo-backup.service \
-  apollo-backup-upload.service apollo-backup-recover.service \
-  --property=Id --property=ActiveState --property=SubState
-sudo apollo-backup check-resumed
-```
-
-The hold and masks do not cancel work already running. Wait for active work and pending recovery to finish, and investigate failed units before proceeding. Do not stop the watchdog or interrupt an active system update. Keep independent SSH/console access available. Runtime masks disappear on reboot; reestablish maintenance isolation if the window spans a reboot.
-
-After successful evaluation, on Apollo:
+Apollo's checkout is `/etc/nixos`. Its `flake.lock` is usually newer than Git's because of [automatic updates](#automatic-updates). Discard it before pulling; the upgrade service updates it again before switching, so inputs never move backwards:
 
 ```bash
 cd /etc/nixos
-sudo nixos-rebuild build --flake 'path:.#apollo' --no-update-lock-file
-nix store diff-closures /run/current-system ./result
-# After reviewing the candidate and expected application migrations:
-sudo nixos-rebuild switch --flake 'path:.#apollo' --no-update-lock-file
+sudo git checkout -- flake.lock && sudo git pull --ff-only
+sudo systemctl start nixos-upgrade.service
+journalctl -u nixos-upgrade.service -n 100
 ```
 
-Inspect failed units, application health and journals after activation. A system switch may restart shared Nginx and interrupt every proxied site. Persistence-layout changes need data preparation before new mounts hide existing runtime files; boot-only changes need a planned reboot. Root rollback does not undo changes to persistent application files or databases. A system-generation rollback likewise does not undo data migrations.
+To deploy exactly the lockfile from Git instead, run `sudo nixos-rebuild switch --flake .#apollo`. Never use `path:.#apollo`: a `path:` flake copies untracked files from `/etc/nixos` into the world-readable Nix store.
 
-When maintenance is complete, remove only the hold and masks created for this window and restore the timers to their previous intended state. For the normal enabled schedules:
+Until the coordinated backup is replaced, avoid deploying while `apollo-backup.service` is active (daily capture at 03:00). After activation, check `systemctl --failed` and application logins. A switch may restart Nginx and briefly interrupt every site. A system-generation rollback does not undo application data migrations.
 
-```bash
-sudo apollo-backup check-resumed
-sudo rm -- /persist/var/lib/apollo-backup/deployment-hold
-sudo systemctl unmask --runtime nixos-upgrade.service nixos-upgrade.timer
-sudo systemctl start apollo-backup.timer apollo-backup-upload.timer nixos-upgrade.timer
-systemctl list-timers --all
-```
-
-Activation may start enabled backup timers again; the hold continues to gate captures/uploads until removed. The upgrade masks prevent scheduled input updates during the switch. Avoid concurrent deployments throughout the window.
+To publish the server's lockfile, copy `/etc/nixos/flake.lock` into the repository and commit it.
 
 ## Automatic updates
 
-[Automatic upgrade configuration](../modules/auto-upgrade.nix) schedules `nixos-upgrade` at 00:00, 06:00, 12:00 and 18:00 Europe/Vienna with up to 30 minutes of random delay. Its pre-start runs `nix flake update` in `/etc/nixos`, then the NixOS upgrade service rebuilds and switches to the flake configuration. The timer is persistent, so a missed run can trigger after boot or when the timer is started again. The setting `upgrade = false` disables the rebuild command's own input-update step; it does not disable the explicit pre-start update. Automatic reboot is disabled.
+[Automatic upgrade configuration](../modules/auto-upgrade.nix) schedules `nixos-upgrade` at 00:00, 06:00, 12:00 and 18:00 Europe/Vienna with up to 30 minutes of random delay. Its pre-start runs `nix flake update` for all inputs in `/etc/nixos`, then the service rebuilds and switches. The timer is persistent, so a missed run can trigger after boot. Automatic reboot is disabled.
 
-The lockfile on the deployment host can therefore diverge from the Git checkout. Inspect the deployment diff and `journalctl -u nixos-upgrade.service` when comparing repository and running state. Major application/database migrations require review; the configuration does not provide an automatic data-migration rollback.
+Each run leaves an audit trail in `journalctl -u nixos-upgrade.service`: `nix flake update` lists every changed input revision, and the post-start step prints `nix store diff-closures` between the previous and new system. Major application/database migrations arrive unreviewed this way; there is no automatic data-migration rollback.
 
 ## Routine health checks
 
