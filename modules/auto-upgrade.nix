@@ -19,10 +19,17 @@
       cd /etc/nixos
       nix flake update
     '';
+    # Logging must never fail an upgrade. The record is missing when a switch
+    # changes this unit mid-run, because systemd then runs the new postStart.
     postStart = ''
-      previous=$(cat "$RUNTIME_DIRECTORY/previous-system")
-      echo "Package changes since $previous:"
-      nix store diff-closures "$previous" /run/current-system
+      record="$RUNTIME_DIRECTORY/previous-system"
+      if [ -e "$record" ]; then
+        previous=$(cat "$record")
+        echo "Package changes since $previous:"
+        nix store diff-closures "$previous" /run/current-system || echo "Package diff unavailable."
+      else
+        echo "No previous system recorded; skipping package diff."
+      fi
     '';
   };
 }
