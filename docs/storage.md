@@ -52,7 +52,6 @@ These paths live directly on the persistent dataset and need no additional bind 
 | `/persist/etc/machine-id` | Source for `/etc/machine-id` |
 | `/persist/etc/ssh/ssh_host_ed25519_key` and `.pub` | Normal SSH host key, read directly by sshd |
 | `/persist/credentials` | Manually provisioned host, boot, backup and reporting credentials |
-| `/persist/var/lib/authentik/authentik-env` | Authentik environment file; separate from `/persist/var/lib/private/authentik` |
 | `/persist/var/lib/apollo-backup` | Private backup ledger, deployment hold and upload-success evidence; excluded from Borg |
 | `/persist/var/lib/apollo-alerts` | Private durable alert incidents/history; included in Borg |
 

@@ -12,9 +12,24 @@ let
   host = "idp.ncrypt.at";
 in
 {
+  sops = {
+    secrets.authentik_secret_key = { };
+    secrets.authentik_smtp_password = { };
+    templates."authentik.env" = {
+      content = ''
+        AUTHENTIK_SECRET_KEY=${config.sops.placeholder.authentik_secret_key}
+        AUTHENTIK_EMAIL__PASSWORD=${config.sops.placeholder.authentik_smtp_password}
+      '';
+      restartUnits = [
+        "authentik.service"
+        "authentik-worker.service"
+      ];
+    };
+  };
+
   services.authentik = {
     enable = true;
-    environmentFile = "/persist/var/lib/authentik/authentik-env";
+    environmentFile = config.sops.templates."authentik.env".path;
     createDatabase = false;
     nginx.enable = false;
     settings = {

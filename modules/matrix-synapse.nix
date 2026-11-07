@@ -1,11 +1,44 @@
 {
+  config,
   ...
 }:
+let
+  inherit (config.sops) placeholder;
+in
 {
+  sops = {
+    secrets = {
+      synapse_registration_shared_secret = { };
+      synapse_macaroon_secret_key = { };
+      synapse_form_secret = { };
+      synapse_smtp_password = { };
+    };
+    templates."synapse-secrets.yaml" = {
+      owner = "matrix-synapse";
+      # Synapse replaces whole top-level sections with those from extra config
+      # files, so the complete email section lives here.
+      content = builtins.toJSON {
+        registration_shared_secret = placeholder.synapse_registration_shared_secret;
+        macaroon_secret_key = placeholder.synapse_macaroon_secret_key;
+        form_secret = placeholder.synapse_form_secret;
+        email = {
+          enable_notifs = true;
+          force_tls = true;
+          notif_for_new_users = false;
+          notif_from = "Matrix ncrypt.at <matrix@ncrypt.at>";
+          smtp_host = "smtp.webspace.bz";
+          smtp_user = "matrix@ncrypt.at";
+          smtp_pass = placeholder.synapse_smtp_password;
+        };
+      };
+      restartUnits = [ "matrix-synapse.service" ];
+    };
+  };
+
   services.matrix-synapse = {
     enable = true;
     extras = [ "oidc" ];
-    extraConfigFiles = [ "/var/lib/matrix-synapse/secrets.yaml" ];
+    extraConfigFiles = [ config.sops.templates."synapse-secrets.yaml".path ];
     log.root.level = "WARNING";
 
     settings = {
@@ -53,6 +86,12 @@
       password_config.enabled = false;
       push.include_content = false;
       encryption_enabled_by_default_for_room_type = "invite";
+
+      matrix_authentication_service = {
+        enabled = true;
+        endpoint = "http://127.0.0.1:8091/";
+        secret_path = "/var/lib/matrix-synapse/mas_secret";
+      };
     };
   };
 

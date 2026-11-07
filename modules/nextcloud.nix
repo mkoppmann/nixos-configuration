@@ -4,7 +4,21 @@
   ...
 }:
 {
-  sops.secrets.nextcloud_admin_password = { };
+  sops = {
+    secrets = {
+      nextcloud_admin_password = { };
+      nextcloud_instanceid = { };
+      nextcloud_passwordsalt = { };
+      nextcloud_secret = { };
+      nextcloud_smtp_password = { };
+    };
+    templates."nextcloud-secrets.json".content = builtins.toJSON {
+      instanceid = config.sops.placeholder.nextcloud_instanceid;
+      passwordsalt = config.sops.placeholder.nextcloud_passwordsalt;
+      secret = config.sops.placeholder.nextcloud_secret;
+      mail_smtppassword = config.sops.placeholder.nextcloud_smtp_password;
+    };
+  };
 
   services.nextcloud = {
     enable = true;
@@ -14,7 +28,7 @@
     configureRedis = true;
     database.createLocally = false;
     notify_push.enable = true;
-    secretFile = "/var/lib/nextcloud/secrets.json";
+    secretFile = config.sops.templates."nextcloud-secrets.json".path;
 
     phpOptions = {
       "opcache.interned_strings_buffer" = "16";
