@@ -56,7 +56,6 @@
         "/persist/var/lib/postgresql"
         "/persist/root/.cache/borg"
         "/persist/var/lib/systemd/random-seed"
-        "/var/log/audit/audit.log"
         "/var/log/journal/e538f1c97e5f472581a47d4a0acd816c/system.journal"
         "/var/log/nginx/access.log"
       ];
@@ -74,11 +73,6 @@
         monthly = 6;
       };
     };
-  };
-
-  security = {
-    auditd.enable = true;
-    audit.enable = true;
   };
 
   # Do NOT change this value unless you have manually inspected all the changes it would make to your configuration,
