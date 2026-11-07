@@ -13,6 +13,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.home-manager.follows = "";
     };
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -72,6 +76,10 @@
             x86_64-linux = {
               toplevel = self.nixosConfigurations.apollo.config.system.build.toplevel;
               hardening = import ./tests/hardening.nix {
+                pkgs = nixpkgs.legacyPackages.x86_64-linux;
+                inherit inputs;
+              };
+              secrets = import ./tests/secrets.nix {
                 pkgs = nixpkgs.legacyPackages.x86_64-linux;
                 inherit inputs;
               };
