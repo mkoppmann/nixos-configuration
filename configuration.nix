@@ -39,6 +39,13 @@
     }
   ];
 
+  # Matches the fingerprint Hetzner publishes for Storage Boxes:
+  # SHA256:XqONwb1S0zuj5A1CDxpOSuD2hnAArV1A3wKY7Z3sdgM
+  programs.ssh.knownHosts.storage-box = {
+    hostNames = [ "[u237324-sub2.your-storagebox.de]:23" ];
+    publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIICf9svRenC/PLKIL9nk6K/pxQgoiFC41wTNvoIncOxs";
+  };
+
   services.borgbackup.jobs = {
     "sidechest" = {
       paths = [

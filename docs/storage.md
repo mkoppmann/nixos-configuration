@@ -25,7 +25,6 @@ Impermanence binds the following directory trees to corresponding paths under `/
 | Runtime paths | Contents |
 | --- | --- |
 | `/etc/nixos` | Deployment checkout |
-| `/root/.ssh` | Administrator SSH keys and host trust |
 | `/root/.config/borg`, `/root/.cache/borg` | Borg configuration/security metadata and rebuildable cache; directories `0700` |
 | `/srv/www` | Mutable static websites |
 | `/var/backup` | PostgreSQL dumps, globals and capture manifest |
