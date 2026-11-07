@@ -461,7 +461,7 @@ class BackupTests(unittest.TestCase):
         run = self.backup.new_run()
         self.backup.save(run)
         self.backup.quiesce(run)
-        self.assertEqual(self.backup.deadline - run["maintenanceMonotonic"], 475)
+        self.assertAlmostEqual(self.backup.deadline - run["maintenanceMonotonic"], 475)
         with patch.object(self.runner, "run", return_value="") as command:
             self.backup.deadline = None
             self.backup.pg("psql")

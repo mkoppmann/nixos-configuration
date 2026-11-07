@@ -23,12 +23,22 @@
       home-manager,
       ...
     }@inputs:
+    let
+      systems = [
+        "x86_64-linux"
+        "aarch64-darwin"
+      ];
+      forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
+    in
     {
       nixosConfigurations.apollo = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = inputs;
         modules = [
           ./configuration.nix
+
+          # `nixos-version --json` reports the deployed commit.
+          { system.configurationRevision = self.rev or self.dirtyRev or "dirty"; }
 
           home-manager.nixosModules.home-manager
           {
@@ -37,6 +47,23 @@
             home-manager.users.mcp = import ./home.nix;
           }
         ];
+      };
+
+      formatter = forAllSystems (pkgs: pkgs.nixfmt);
+
+      devShells = forAllSystems (pkgs: {
+        default = pkgs.mkShellNoCC {
+          packages = with pkgs; [
+            age
+            nixfmt
+            sops
+          ];
+        };
+      });
+
+      # VM tests are added here as they are written.
+      checks.x86_64-linux = {
+        toplevel = self.nixosConfigurations.apollo.config.system.build.toplevel;
       };
     };
 }
