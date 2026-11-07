@@ -29,7 +29,7 @@ mkdir -m 0700 "$recovery_case"
 mkdir -m 0700 "$recovery_case/credentials" "$recovery_case/extracted"
 ```
 
-Install the independently retained `borg_sidechest_ssh`, `borg_sidechest_passphrase` and verified `known_hosts` into its credentials directory (`0600`). The host-trust entry must cover `[u237324-sub2.your-storagebox.de]:23`; an unverified key scan is not independent trust.
+Install the independently retained `borg_sidechest_ssh`, `borg_sidechest_passphrase` into its credentials directory (`0600`). Create `known_hosts` there from the Storage Box host key declared in [the host configuration](../configuration.nix), prefixed with `[u237324-sub2.your-storagebox.de]:23`, after checking its fingerprint against Hetzner's published value; an unverified key scan is not independent trust.
 
 ```bash
 export BORG_REPO='ssh://u237324-sub2@u237324-sub2.your-storagebox.de:23/home/borg'

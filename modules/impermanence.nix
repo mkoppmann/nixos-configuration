@@ -21,7 +21,6 @@ in
     hideMounts = true;
     directories = [
       "/etc/nixos"
-      "/root/.ssh"
       {
         directory = "/var/lib/logrotate";
         mode = "0700";
