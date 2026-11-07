@@ -1,0 +1,68 @@
+# Services and host settings
+
+[Repository overview](../README.md) · [Storage](storage.md) · [Operations](operations.md)
+
+The declarations are in [service modules](../modules/), [host configuration](../configuration.nix) and the [local MAS module](../nixos-modules/matrix-authentication-service.nix). Package revisions come from [flake.lock](../flake.lock).
+
+## Applications
+
+| Service | Endpoint and backend | Dependencies and state |
+| --- | --- | --- |
+| Actual | `budget.ncrypt.at` → `127.0.0.1:5006` | Package from the unstable input; Authentik OIDC; SQLite and budget files in `/var/lib/actual` |
+| Authentik | `idp.ncrypt.at` → HTTPS `localhost:9443` | PostgreSQL `authentik`; migration and worker services; media and SMTP; LDAP and RADIUS disabled |
+| Matrix Synapse | `matrix.ncrypt.at` → `127.0.0.1:8008` | Server identity `ncrypt.at`; PostgreSQL `matrix-synapse`; media/signing keys; MAS; database compressor |
+| Matrix Authentication Service | `auth.matrix.ncrypt.at` → `127.0.0.1:8091` | PostgreSQL `matrix-authentication-service`; internal health port `8092`; encryption/signing keys; SMTP; local passwords disabled |
+| Element Web | `chat.ncrypt.at` | Nix-store frontend configured for the `ncrypt.at` homeserver |
+| Nextcloud | `cloud.ncrypt.at`; package selection `nextcloud35` | PostgreSQL `nextcloud`; Redis, PHP-FPM, notify-push and cron; files and mutable configuration |
+| OnlyOffice | `office.ncrypt.at`; backend port `8000` | PostgreSQL `onlyoffice`, RabbitMQ, working files; JWT shared with Nextcloud |
+| Pleroma | `communicating.cypherpunk.observer` → `127.0.0.1:4000` | PostgreSQL `pleroma`; uploads/static files; runtime secrets and database-stored settings |
+| Vaultwarden | `pw.ncrypt.at` → `127.0.0.1:8222` | PostgreSQL `vaultwarden`; attachments, sends, keys and SMTP; WebSocket forwarding enabled |
+| Photo proxy | `photos.mkoppmann.at` → `10.100.0.2:2283` | Upstream reached through WireGuard; its database and media are outside Apollo's backup coverage |
+
+Nextcloud's packaged apps are Calendar, Contacts, Notes, OnlyOffice, Tasks and User OIDC; automatic app updates are disabled. Its initial administrator is configured as `ncroot`, using the [administrator password file](secrets.md#credential-inventory). Login/provider registrations and secrets supplied through runtime files are not fully represented by this checkout. Synapse, Pleroma and Vaultwarden have public registration disabled.
+
+## HTTP routing and limits
+
+[Nginx configuration](../modules/nginx.nix) terminates HTTPS using ACME certificates. It enables the recommended proxy, TLS, gzip and optimisation settings and uses mainline Nginx with the slice module.
+
+- Matrix discovery is served on `ncrypt.at`. Login/logout/refresh compatibility routes go to MAS; other Matrix and Synapse client/MAS routes go to Synapse. Other requests to the Matrix host return 404.
+- Pleroma media redirects to `media.communicating.cypherpunk.observer`, which proxies media and caches sliced responses. `/proxy` on the main Pleroma host returns 404.
+- Authentik, Vaultwarden and the photo proxy enable WebSocket forwarding. Actual has its own cross-origin isolation headers and retains the application's CSP. Header policies vary by host and location.
+- The configured limits differ: Nextcloud `16G`, Synapse `100M` with unlimited Nginx request bodies on its proxy locations, Pleroma's main virtual host `100m`, and the photo proxy `50000M` with 600-second proxy/send timeouts. Other limits come from application and module defaults.
+
+| Static hostname | Content root |
+| --- | --- |
+| `www.cypherpunk.observer` | `/srv/www/cypherpunk.observer` |
+| `mta-sts.cypherpunk.observer` | `/srv/www/mta-sts.cypherpunk.observer` |
+| `www.mkoppmann.at` | `/srv/www/mkoppmann.at/dist` |
+| `mta-sts.mkoppmann.at` | `/srv/www/mta-sts.mkoppmann.at` |
+| `wtcvss.mkoppmann.at` | `/srv/www/wtcvss` |
+
+These trees are persistent, mutable content deployed outside this flake. The bare `cypherpunk.observer` and `mkoppmann.at` domains redirect to their `www` hosts. `ncrypt.at` redirects non-discovery requests to `www.ncrypt.at`, whose `/` response is an empty HTTP 200.
+
+## Host and network
+
+| Setting | Declaration |
+| --- | --- |
+| Platform | `apollo`, `x86_64-linux`, QEMU/virtio guest, UEFI/systemd-boot |
+| Network | Static `ens3`; DHCP and NetworkManager disabled |
+| IPv4 | `152.53.35.165/22`, gateway `152.53.32.1` |
+| IPv6 | `2a0a:4cc0:100:23::bad:c0de/64` |
+| DNS resolvers | Cloudflare `1.1.1.1`, `1.0.0.1`, `2606:4700:4700::1111`, `2606:4700:4700::1001` |
+| Firewall openings | TCP `22`, `80`, `443`, `2222`; UDP `51820` |
+| WireGuard | `wg0`, `10.100.0.1/24`; five peers at `10.100.0.2`–`10.100.0.6`, keepalive 25 seconds |
+| NAT | NixOS-managed NAT from `wg0` through `ens3` |
+| Administrator | `mcp`, wheel member, Fish shell, manually provisioned password hash |
+| SSH | Public-key authentication, SFTP and TCP forwarding; agent, X11 and stream-local forwarding disabled |
+| Timezone | `Europe/Vienna` |
+| Compatibility versions | NixOS and Home Manager `stateVersion = "23.11"` |
+
+The initrd uses the same static IPv4 route, IPv4 DNS resolvers and disabled IPv6 router advertisements. [Remote unlock](operations.md#remote-unlock) uses a separate SSH host key on port 2222. The normal root password is locked. Zram swap, audit logging, ZFS scrub/trim/snapshots, weekly Nix garbage collection of generations older than 30 days and automatic store optimisation are enabled.
+
+## Startup and certificate behavior
+
+PostgreSQL 16 with JIT is configured for Unix-socket access and peer authentication; TCP listening is disabled. `postgresql.target` groups the server and separate role/database setup service. Apollo's explicit Authentik, Nextcloud setup and MAS dependencies name `postgresql.service`, rather than completion of that target. Recovery must verify both server and provisioning readiness.
+
+Authentik migration precedes its worker/server. The worker loads the IdP certificate and key through systemd credentials when it starts; Apollo declares no certificate-renewal hook to refresh that worker's credentials. Actual, Authentik and MAS use dynamic users and systemd state directories; see [ownership](storage.md#ownership-and-file-behavior).
+
+OnlyOffice's pinned pre-start hook runs `removetbl.sql` when `task_result` exists, then `createdb.sql`. Starting its document service can therefore change restored database state. This behavior is present in the [locked OnlyOffice module](https://github.com/NixOS/nixpkgs/blob/f546a0b3db840c7c8a7c705265fc6b42bcbfe278/nixos/modules/services/web-apps/onlyoffice.nix); see [recovery](recovery.md#restore-and-release-applications).
