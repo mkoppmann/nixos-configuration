@@ -59,7 +59,7 @@ These trees are persistent, mutable content deployed outside this flake. The bar
 | Timezone | `Europe/Vienna` |
 | Compatibility version | NixOS `stateVersion = "23.11"` |
 
-The initrd uses the same static IPv4 route, IPv4 DNS resolvers and disabled IPv6 router advertisements. [Remote unlock](operations.md#remote-unlock) uses a separate SSH host key on port 2222. The normal root password is locked. Zram swap, ZFS scrub/trim, weekly Nix garbage collection of generations older than 30 days and automatic store optimisation are enabled.
+The initrd uses the same static IPv4 route, IPv4 DNS resolvers and disabled IPv6 router advertisements. [Remote unlock](operations.md#remote-unlock) uses a separate SSH host key on port 2222. The normal root password is locked. [Kernel settings](../modules/kernel.nix) hide kernel pointers and logs from unprivileged users, restrict ptrace and BPF, ignore ICMP redirects and source routing, and disable kexec and hibernation. Zram swap, ZFS scrub/trim, weekly Nix garbage collection of generations older than 30 days and automatic store optimisation are enabled.
 
 ## Startup and certificate behavior
 

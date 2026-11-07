@@ -12,6 +12,7 @@
     ./modules/boot.nix
     ./modules/element-web.nix
     ./modules/impermanence.nix
+    ./modules/kernel.nix
     ./modules/mas.nix
     ./modules/matrix-synapse.nix
     ./modules/networking.nix
