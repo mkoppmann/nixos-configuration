@@ -23,8 +23,6 @@ Paths below are configured readers or boot inputs. Files beneath persisted servi
 | `/var/lib/private/matrix-authentication-service/homeserver_secret` | Raw MAS/Synapse integration secret | Dynamic MAS reader, `0600`; match Synapse's runtime configuration |
 | `/var/lib/nextcloud/secrets.json` | JSON merged into Nextcloud configuration, including SMTP credentials | Root-readable credential source, `0600` |
 | `/var/lib/nextcloud/adminpass` | Raw password for initial creation of administrator `ncroot` | Root-readable credential source, `0600`; must remain nonempty for the setup service |
-| `/var/lib/onlyoffice/onlyoffice-jwt` | Raw JWT secret shared with Nextcloud's OnlyOffice app | `onlyoffice`-readable, `0600` |
-| `/var/lib/onlyoffice/onlyoffice-nginx-nonce.conf` | Nginx directive `set $secure_link_secret "VALUE";` | Readable by OnlyOffice and Nginx; `root:onlyoffice 0640` is suitable |
 | `/var/lib/pleroma/secret.exs` | Elixir configuration imported by Pleroma | `pleroma`-readable, `0600`; preserve endpoint secrets, matching VAPID keys and overrides |
 | `/var/lib/bitwarden_rs/.env` | systemd environment assignments, including deployed SMTP/admin credentials | `root:root 0600` |
 | `/var/lib/acme/idp.ncrypt.at/fullchain.pem` and `key.pem` | ACME-managed certificate/key loaded by the Authentik worker | Preserve module-managed ownership and restrictive permissions |
@@ -37,9 +35,9 @@ Nextcloud's `config.adminuser` and `config.adminpassFile` set administrator cred
 
 Normal SSH host keys and machine ID are sourced from `/persist/etc`, as listed in [storage](storage.md#retained-paths). Keep private SSH host keys root-owned `0600` and public keys `0644`. The initrd host key is separate; reinstall boot artifacts after changing its source, and verify the resulting fingerprint. Its inclusion in boot artifacts means it may reside on the unencrypted ESP.
 
-Restore generated identities with their containing state: Synapse signing keys, MAS encryption/signing keys, Nextcloud instance configuration, Vaultwarden keys, Pleroma secrets/cookie, RabbitMQ cookie and ACME account keys. Restoring database contents alone does not recover an application's identity or encrypted data.
+Restore generated identities with their containing state: Synapse signing keys, MAS encryption/signing keys, Nextcloud instance configuration, Vaultwarden keys, Pleroma secrets/cookie and ACME account keys. Restoring database contents alone does not recover an application's identity or encrypted data.
 
-Actual's client secret must match Authentik's registration; MAS's homeserver secret must match Synapse's integration configuration; OnlyOffice's JWT must match Nextcloud's app setting. MAS local passwords are disabled, so the upstream login configuration in its runtime YAML is required for authentication.
+Actual's client secret must match Authentik's registration; MAS's homeserver secret must match Synapse's integration configuration. MAS local passwords are disabled, so the upstream login configuration in its runtime YAML is required for authentication.
 
 ## Provisioning and access
 

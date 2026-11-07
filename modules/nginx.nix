@@ -400,11 +400,6 @@ in
       };
     };
 
-    virtualHosts."office.ncrypt.at" = {
-      enableACME = true;
-      forceSSL = true;
-    };
-
     virtualHosts."pw.ncrypt.at" = {
       enableACME = true;
       forceSSL = true;

@@ -14,12 +14,11 @@ The declarations are in [service modules](../modules/), [host configuration](../
 | Matrix Authentication Service | `auth.matrix.ncrypt.at` → `127.0.0.1:8091` | PostgreSQL `matrix-authentication-service`; internal health port `8092`; encryption/signing keys; SMTP; local passwords disabled |
 | Element Web | `chat.ncrypt.at` | Nix-store frontend configured for the `ncrypt.at` homeserver |
 | Nextcloud | `cloud.ncrypt.at`; package selection `nextcloud35` | PostgreSQL `nextcloud`; Redis, PHP-FPM, notify-push and cron; files and mutable configuration |
-| OnlyOffice | `office.ncrypt.at`; backend port `8000` | PostgreSQL `onlyoffice`, RabbitMQ, working files; JWT shared with Nextcloud |
 | Pleroma | `communicating.cypherpunk.observer` → `127.0.0.1:4000` | PostgreSQL `pleroma`; uploads/static files; runtime secrets and database-stored settings |
 | Vaultwarden | `pw.ncrypt.at` → `127.0.0.1:8222` | PostgreSQL `vaultwarden`; attachments, sends, keys and SMTP; WebSocket forwarding enabled |
 | Photo proxy | `photos.mkoppmann.at` → `10.100.0.2:2283` | Upstream reached through WireGuard; its database and media are outside Apollo's backup coverage |
 
-Nextcloud's packaged apps are Calendar, Contacts, Notes, OnlyOffice, Tasks and User OIDC; automatic app updates are disabled. Its initial administrator is configured as `ncroot`, using the [administrator password file](secrets.md#credential-inventory). Login/provider registrations and secrets supplied through runtime files are not fully represented by this checkout. Synapse, Pleroma and Vaultwarden have public registration disabled.
+Nextcloud's packaged apps are Calendar, Contacts, Notes, Tasks and User OIDC; automatic app updates are disabled. Its initial administrator is configured as `ncroot`, using the [administrator password file](secrets.md#credential-inventory). Login/provider registrations and secrets supplied through runtime files are not fully represented by this checkout. Synapse, Pleroma and Vaultwarden have public registration disabled.
 
 ## HTTP routing and limits
 
@@ -64,5 +63,3 @@ The initrd uses the same static IPv4 route, IPv4 DNS resolvers and disabled IPv6
 PostgreSQL 16 with JIT is configured for Unix-socket access and peer authentication; TCP listening is disabled. `postgresql.target` groups the server and separate role/database setup service. Apollo's explicit Authentik, Nextcloud setup and MAS dependencies name `postgresql.service`, rather than completion of that target. Recovery must verify both server and provisioning readiness.
 
 Authentik migration precedes its worker/server. The worker loads the IdP certificate and key through systemd credentials when it starts; Apollo declares no certificate-renewal hook to refresh that worker's credentials. Actual, Authentik and MAS use dynamic users and systemd state directories; see [ownership](storage.md#ownership-and-file-behavior).
-
-OnlyOffice's pinned pre-start hook runs `removetbl.sql` when `task_result` exists, then `createdb.sql`. Starting its document service can therefore change restored database state. This behavior is present in the [locked OnlyOffice module](https://github.com/NixOS/nixpkgs/blob/f546a0b3db840c7c8a7c705265fc6b42bcbfe278/nixos/modules/services/web-apps/onlyoffice.nix); see [recovery](recovery.md#restore-and-release-applications).

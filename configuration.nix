@@ -24,7 +24,6 @@ in
     ./modules/mas.nix
     ./modules/nextcloud.nix
     ./modules/nginx.nix
-    ./modules/onlyoffice.nix
     ./modules/pleroma.nix
     ./modules/postgresql.nix
     ./modules/vaultwarden.nix
@@ -199,18 +198,11 @@ in
           "/var/lib/matrix-synapse"
           "/var/lib/nextcloud"
           "/var/lib/nixos"
-          "/var/lib/onlyoffice"
           "/var/lib/pleroma"
           "/var/lib/postgresql"
           "/var/lib/private/actual"
           "/var/lib/private/authentik"
           "/var/lib/private/matrix-authentication-service"
-          {
-            directory = "/var/lib/rabbitmq";
-            user = "rabbitmq";
-            group = "rabbitmq";
-            mode = "0700";
-          }
           {
             directory = "/var/lib/systemd/timers";
             mode = "0755";
@@ -305,8 +297,6 @@ in
   };
 
   time.timeZone = "Europe/Vienna";
-
-  nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [ "corefonts" ];
 
   environment.systemPackages = with pkgs; [
     fzf

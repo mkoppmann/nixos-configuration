@@ -83,7 +83,7 @@ in
     compression = "none";
     pgdumpOptions = "--format=custom";
 
-    # Include declarations contributed by service modules, including OnlyOffice.
+    # Include declarations contributed by service modules.
     databases = declaredDatabases;
   };
 

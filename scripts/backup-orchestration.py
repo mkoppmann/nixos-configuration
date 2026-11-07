@@ -261,7 +261,7 @@ class Backup:
             "restoreApplications": [], "restoreTimers": [], "originalApplications": [], "originalTimers": [],
             "snapshotsPlanned": False, "captureComplete": False,
             "resumed": False, "archiveCreated": False, "retentionComplete": False,
-            "consistencyExcluded": ["onlyoffice", "rabbitmq", "logs and other live host state"],
+            "consistencyExcluded": ["logs and other live host state"],
         }
 
     def flag(self, name, enabled):
