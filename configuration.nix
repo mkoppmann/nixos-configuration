@@ -21,6 +21,7 @@
     ./modules/photos.nix
     ./modules/pleroma.nix
     ./modules/postgresql.nix
+    ./modules/ssh.nix
     ./modules/users.nix
     ./modules/vaultwarden.nix
     ./modules/websites.nix

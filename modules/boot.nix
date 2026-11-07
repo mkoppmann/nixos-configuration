@@ -1,5 +1,6 @@
 {
   config,
+  lib,
   pkgs,
   ...
 }:
@@ -24,6 +25,7 @@
           port = 2222;
           hostKeys = [ /persist/credentials/initrd_host_ed25519_key ];
           authorizedKeys = config.users.users.mcp.openssh.authorizedKeys.keys;
+          extraConfig = "KexAlgorithms ${lib.concatStringsSep "," config.services.openssh.settings.KexAlgorithms}";
         };
       };
       systemd = {

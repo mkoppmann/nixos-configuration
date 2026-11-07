@@ -52,7 +52,7 @@ These trees are persistent, mutable content deployed outside this flake. The bar
 | WireGuard | `wg0`, `10.100.0.1/24`; five peers at `10.100.0.2`–`10.100.0.6`, keepalive 25 seconds |
 | NAT | NixOS-managed NAT from `wg0` through `ens3` |
 | Administrator | `mcp`, wheel member, Fish shell, manually provisioned password hash |
-| SSH | Public-key authentication, SFTP and TCP forwarding; agent, X11 and stream-local forwarding disabled |
+| SSH | [SSH configuration](../modules/ssh.nix): `mcp` only, with keys declared in Nix; public-key authentication; post-quantum hybrid key exchange only, also for remote unlock; Ed25519 host key; SFTP; all forwarding disabled; key fingerprints logged |
 | Timezone | `Europe/Vienna` |
 | Compatibility version | NixOS `stateVersion = "23.11"` |
 
