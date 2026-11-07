@@ -61,9 +61,17 @@
         };
       });
 
-      # VM tests are added here as they are written.
-      checks.x86_64-linux = {
-        toplevel = self.nixosConfigurations.apollo.config.system.build.toplevel;
-      };
+      checks =
+        nixpkgs.lib.recursiveUpdate
+          (forAllSystems (pkgs: {
+            formatting = pkgs.runCommand "formatting" { nativeBuildInputs = [ pkgs.nixfmt ]; } ''
+              find ${self} -name '*.nix' -exec nixfmt --check {} +
+              touch $out
+            '';
+          }))
+          {
+            # VM tests are added here as they are written.
+            x86_64-linux.toplevel = self.nixosConfigurations.apollo.config.system.build.toplevel;
+          };
     };
 }
