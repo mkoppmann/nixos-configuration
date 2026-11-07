@@ -18,10 +18,12 @@
     ./modules/nextcloud.nix
     ./modules/nginx.nix
     ./modules/nix.nix
+    ./modules/photos.nix
     ./modules/pleroma.nix
     ./modules/postgresql.nix
     ./modules/users.nix
     ./modules/vaultwarden.nix
+    ./modules/websites.nix
     ./modules/wireguard.nix
     ./nixos-modules/matrix-authentication-service.nix
   ];
