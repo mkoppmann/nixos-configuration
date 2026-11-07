@@ -47,6 +47,10 @@
     };
 
     defaultGateway = "152.53.32.1";
+    defaultGateway6 = {
+      address = "fe80::1";
+      interface = "ens3";
+    };
   };
 
   services.openssh = {
