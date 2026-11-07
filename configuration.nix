@@ -3,8 +3,7 @@
   lib,
   pkgs,
   utils,
-  authentik-nix,
-  impermanence,
+  inputs,
   ...
 }:
 let
@@ -12,8 +11,8 @@ let
 in
 {
   imports = [
-    authentik-nix.nixosModules.default
-    impermanence.nixosModule
+    inputs.authentik-nix.nixosModules.default
+    inputs.impermanence.nixosModules.impermanence
     ./hardware-configuration.nix
     ./modules/actual.nix
     ./modules/alerts.nix

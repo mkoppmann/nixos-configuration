@@ -2,13 +2,11 @@
   config,
   lib,
   pkgs,
-  nixpkgs-unstable,
+  inputs,
   ...
 }:
 let
-  pkgs-unstable = import nixpkgs-unstable {
-    inherit (pkgs.stdenv.hostPlatform) system;
-  };
+  pkgs-unstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system};
 in
 {
   services.actual = {
