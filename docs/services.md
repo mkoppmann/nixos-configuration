@@ -46,7 +46,7 @@ These trees are persistent, mutable content deployed outside this flake. The bar
 | Platform | `apollo`, `x86_64-linux`, QEMU/virtio guest, UEFI/systemd-boot |
 | Network | Static `ens3`; DHCP and NetworkManager disabled |
 | IPv4 | `152.53.35.165/22`, gateway `152.53.32.1` |
-| IPv6 | `2a0a:4cc0:100:23::bad:c0de/64` |
+| IPv6 | `2a0a:4cc0:100:23::bad:c0de/64`, gateway `fe80::1` on `ens3` |
 | DNS resolvers | Cloudflare `1.1.1.1`, `1.0.0.1`, `2606:4700:4700::1111`, `2606:4700:4700::1001` |
 | Firewall openings | TCP `22`, `80`, `443`, `2222`; UDP `51820` |
 | WireGuard | `wg0`, `10.100.0.1/24`; five peers at `10.100.0.2`–`10.100.0.6`, keepalive 25 seconds |
