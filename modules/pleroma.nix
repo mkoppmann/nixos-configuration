@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   ...
 }:
@@ -13,9 +14,27 @@ let
   '';
 in
 {
+  sops = {
+    secrets.pleroma_secret_key_base = { };
+    secrets.pleroma_vapid_private_key = { };
+    templates."pleroma-secret.exs" = {
+      owner = config.services.pleroma.user;
+      content = ''
+        import Config
+
+        config :pleroma, Pleroma.Web.Endpoint,
+          secret_key_base: "${config.sops.placeholder.pleroma_secret_key_base}"
+
+        config :web_push_encryption, :vapid_details,
+          private_key: "${config.sops.placeholder.pleroma_vapid_private_key}"
+      '';
+      restartUnits = [ "pleroma.service" ];
+    };
+  };
+
   services.pleroma = {
     enable = true;
-    secretConfigFile = "/var/lib/pleroma/secret.exs";
+    secretConfigFile = config.sops.templates."pleroma-secret.exs".path;
     configs = [
       ''
         import Config
@@ -50,7 +69,8 @@ in
           referrer_policy: "no-referrer"
 
         config :web_push_encryption, :vapid_details,
-          subject: "mailto:shibayashi@cypherpunk.observer"
+          subject: "mailto:shibayashi@cypherpunk.observer",
+          public_key: "BAAFL_q8nM3gu75uK4VfcNQEmkn8wn3At_xl1gf3AN4ZqqrAHNleOYy78du2TdJyd7St6BDMc98ZZPaqGLRUHhg"
 
         config :pleroma, configurable_from_database: true
       ''

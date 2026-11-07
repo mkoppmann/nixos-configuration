@@ -3,10 +3,22 @@
   ...
 }:
 {
+  sops = {
+    secrets.vaultwarden_admin_token = { };
+    secrets.vaultwarden_smtp_password = { };
+    templates."vaultwarden.env" = {
+      content = ''
+        ADMIN_TOKEN=${config.sops.placeholder.vaultwarden_admin_token}
+        SMTP_PASSWORD=${config.sops.placeholder.vaultwarden_smtp_password}
+      '';
+      restartUnits = [ "vaultwarden.service" ];
+    };
+  };
+
   services.vaultwarden = {
     enable = true;
     dbBackend = "postgresql";
-    environmentFile = "/var/lib/bitwarden_rs/.env";
+    environmentFile = config.sops.templates."vaultwarden.env".path;
 
     config = {
       DATABASE_URL = "postgresql:///vaultwarden";

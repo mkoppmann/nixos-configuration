@@ -41,17 +41,18 @@ Paths below are configured readers or boot inputs. Files beneath persisted servi
 | `/run/secrets/reporting_smtp_password` | sops secret `reporting_smtp_password`: password for `reporting@ncrypt.at` | `root:root 0400`; loaded into the SMTP worker using systemd credentials |
 | `/run/secrets/wireguard_private_key` | sops secret `wireguard_private_key` | `root:root 0400`; changing it requires peer coordination |
 | `/run/secrets/actual_openid_client_secret` | sops secret `actual_openid_client_secret` for Actual's Authentik OIDC client | `root:root 0400`; passed to the dynamic user with `LoadCredential` |
-| `/persist/var/lib/authentik/authentik-env` | systemd environment file, including application secret and SMTP password | `root:root 0600`; preserve the original secret with the database |
-| `/var/lib/matrix-synapse/secrets.yaml` | YAML merged into Synapse configuration | `matrix-synapse`-readable, `0600`; preserve every field and referenced file |
+| `/run/secrets/rendered/authentik.env` | Template from `authentik_secret_key` and `authentik_smtp_password`; systemd environment file | `root:root 0400`; preserve the secret key with the database |
+| `/run/secrets/rendered/synapse-secrets.yaml` | Template from the `synapse_*` secrets, merged into Synapse's configuration together with the email section | `matrix-synapse` reader, `0400` |
+| `/var/lib/matrix-synapse/mas_secret` | Raw MAS/Synapse integration secret, same value as MAS's `homeserver_secret` | `matrix-synapse` reader, `0600` |
 | `/var/lib/private/matrix-authentication-service/secrets.yaml` | YAML containing MAS encryption/signing keys, provider/client settings and SMTP password | Dynamic MAS reader, `0600` |
 | `/var/lib/private/matrix-authentication-service/homeserver_secret` | Raw MAS/Synapse integration secret | Dynamic MAS reader, `0600`; match Synapse's runtime configuration |
-| `/var/lib/nextcloud/secrets.json` | JSON merged into Nextcloud configuration, including SMTP credentials | Root-readable credential source, `0600` |
+| `/run/secrets/rendered/nextcloud-secrets.json` | Template from the `nextcloud_*` secrets (instance ID, salt, secret, SMTP password) | `root:root 0400`; passed with `LoadCredential` |
 | `/run/secrets/nextcloud_admin_password` | sops secret `nextcloud_admin_password` for initial creation of administrator `ncroot` | `root:root 0400`; must remain nonempty for the setup service |
-| `/var/lib/pleroma/secret.exs` | Elixir configuration imported by Pleroma | `pleroma`-readable, `0600`; preserve endpoint secrets, matching VAPID keys and overrides |
-| `/var/lib/bitwarden_rs/.env` | systemd environment assignments, including deployed SMTP/admin credentials | `root:root 0600` |
+| `/run/secrets/rendered/pleroma-secret.exs` | Template from `pleroma_secret_key_base` and `pleroma_vapid_private_key`; the VAPID public key is in Nix | `pleroma` reader, `0400`; the VAPID key pair must match |
+| `/run/secrets/rendered/vaultwarden.env` | Template from `vaultwarden_admin_token` and `vaultwarden_smtp_password`; systemd environment file | `root:root 0400` |
 | `/var/lib/acme/idp.ncrypt.at/fullchain.pem` and `key.pem` | ACME-managed certificate/key loaded by the Authentik worker | Preserve module-managed ownership and restrictive permissions |
 
-Authentik's environment file uses names such as `AUTHENTIK_SECRET_KEY` and `AUTHENTIK_EMAIL__PASSWORD`. Environment-file syntax is not shell syntax; do not source these files. Preserve all fields in existing JSON/YAML/Elixir files rather than replacing them with minimal examples. The checkout cannot establish their complete contents.
+sops values are stored without quotes or trailing newline; templates insert them verbatim. Environment-file syntax is not shell syntax; do not source these files. The remaining MAS files still have to be preserved as a whole: the checkout cannot establish their complete contents.
 
 Nextcloud's `config.adminuser` and `config.adminpassFile` set administrator credentials only during initial installation. Changing them does not rename an existing account or reset its password. The [locked Nextcloud module](https://github.com/NixOS/nixpkgs/blob/f546a0b3db840c7c8a7c705265fc6b42bcbfe278/nixos/modules/services/web-apps/nextcloud.nix) still loads and checks the password file on each setup-service invocation, including for an existing installation.
 
