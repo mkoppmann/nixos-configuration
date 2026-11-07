@@ -2,7 +2,7 @@
 
 [Repository overview](../README.md) · [Storage](storage.md) · [Recovery](recovery.md)
 
-Service secrets are moving to [sops-nix](https://github.com/Mic92/sops-nix): `secrets/apollo.yaml` is encrypted to two post-quantum age recipients listed in `.sops.yaml`, the admin key and Apollo's host key. At activation, sops-nix decrypts the declared secrets to `/run/secrets` with the owner and mode each module declares. Secrets not yet migrated are still provisioned manually at the runtime paths below. Never put secret values into Nix expressions: Nix-store files are readable by every user.
+Service secrets are managed with [sops-nix](https://github.com/Mic92/sops-nix): `secrets/apollo.yaml` is encrypted to two post-quantum age recipients listed in `.sops.yaml`, the admin key and Apollo's host key. At activation, sops-nix decrypts the declared secrets to `/run/secrets` with the owner and mode each module declares; files that mix secret and non-secret settings are rendered from templates. Boot and backup credentials and the MAS files are still provisioned manually at the paths below. Never put secret values into Nix expressions: Nix-store files are readable by every user.
 
 ## Keys
 
@@ -25,6 +25,17 @@ unset SOPS_AGE_KEY
 ```
 
 After changing `.sops.yaml` recipients, re-encrypt with `sops updatekeys secrets/apollo.yaml`. The `secrets-encrypted` flake check fails if any file in `secrets/` is not encrypted.
+
+To import a value that already exists on Apollo, set it there with the host key so the plaintext never leaves the server, then copy the encrypted file back into the checkout:
+
+```sh
+sudo bash
+cd /root && umask 077 && cp /etc/nixos/secrets/apollo.yaml .
+nix shell nixpkgs#sops nixpkgs#jq -c bash -c 'printf %s "$(cat OLD_FILE)" | jq -Rs . | SOPS_AGE_KEY_FILE=/persist/var/lib/sops-nix/key.txt sops set --value-stdin apollo.yaml "[\"NAME\"]"'
+install -o mcp -m 644 apollo.yaml /home/mcp/ && rm apollo.yaml
+```
+
+Then `scp mcp@apollo:apollo.yaml secrets/apollo.yaml` into the checkout and remove the copy on Apollo.
 
 A new server can only decrypt the secrets once its host key is restored from KeePass to `/persist/var/lib/sops-nix/key.txt`, or after a new host key is added as a recipient with `sops updatekeys`.
 
