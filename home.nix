@@ -25,8 +25,8 @@
   programs.git = {
     enable = true;
     settings = {
-       user.name = "mkoppmann";
-       user.email = "dev@mkoppmann.at";
+      user.name = "mkoppmann";
+      user.email = "dev@mkoppmann.at";
     };
   };
 

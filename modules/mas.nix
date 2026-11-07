@@ -52,7 +52,7 @@ in
       };
 
       database = {
-	socket = "/run/postgresql";
+        socket = "/run/postgresql";
         username = "matrix-authentication-service";
         database = "matrix-authentication-service";
       };
@@ -102,4 +102,3 @@ in
     };
   };
 }
-

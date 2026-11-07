@@ -35,7 +35,7 @@ in
         user = "authentik";
         name = "authentik";
         host = "/run/postgresql";
-	sslmode = "disable";
+        sslmode = "disable";
       };
     };
   };

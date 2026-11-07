@@ -56,9 +56,7 @@ in
       wantedBy = [ "multi-user.target" ];
 
       environment = {
-        MAS_CONFIG = lib.concatStringsSep ":" (
-          [ "${configFile}" ] ++ cfg.extraConfigFiles
-        );
+        MAS_CONFIG = lib.concatStringsSep ":" ([ "${configFile}" ] ++ cfg.extraConfigFiles);
       };
 
       serviceConfig = {
@@ -100,4 +98,3 @@ in
     };
   };
 }
-
