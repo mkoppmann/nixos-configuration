@@ -1,0 +1,6 @@
+# Separate `services.x = …` blocks keep each concern of a module on its own;
+# `{ ... }:` is the conventional NixOS module signature.
+disabled = [
+  "repeated_keys",
+  "empty_pattern",
+]
