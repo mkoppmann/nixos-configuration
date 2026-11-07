@@ -147,7 +147,9 @@ assert timerSettings.nix-gc.Persistent && timerSettings.nix-optimise.Persistent;
 assert lib.toList timerSettings.logrotate.OnCalendar == [ "hourly" ];
 assert config.system.stateVersion == "23.11";
 assert config.home-manager.users.mcp.home.stateVersion == "23.11";
-assert lib.any (file: file.file == ".local/share/fish/fish_history") persistence.users.mcp.files;
+assert lib.any (dir: dir.directory == ".local/share/fish") persistence.users.mcp.directories;
+assert !(lib.any (file: file.file == ".local/share/fish/fish_history") persistence.users.mcp.files);
+assert hasMount "/home/mcp/.local/share/fish";
 {
   coverage = "passed";
   inherit newDirectories serviceDirectories timerSettings;

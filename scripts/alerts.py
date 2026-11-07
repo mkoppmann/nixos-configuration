@@ -156,6 +156,9 @@ class Alerts:
                 item["generation"] += 1
                 item["firstSeen"] = now
                 item.pop("acknowledged", None)
+                item.pop("retired", None)
+                item.pop("retiredAt", None)
+                item.pop("retirementReason", None)
                 item["failureSummary"] = summary
             item.update(active=bool(severity), severity=severity, summary=summary, lastSeen=now)
             item.update(metadata)
@@ -180,6 +183,8 @@ class Alerts:
         return 0
 
     def due(self, key, item):
+        if item.get("retired"):
+            return False
         if not item.get("acknowledged") and not item.get("once"):
             if self.clock() < self.deferred_until(key, item):
                 return False
@@ -203,6 +208,16 @@ class Alerts:
         result["deferred"] = {k: self.deferred_until(k, v) for k, v in result["incidents"].items()
                               if self.clock() < self.deferred_until(k, v)}
         return result
+
+    def retire(self, key, observed):
+        with self.transaction() as data:
+            item = data["incidents"].get(key)
+            if item is None or item != observed or item.get("retired"):
+                return
+            reason = "systemd reports LoadState=not-found; recovery was not verified."
+            item.update(active=False, severity=0, retired=True, retiredAt=self.clock(),
+                        retirementReason=reason, lastSeen=self.clock(), summary=reason)
+            self.history(data, key, "retired", reason)
 
     def acknowledge(self, key):
         with self.transaction() as data:
@@ -233,9 +248,20 @@ class Alerts:
     def unit(self, unit):
         if unit.startswith(EXCLUDED):
             return
-        p = self.unit_properties(unit)
         canonical = "apollo-backup-upload.service" if unit == "borgbackup-job-sidechest.service" else unit
         key = "service:" + canonical
+        with self.transaction() as data:
+            old = copy.deepcopy(data["incidents"].get(key))
+        p = self.unit_properties(unit)
+        if p.get("LoadState") == "not-found":
+            # The compatibility alias disappearing says nothing about the
+            # canonical upload service's existence.
+            if unit == canonical:
+                self.retire(key, old)
+            return
+        if p.get("LoadState") != "loaded" or p.get("ActiveState") not in (
+                "active", "inactive", "failed", "activating", "deactivating", "reloading", "refreshing"):
+            raise ValueError("Inconclusive service state")
         if p.get("ActiveState") == "failed":
             # Only allow enumerated safe metadata into messages.
             result = p.get("Result", "unknown")
@@ -253,11 +279,9 @@ class Alerts:
                     metadata["failedLedgerEvidence"] = backup_evidence(ledger, key)
                 except (OSError, ValueError):
                     metadata["failedLedgerEvidence"] = None
-            self.observe(key, 2, f"{unit}: failed; result={result}; exit status={status}.",
+            self.observe(key, 2, f"{unit}: failed; result={result}; main-process status={status}.",
                          unit=canonical, failedStart=p["start"], **metadata)
         elif key not in (BACKUP_CAPTURE, BACKUP_UPLOAD, BACKUP_RECOVER):
-            with self.transaction() as data:
-                old = copy.deepcopy(data["incidents"].get(key))
             if (old and old["active"] and p.get("LoadState") == "loaded"
                     and p.get("Result") == "success"
                     and p["start"] != old.get("failedStart")
@@ -269,9 +293,11 @@ class Alerts:
 
     def units(self):
         units = json.loads(self.run("systemctl", "list-units", "--all", "--type=service", "--output=json"))
-        tracked = self.status()["incidents"].values()
+        tracked = self.status()["incidents"].items()
         names = {u["unit"] for u in units if u["active"] == "failed"}
-        names.update(v["unit"] for v in tracked if v["active"] and "unit" in v)
+        names.update(k.removeprefix("service:") for k, v in tracked
+                     if k.startswith("service:") and not v.get("retired")
+                     and (v["active"] or self.due(k, v)))
         for name in sorted(names):
             self.probe("unit:" + name, lambda name=name: self.unit(name))
 
@@ -312,13 +338,16 @@ class Alerts:
         if run.get("testCapture"):
             return
         def failure(key, summary):
+            old = self.status()["incidents"].get(key, {})
+            if old.get("retired") and old.get("failedLedgerEvidence") == backup_evidence(run, key):
+                return
             self.observe(key, 2, summary, failedLedgerEvidence=backup_evidence(run, key))
 
         def recovered(key, summary):
             old = self.status()["incidents"].get(key, {})
             # An old successful ledger cannot resolve a newer failed unit or a
             # successful timer no-op. Require changed production evidence.
-            if old.get("failedLedgerEvidence") != backup_evidence(run, key):
+            if not old.get("retired") and old.get("failedLedgerEvidence") != backup_evidence(run, key):
                 self.observe(key, 0, summary)
 
         if run.get("phase") == "failed" or (run.get("error") and not run.get("captureComplete")
@@ -372,12 +401,18 @@ class Alerts:
         # failures before mailing so a recovery near the deadline is not missed.
         with self.transaction() as data:
             services = {k: copy.deepcopy(v) for k, v in data["incidents"].items()
-                        if k.startswith("service:") and v["active"] and self.due(k, v)}
-        for item in services.values():
-            if item.get("unit"):
-                self.probe("unit:" + item["unit"], lambda item=item: self.unit(item["unit"]))
-        if services.keys() & {BACKUP_CAPTURE, BACKUP_UPLOAD, BACKUP_RECOVER}:
-            self.probe("backup-state", self.backup)
+                        if k.startswith("service:") and self.due(k, v)}
+        # Include pending recovery notifications and ledger-only incidents.
+        # Only successfully refreshed services may enter this delivery batch.
+        verified = set()
+        for key in services:
+            unit = key.removeprefix("service:")
+            if self.probe("unit:" + unit, lambda unit=unit: self.unit(unit)):
+                verified.add(key)
+        backup_keys = {BACKUP_CAPTURE, BACKUP_UPLOAD, BACKUP_RECOVER}
+        if verified & backup_keys and not self.probe("backup-state", self.backup):
+            verified -= backup_keys
+        return verified
 
     def deliver(self, transport=None, force=False):
         # A separate worker lock prevents duplicate concurrent sends. Collection
@@ -391,9 +426,10 @@ class Alerts:
             with self.transaction() as data:
                 if not force and self.clock() < data["deliveryNext"]:
                     return False
-            self.refresh_due_services()
+            verified = self.refresh_due_services()
             with self.transaction() as data:
-                batch = {k: copy.deepcopy(v) for k, v in data["incidents"].items() if self.due(k, v)}
+                batch = {k: copy.deepcopy(v) for k, v in data["incidents"].items()
+                         if self.due(k, v) and (not k.startswith("service:") or k in verified)}
                 if not batch:
                     return False
                 # Also survives a worker timeout or crash before SMTP returns.
@@ -477,4 +513,3 @@ if __name__ == "__main__":
     except Exception as error:
         print("apollo-alert: " + safe_error(error), file=sys.stderr)
         sys.exit(1)
-

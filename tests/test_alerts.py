@@ -45,6 +45,21 @@ class AlertsTests(unittest.TestCase):
     def ledger(self, **record):
         m.atomic_json(Path(self.temp.name) / "run.json", record)
 
+    def service(self, unit="app.service", **overrides):
+        properties = dict(LoadState="loaded", ActiveState="failed", Result="exit-code",
+                          ExecMainStatus="1", ExecMainCode="1", start="boot:42",
+                          ExecMainStartTimestampMonotonic="42")
+        properties.update(overrides)
+        mock = patch.object(self.a, "unit_properties", return_value=properties)
+        mock.start()
+        self.addCleanup(mock.stop)
+        self.a.unit(unit)
+        return properties
+
+    def recover_service(self, properties):
+        properties.update(ActiveState="inactive", Result="success", ExecMainStatus="0",
+                          start="boot:43", ExecMainStartTimestampMonotonic="43")
+
     def test_repeat_reminder_and_recovery(self):
         self.a.observe("test", 1, "failure")
         self.assertTrue(self.send())
@@ -233,7 +248,7 @@ class AlertsTests(unittest.TestCase):
 
     def test_old_success_ledger_cannot_resolve_new_unit_failure(self):
         self.ledger(id="old", phase="complete", resumed=True, retentionComplete=True)
-        p = dict(ActiveState="failed", Result="exit-code", ExecMainStatus="1", start="boot:42")
+        p = dict(LoadState="loaded", ActiveState="failed", Result="exit-code", ExecMainStatus="1", start="boot:42")
         with patch.object(self.a, "unit_properties", return_value=p):
             self.a.unit("apollo-backup-upload.service")
         self.a.backup()
@@ -264,7 +279,7 @@ class AlertsTests(unittest.TestCase):
 
     def test_automatic_restart_and_normal_stop_do_not_alert(self):
         for state in ("activating", "active", "inactive", "deactivating"):
-            with patch.object(self.a, "unit_properties", return_value=dict(ActiveState=state, start="boot:42")):
+            with patch.object(self.a, "unit_properties", return_value=dict(LoadState="loaded", ActiveState=state, start="boot:42")):
                 self.a.unit("app.service")
         self.assertFalse(self.a.status()["incidents"])
 
@@ -272,6 +287,311 @@ class AlertsTests(unittest.TestCase):
         self.a.unit("apollo-alert-send.service")
         self.a.unit("apollo-backup-test@dump.service")
         self.assertFalse(self.a.status()["incidents"])
+
+    def test_service_grace_boundary_and_repeated_observation(self):
+        self.service()
+        deadline = self.now + 600
+        self.assertEqual(self.a.status()["deferred"], {"service:app.service": deadline})
+        self.assertEqual(self.a.status()["pending"], [])
+        self.now += 599
+        self.a.unit("app.service")
+        self.assertFalse(self.send())
+        self.assertEqual(self.a.status()["deferred"]["service:app.service"], deadline)
+        self.now += 1
+        self.assertTrue(self.send())
+        self.assertEqual(self.a.status()["deferred"], {})
+        self.assertFalse(self.send())
+        self.now += m.DAY
+        self.assertTrue(self.send())
+
+    def test_grace_configuration_and_restart_preserve_first_seen(self):
+        self.c["serviceGraceSeconds"] = 120
+        self.service()
+        first = self.incident("service:app.service")["firstSeen"]
+        self.now += 119
+        restored = m.Alerts(self.c, clock=lambda: self.now)
+        self.assertEqual(restored.status()["deferred"], {"service:app.service": first + 120})
+        self.now += 1
+        self.assertEqual(restored.status()["pending"], ["service:app.service"])
+        self.assertEqual(restored.status()["version"], 1)
+
+    def test_thirty_minute_service_grace_matches_synced_host_policy(self):
+        self.c["serviceGraceSeconds"] = 1800
+        self.service()
+        deadline = self.now + 1800
+        self.now += 600
+        self.assertFalse(self.send())
+        self.assertEqual(self.a.status()["deferred"], {"service:app.service": deadline})
+        self.now += 1199
+        self.assertFalse(self.send())
+        self.now += 1
+        self.assertTrue(self.send())
+
+    def test_missing_service_retires_pending_recovery_before_delivery(self):
+        p = self.service()
+        self.now += 600
+        self.send()
+        self.recover_service(p)
+        self.a.unit("app.service")
+        p.update(LoadState="not-found")
+        self.assertFalse(self.send())
+        self.assertTrue(self.incident("service:app.service")["retired"])
+
+    def test_sender_refreshes_backup_incident_without_unit_metadata(self):
+        self.ledger(id="old", uploadError="failed", retentionComplete=False)
+        self.a.backup()
+        self.assertNotIn("unit", self.incident(m.BACKUP_UPLOAD))
+        self.now += 1800
+        with patch.object(self.a, "unit_properties", side_effect=OSError("unavailable")):
+            self.assertTrue(self.send())
+        self.assertIn("monitoring:unit:apollo-backup-upload.service", self.messages[-1].get_content())
+        self.assertNotIn("CRITICAL: " + m.BACKUP_UPLOAD, self.messages[-1].get_content())
+
+    def test_quiet_service_recovery_is_local_and_eventually_pruned(self):
+        p = self.service()
+        self.recover_service(p)
+        self.a.unit("app.service")
+        self.assertFalse(self.send())
+        self.assertFalse(self.incident("service:app.service")["active"])
+        self.assertTrue(self.a.status()["history"])
+        self.now += 31 * m.DAY
+        self.assertEqual(self.a.status()["incidents"], {})
+
+    def test_sender_rechecks_and_suppresses_recovery_after_grace(self):
+        p = self.service()
+        self.now += 600
+        self.recover_service(p)
+        self.assertFalse(self.send())
+        self.assertEqual(self.messages, [])
+        self.assertFalse(self.incident("service:app.service")["active"])
+
+    def test_service_recovery_after_smtp_outage_is_quiet(self):
+        p = self.service()
+        self.now += 600
+        with self.assertRaises(OSError):
+            self.a.deliver(transport=lambda _: (_ for _ in ()).throw(OSError("offline")))
+        self.recover_service(p)
+        self.now += m.RETRY
+        self.assertFalse(self.send())
+        self.assertIsNone(self.incident("service:app.service")["lastSent"])
+
+    def test_mailed_service_recovery_and_quiet_recurrence(self):
+        p = self.service()
+        self.now += 600
+        self.send()
+        self.recover_service(p)
+        self.a.unit("app.service")
+        self.assertTrue(self.send())
+        self.assertIn("RECOVERY: service:app.service", self.messages[-1].get_content())
+        p.update(ActiveState="failed", Result="exit-code", ExecMainStatus="1",
+                 start="boot:44", ExecMainStartTimestampMonotonic="44")
+        self.a.unit("app.service")
+        self.assertEqual(self.a.status()["deferred"], {"service:app.service": self.now + 600})
+        p.update(ActiveState="inactive", Result="success", ExecMainStatus="0",
+                 start="boot:45", ExecMainStartTimestampMonotonic="45")
+        self.a.unit("app.service")
+        self.assertFalse(self.send())
+        self.assertEqual(len(self.messages), 2)
+
+    def test_force_bypasses_retry_but_not_grace(self):
+        self.service()
+        with self.a.transaction() as data:
+            data["deliveryNext"] = self.now + m.RETRY
+        self.assertFalse(self.a.deliver(transport=self.messages.append, force=True))
+        self.now += 600
+        self.assertFalse(self.send())
+        self.assertTrue(self.a.deliver(transport=self.messages.append, force=True))
+
+    def test_mailed_service_escalation_does_not_restart_grace(self):
+        self.service()
+        self.a.observe("service:app.service", 1, "warning")
+        self.now += 600
+        with patch.object(self.a, "unit", return_value=None):
+            self.assertTrue(self.send())
+            self.a.observe("service:app.service", 2, "critical")
+            self.assertTrue(self.send())
+
+    def test_reappearing_service_can_notify_after_new_grace(self):
+        p = self.service()
+        self.now += 600
+        self.send()
+        p.update(LoadState="not-found")
+        self.a.unit("app.service")
+        p.update(LoadState="loaded", start="boot:44")
+        self.a.unit("app.service")
+        self.assertFalse(self.send())
+        self.now += 600
+        self.assertTrue(self.send())
+        self.assertEqual(len(self.messages), 2)
+
+    def test_delivery_refresh_preserves_reset_failed_incident(self):
+        p = self.service()
+        self.now += 600
+        p.update(ActiveState="inactive", Result="success", ExecMainStatus="0")
+        self.assertTrue(self.send())
+        self.assertTrue(self.incident("service:app.service")["active"])
+
+    def test_concurrent_service_recovery_during_smtp_still_notifies(self):
+        p = self.service()
+        self.now += 600
+        def transport(message):
+            self.messages.append(message)
+            self.recover_service(p)
+            self.a.unit("app.service")
+        self.assertTrue(self.a.deliver(transport=transport))
+        self.assertTrue(self.send())
+        self.assertIn("RECOVERY: service:app.service", self.messages[-1].get_content())
+
+    def test_immediate_health_and_backup_recovery_while_service_deferred(self):
+        self.service()
+        self.a.observe("storage:rpool", 2, "unhealthy")
+        self.assertTrue(self.send())
+        self.assertNotIn("service:app.service", self.messages[-1].get_content())
+        self.assertIn("storage:rpool", self.messages[-1].get_content())
+        self.service("apollo-backup-recover.service")
+        self.assertTrue(self.send())
+        self.assertIn(m.BACKUP_RECOVER, self.messages[-1].get_content())
+
+    def test_backup_upload_grace_and_sender_ledger_recovery(self):
+        self.ledger(id="old", uploadError="failed", retentionComplete=False)
+        p = self.service("apollo-backup-upload.service")
+        self.now += 1799
+        self.assertFalse(self.send())
+        self.now += 1
+        self.assertTrue(self.send())
+        # A successful unit/no-op cannot clear a production upload incident.
+        self.recover_service(p)
+        self.assertFalse(self.send())
+        self.assertTrue(self.incident(m.BACKUP_UPLOAD)["active"])
+        self.ledger(id="new", retentionComplete=True)
+        self.now += m.DAY
+        self.assertTrue(self.send())
+        self.assertFalse(self.incident(m.BACKUP_UPLOAD)["active"])
+        self.assertIn("RECOVERY: " + m.BACKUP_UPLOAD, self.messages[-1].get_content())
+
+    def test_backup_recovery_within_grace_sends_nothing(self):
+        self.ledger(id="old", uploadError="failed", retentionComplete=False)
+        p = self.service("apollo-backup-upload.service")
+        self.recover_service(p)
+        self.ledger(id="new", retentionComplete=True)
+        self.now += 1800
+        self.assertFalse(self.send())
+        self.assertFalse(self.incident(m.BACKUP_UPLOAD)["active"])
+
+    def test_failed_delivery_refresh_defers_only_affected_service(self):
+        self.service()
+        self.now += 600
+        self.a.observe("storage:rpool", 2, "unhealthy")
+        with patch.object(self.a, "unit_properties", side_effect=OSError("private diagnostic")):
+            self.assertTrue(self.send())
+        body = self.messages[-1].get_content()
+        self.assertNotIn("CRITICAL: service:app.service", body)
+        self.assertIn("monitoring:unit:app.service", body)
+        self.assertIn("storage:rpool", body)
+        self.assertNotIn("private diagnostic", body)
+        self.assertTrue(self.incident("service:app.service")["active"])
+        self.assertTrue(self.send())
+        self.assertIn("CRITICAL: service:app.service", self.messages[-1].get_content())
+
+    def test_backup_probe_error_defers_backup_notification(self):
+        self.service("apollo-backup-upload.service")
+        self.now += 1800
+        (Path(self.temp.name) / "run.json").write_text("broken")
+        self.assertTrue(self.send())
+        self.assertIn("monitoring:backup-state", self.messages[-1].get_content())
+        self.assertNotIn("CRITICAL: " + m.BACKUP_UPLOAD, self.messages[-1].get_content())
+
+    def test_missing_service_retires_queued_and_mailed_incidents(self):
+        for mailed in (False, True):
+            with self.subTest(mailed=mailed):
+                p = self.service()
+                self.now += 600
+                if mailed:
+                    self.send()
+                    self.now += m.DAY
+                before = len(self.messages)
+                p.update(LoadState="not-found", ActiveState="inactive")
+                self.assertFalse(self.send())
+                item = self.incident("service:app.service")
+                self.assertTrue(item["retired"])
+                self.assertFalse(item["active"])
+                self.assertIn("not-found", item["retirementReason"])
+                self.assertEqual(len(self.messages), before)
+                self.assertEqual(self.a.status()["pending"], [])
+                self.assertEqual(self.a.status()["deferred"], {})
+                # A later failure reopens it and receives fresh grace.
+                p.update(LoadState="loaded", ActiveState="failed")
+                self.a.unit("app.service")
+                self.assertNotIn("retired", self.incident("service:app.service"))
+                self.assertEqual(self.a.status()["deferred"]["service:app.service"], self.now + 600)
+
+    def test_missing_service_retirement_and_retention_survive_restart(self):
+        p = self.service()
+        p.update(LoadState="not-found")
+        self.a.unit("app.service")
+        restored = m.Alerts(self.c, clock=lambda: self.now)
+        self.assertTrue(restored.status()["incidents"]["service:app.service"]["retired"])
+        self.assertEqual(restored.status()["pending"], [])
+        self.now += 31 * m.DAY
+        self.assertEqual(restored.status()["incidents"], {})
+
+    def test_ambiguous_service_state_does_not_retire_or_send_stale_failure(self):
+        p = self.service()
+        self.now += 600
+        for load in ("error", "masked", "bad-setting", "", None):
+            p.update(LoadState=load)
+            self.send()
+            self.assertTrue(self.incident("service:app.service")["active"])
+            self.assertNotIn("retired", self.incident("service:app.service"))
+            self.assertFalse(any("CRITICAL: service:app.service" in msg.get_content() for msg in self.messages))
+
+    def test_reconciliation_retires_missing_deferred_and_pending_recovery(self):
+        p = self.service()
+        self.a.run = lambda *args: "[]"
+        p.update(LoadState="not-found")
+        self.a.units()
+        self.assertTrue(self.incident("service:app.service")["retired"])
+        p = self.service()
+        self.now += 600
+        self.send()
+        self.recover_service(p)
+        self.a.unit("app.service")
+        p.update(LoadState="not-found")
+        self.a.units()
+        self.assertTrue(self.incident("service:app.service")["retired"])
+        self.assertFalse(self.send())
+
+    def test_retirement_does_not_overwrite_concurrent_new_failure(self):
+        self.service()
+        def query(_):
+            self.a.observe("service:app.service", 2, "new failure", failedStart="boot:99")
+            return dict(LoadState="not-found")
+        with patch.object(self.a, "unit_properties", side_effect=query):
+            self.a.unit("app.service")
+        self.assertTrue(self.incident("service:app.service")["active"])
+
+    def test_missing_borg_alias_does_not_retire_upload(self):
+        p = self.service("apollo-backup-upload.service")
+        p.update(LoadState="not-found")
+        self.a.unit("borgbackup-job-sidechest.service")
+        self.assertTrue(self.incident(m.BACKUP_UPLOAD)["active"])
+
+    def test_old_backup_ledger_does_not_reopen_retired_service(self):
+        self.ledger(id="old", phase="failed")
+        p = self.service("apollo-backup.service")
+        p.update(LoadState="not-found")
+        self.a.unit("apollo-backup.service")
+        self.a.backup()
+        self.assertTrue(self.incident(m.BACKUP_CAPTURE)["retired"])
+        self.assertFalse(self.incident(m.BACKUP_CAPTURE)["active"])
+
+    def test_main_process_zero_does_not_hide_service_failure(self):
+        self.service(ExecMainStatus="0")
+        self.now += 600
+        self.assertTrue(self.send())
+        body = self.messages[-1].get_content()
+        self.assertIn("result=exit-code; main-process status=0", body)
+        self.assertIn("CRITICAL: service:app.service", body)
 
     def test_invalid_unit_names_cannot_be_arguments(self):
         for unit in ("--all.service", "app;whoami.service", "../test.service"):
