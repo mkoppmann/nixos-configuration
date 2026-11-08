@@ -61,7 +61,7 @@ Paths below are configured readers or boot inputs. Files beneath persisted servi
 | `/run/secrets/rendered/nextcloud-secrets.json` | Template from the `nextcloud_*` secrets (instance ID, salt, secret, SMTP password) | `root:root 0400`; passed with `LoadCredential` |
 | `/run/secrets/nextcloud_admin_password` | sops secret `nextcloud_admin_password` for initial creation of administrator `ncroot` | `root:root 0400`; must remain nonempty for the setup service |
 | `/run/secrets/rendered/pleroma-secret.exs` | Template from `pleroma_secret_key_base` and `pleroma_vapid_private_key`; the VAPID public key is in Nix | `pleroma` reader, `0400`; the VAPID key pair must match |
-| `/run/secrets/rendered/vaultwarden.env` | Template from `vaultwarden_admin_token` and `vaultwarden_smtp_password`; systemd environment file | `root:root 0400` |
+| `/run/secrets/rendered/vaultwarden.env` | Template from `vaultwarden_smtp_password`; systemd environment file | `root:root 0400` |
 | `/var/lib/acme/idp.ncrypt.at/fullchain.pem` and `key.pem` | ACME-managed certificate/key loaded by the Authentik worker | Preserve module-managed ownership and restrictive permissions |
 
 sops values are stored without quotes or trailing newline; templates insert them verbatim. Environment-file syntax is not shell syntax; do not source these files. The remaining MAS files still have to be preserved as a whole: the checkout cannot establish their complete contents.

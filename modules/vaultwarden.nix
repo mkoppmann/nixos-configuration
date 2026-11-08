@@ -4,11 +4,9 @@
 }:
 {
   sops = {
-    secrets.vaultwarden_admin_token = { };
     secrets.vaultwarden_smtp_password = { };
     templates."vaultwarden.env" = {
       content = ''
-        ADMIN_TOKEN=${config.sops.placeholder.vaultwarden_admin_token}
         SMTP_PASSWORD=${config.sops.placeholder.vaultwarden_smtp_password}
       '';
       restartUnits = [ "vaultwarden.service" ];
@@ -24,6 +22,9 @@
       DATABASE_URL = "postgresql:///vaultwarden";
       SIGNUPS_ALLOWED = false;
       SIGNUPS_VERIFY = true;
+      # Organisation admins invite new users; without ADMIN_TOKEN there is no
+      # admin page.
+      INVITATIONS_ALLOWED = true;
       SHOW_PASSWORD_HINT = false;
       DOMAIN = "https://pw.ncrypt.at";
       _ENABLE_YUBICO = false;
