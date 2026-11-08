@@ -1,4 +1,4 @@
-{ ... }:
+{ lib, pkgs, ... }:
 let
   inherit (import ../lib/nginx-headers.nix)
     hsts
@@ -22,6 +22,24 @@ let
       return 200 '${builtins.toJSON data}';
     '';
 
+  # RFC 8461 policy for receiving mail servers.
+  mta-sts-host = mxs: {
+    enableACME = true;
+    forceSSL = true;
+    extraConfig = default-headers;
+    locations."/".return = "404";
+    locations."= /.well-known/mta-sts.txt".alias = pkgs.writeText "mta-sts.txt" ''
+      version: STSv1
+      mode: enforce
+      ${lib.concatMapStrings (mx: "mx: ${mx}\n") mxs}max_age: 2505600
+    '';
+  };
+
+  mailbox-org = [
+    "mxext1.mailbox.org"
+    "mxext2.mailbox.org"
+    "mxext3.mailbox.org"
+  ];
 in
 {
   environment.persistence."/persist".directories = [ "/srv/www" ];
@@ -36,13 +54,7 @@ in
       globalRedirect = "www.cypherpunk.observer";
     };
 
-    virtualHosts."mta-sts.cypherpunk.observer" = {
-      enableACME = true;
-      forceSSL = true;
-      root = "/srv/www/mta-sts.cypherpunk.observer/";
-
-      extraConfig = default-headers;
-    };
+    virtualHosts."mta-sts.cypherpunk.observer" = mta-sts-host mailbox-org;
 
     virtualHosts."www.cypherpunk.observer" = {
       enableACME = true;
@@ -65,13 +77,7 @@ in
       globalRedirect = "www.mkoppmann.at";
     };
 
-    virtualHosts."mta-sts.mkoppmann.at" = {
-      enableACME = true;
-      forceSSL = true;
-      root = "/srv/www/mta-sts.mkoppmann.at/";
-
-      extraConfig = default-headers;
-    };
+    virtualHosts."mta-sts.mkoppmann.at" = mta-sts-host mailbox-org;
 
     virtualHosts."wtcvss.mkoppmann.at" = {
       enableACME = true;

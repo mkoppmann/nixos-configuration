@@ -35,12 +35,10 @@ Nextcloud's packaged apps are Calendar, Contacts, Notes, Tasks and User OIDC; au
 | Static hostname | Content root |
 | --- | --- |
 | `www.cypherpunk.observer` | `/srv/www/cypherpunk.observer` |
-| `mta-sts.cypherpunk.observer` | `/srv/www/mta-sts.cypherpunk.observer` |
 | `www.mkoppmann.at` | `/srv/www/mkoppmann.at/dist` |
-| `mta-sts.mkoppmann.at` | `/srv/www/mta-sts.mkoppmann.at` |
 | `wtcvss.mkoppmann.at` | `/srv/www/wtcvss` |
 
-These trees are persistent, mutable content deployed outside this flake. The bare `cypherpunk.observer` and `mkoppmann.at` domains redirect to their `www` hosts. `ncrypt.at` redirects non-discovery requests to `www.ncrypt.at`, whose `/` response is an empty HTTP 200.
+These trees are persistent, mutable content deployed outside this flake. The MTA-STS policies for both domains are defined in the [websites module](../modules/websites.nix). The bare `cypherpunk.observer` and `mkoppmann.at` domains redirect to their `www` hosts. `ncrypt.at` redirects non-discovery requests to `www.ncrypt.at`, whose `/` response is an empty HTTP 200.
 
 ## Host and network
 
