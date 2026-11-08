@@ -24,7 +24,7 @@ Impermanence binds the following directory trees to corresponding paths under `/
 
 | Runtime paths | Contents |
 | --- | --- |
-| `/etc/nixos` | Deployment checkout |
+| `/etc/nixos` | Deployment checkout, owned by `mcp` |
 | `/root/.config/borg`, `/root/.cache/borg` | Borg configuration/security metadata and rebuildable cache; directories `0700` |
 | `/var/backup` | PostgreSQL dumps and globals |
 | `/var/lib/acme` | ACME accounts and certificates |
