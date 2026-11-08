@@ -79,6 +79,7 @@
       mail_smtpname = "cloud@ncrypt.at";
 
       overwriteprotocol = "https";
+      "overwrite.cli.url" = "https://${config.services.nextcloud.hostName}";
       trusted_proxies = [
         "127.0.0.1"
         "152.53.35.165"
