@@ -53,12 +53,13 @@ Paths below are configured readers or boot inputs. Files beneath persisted servi
 | `/run/secrets/reporting_smtp_password` | sops secret `reporting_smtp_password`: password for `reporting@ncrypt.at` | `root:root 0400`; loaded into the SMTP worker using systemd credentials |
 | `/run/secrets/wireguard_private_key` | sops secret `wireguard_private_key` | `root:root 0400`; changing it requires peer coordination |
 | `/run/secrets/actual_openid_client_secret` | sops secret `actual_openid_client_secret` for Actual's Authentik OIDC client | `root:root 0400`; passed to the dynamic user with `LoadCredential` |
-| `/run/secrets/rendered/authentik.env` | Template from `authentik_secret_key` and `authentik_smtp_password`; systemd environment file | `root:root 0400`; preserve the secret key with the database |
+| `/run/secrets/rendered/authentik.env` | Template from `authentik_secret_key`, `authentik_smtp_password` and the OIDC client secrets `actual_openid_client_secret`, `immich_openid_client_secret`, `matrix_openid_client_secret` and `nextcloud_openid_client_secret`, which the applications blueprint reads; systemd environment file | `root:root 0400`; preserve the secret key with the database; each client secret must match the application’s copy |
 | `/run/secrets/rendered/synapse-secrets.yaml` | Template from the `synapse_*` secrets, merged into Synapse's configuration together with the email section | `matrix-synapse` reader, `0400` |
 | `/var/lib/matrix-synapse/mas_secret` | Raw MAS/Synapse integration secret, same value as MAS's `homeserver_secret` | `matrix-synapse` reader, `0600` |
 | `/var/lib/private/matrix-authentication-service/secrets.yaml` | YAML containing MAS encryption/signing keys, provider/client settings and SMTP password | Dynamic MAS reader, `0600` |
 | `/var/lib/private/matrix-authentication-service/homeserver_secret` | Raw MAS/Synapse integration secret | Dynamic MAS reader, `0600`; match Synapse's runtime configuration |
 | `/run/secrets/rendered/nextcloud-secrets.json` | Template from the `nextcloud_*` secrets (instance ID, salt, secret, SMTP password) | `root:root 0400`; passed with `LoadCredential` |
+| `/run/secrets/nextcloud_openid_client_secret` | sops secret `nextcloud_openid_client_secret` for Nextcloud’s Authentik login | `root:root 0400`; passed to `nextcloud-oidc.service` with `LoadCredential` |
 | `/run/secrets/nextcloud_admin_password` | sops secret `nextcloud_admin_password` for initial creation of administrator `ncroot` | `root:root 0400`; must remain nonempty for the setup service |
 | `/run/secrets/rendered/pleroma-secret.exs` | Template from `pleroma_secret_key_base` and `pleroma_vapid_private_key`; the VAPID public key is in Nix | `pleroma` reader, `0400`; the VAPID key pair must match |
 | `/run/secrets/rendered/vaultwarden.env` | Template from `vaultwarden_smtp_password`; systemd environment file | `root:root 0400` |
