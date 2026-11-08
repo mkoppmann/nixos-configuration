@@ -27,7 +27,7 @@ Nextcloud's packaged apps are Calendar, Contacts, Notes, Tasks and User OIDC; au
 - Requests for unknown host names, including bare IP addresses, are closed without a response; TLS handshakes for them are rejected, so no certificate is revealed.
 - Login form submissions are rate-limited per client address to 10 per minute with a burst of 20: Authentik's flow executor, Vaultwarden's token endpoint and Nextcloud's `/login`. Only POST requests count; exceeding the limit returns 429. The applications' own login throttling applies as well.
 
-- Matrix discovery is served on `ncrypt.at`. Login/logout/refresh compatibility routes go to MAS; other Matrix and Synapse client/MAS routes go to Synapse. Other requests to the Matrix host return 404.
+- Matrix discovery is served on `ncrypt.at`. Login/logout/refresh compatibility routes go to MAS; other `/_matrix` and `/_synapse/client` routes go to Synapse; `/_synapse/mas` is not exposed. Other requests to the Matrix host return 404.
 - Pleroma media redirects to `media.communicating.cypherpunk.observer`, which proxies and caches media. `/proxy` on the main Pleroma host returns 404.
 - Authentik, Vaultwarden and the photo proxy enable WebSocket forwarding. Actual has its own cross-origin isolation headers and retains the application's CSP. Header policies vary by host and location.
 - The configured limits differ: Nextcloud `16G`, Synapse `100M` with unlimited Nginx request bodies on its proxy locations, Pleroma's main virtual host `100m`, and the photo proxy `50000M` with 600-second proxy/send timeouts. Other limits come from application and module defaults.

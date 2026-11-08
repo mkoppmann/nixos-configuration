@@ -133,8 +133,9 @@ in
 
       locations."/_matrix" = synapse "client_max_body_size 0;";
 
+      # Other /_synapse paths stay internal, such as /_synapse/mas, which MAS
+      # reaches directly.
       locations."/_synapse/client" = synapse "client_max_body_size 0;";
-      locations."/_synapse/mas" = synapse "client_max_body_size 0;";
     };
   };
 }
