@@ -17,11 +17,11 @@ nix flake check --no-build --all-systems
 
 ## Deployment
 
-Apollo's checkout is `/etc/nixos`. It belongs to `mcp`, so Git runs without `sudo`; root only reads it when building. Its `flake.lock` is usually newer than Git's because of [automatic updates](#automatic-updates). Discard it before pulling; the upgrade service updates it again before switching, so inputs never move backwards:
+Apollo's checkout is `/etc/nixos`. It belongs to the user `deploy`, which has no login: Git runs as `sudo -u deploy git …`, never as root, and changing what root builds still takes the sudo password. Root only reads the checkout when building; read-only Git commands also work as `mcp`. Its `flake.lock` is usually newer than Git's because of [automatic updates](#automatic-updates). Discard it before pulling; the upgrade service updates it again before switching, so inputs never move backwards:
 
 ```bash
 cd /etc/nixos
-git checkout -- flake.lock && git pull --ff-only
+sudo -u deploy git checkout -- flake.lock && sudo -u deploy git pull --ff-only
 sudo systemctl start nixos-upgrade.service
 journalctl -u nixos-upgrade.service -n 100
 ```
@@ -34,7 +34,7 @@ To publish the server's lockfile, copy `/etc/nixos/flake.lock` into the reposito
 
 ## Automatic updates
 
-[Automatic upgrade configuration](../modules/auto-upgrade.nix) schedules `nixos-upgrade` at 00:00, 06:00, 12:00 and 18:00 Europe/Vienna with up to 30 minutes of random delay. Its pre-start runs `nix flake update` for all inputs in `/etc/nixos` as `mcp`, then the service rebuilds and switches without writing to the checkout. The timer is persistent, so a missed run can trigger after boot. Automatic reboot is disabled.
+[Automatic upgrade configuration](../modules/auto-upgrade.nix) schedules `nixos-upgrade` at 00:00, 06:00, 12:00 and 18:00 Europe/Vienna with up to 30 minutes of random delay. Its pre-start runs `nix flake update` for all inputs in `/etc/nixos` as `deploy`, then the service rebuilds and switches without writing to the checkout. The timer is persistent, so a missed run can trigger after boot. Automatic reboot is disabled.
 
 Each run leaves an audit trail in `journalctl -u nixos-upgrade.service`: `nix flake update` lists every changed input revision, and the post-start step prints `nix store diff-closures` between the previous and new system. Major application/database migrations arrive unreviewed this way; there is no automatic data-migration rollback.
 
