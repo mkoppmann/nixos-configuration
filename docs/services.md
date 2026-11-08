@@ -32,12 +32,12 @@ Nextcloud's packaged apps are Calendar, Contacts, Notes, Tasks and User OIDC; au
 - Authentik, Vaultwarden and the photo proxy enable WebSocket forwarding. Actual has its own cross-origin isolation headers and retains the application's CSP. Header policies vary by host and location.
 - The configured limits differ: Nextcloud `16G`, Synapse `100M` with unlimited Nginx request bodies on its proxy locations, Pleroma's main virtual host `100m`, and the photo proxy `50000M` with 600-second proxy/send timeouts. Other limits come from application and module defaults.
 
-| Static hostname | Content root |
+| Static hostname | Source |
 | --- | --- |
-| `www.mkoppmann.at` | `/srv/www/mkoppmann.at/dist` |
-| `wtcvss.mkoppmann.at` | `/srv/www/wtcvss` |
+| `www.mkoppmann.at` | Flake input `website` ([mkoppmann/website](https://github.com/mkoppmann/website)) |
+| `wtcvss.mkoppmann.at` | Flake input `wtcvss` ([mkoppmann/wtcvss](https://github.com/mkoppmann/wtcvss)) |
 
-These trees are persistent, mutable content deployed outside this flake. The MTA-STS policies for both domains are defined in the [websites module](../modules/websites.nix). The bare `cypherpunk.observer` and `mkoppmann.at` domains redirect to their `www` hosts. `ncrypt.at` redirects non-discovery requests to `www.ncrypt.at`. `www.ncrypt.at` and `www.cypherpunk.observer` answer every request with an empty HTTP 200.
+Both sites are built from their repositories with their own locked nixpkgs and served from the Nix store. The nightly upgrade picks up their latest commits; a site that fails to build fails the whole upgrade. The MTA-STS policies for both domains are defined in the [websites module](../modules/websites.nix). The bare `cypherpunk.observer` and `mkoppmann.at` domains redirect to their `www` hosts. `ncrypt.at` redirects non-discovery requests to `www.ncrypt.at`. `www.ncrypt.at` and `www.cypherpunk.observer` answer every request with an empty HTTP 200.
 
 ## Host and network
 

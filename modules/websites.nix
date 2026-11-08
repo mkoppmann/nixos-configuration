@@ -1,4 +1,9 @@
-{ lib, pkgs, ... }:
+{
+  inputs,
+  lib,
+  pkgs,
+  ...
+}:
 let
   inherit (import ../lib/nginx-headers.nix)
     hsts
@@ -35,6 +40,8 @@ let
     '';
   };
 
+  site = name: inputs.${name}.packages.${pkgs.stdenv.hostPlatform.system}.default;
+
   mailbox-org = [
     "mxext1.mailbox.org"
     "mxext2.mailbox.org"
@@ -42,8 +49,6 @@ let
   ];
 in
 {
-  environment.persistence."/persist".directories = [ "/srv/www" ];
-
   services.nginx = {
     virtualHosts."cypherpunk.observer" = {
       enableACME = true;
@@ -82,7 +87,7 @@ in
     virtualHosts."wtcvss.mkoppmann.at" = {
       enableACME = true;
       forceSSL = true;
-      root = "/srv/www/wtcvss/";
+      root = site "wtcvss";
 
       extraConfig =
         hsts
@@ -97,7 +102,7 @@ in
     virtualHosts."www.mkoppmann.at" = {
       enableACME = true;
       forceSSL = true;
-      root = "/srv/www/mkoppmann.at/dist/";
+      root = site "website";
 
       extraConfig =
         hsts
@@ -119,10 +124,6 @@ in
       locations."~* ^/_astro/".extraConfig = default-headers-without-csp + ''
         expires 1y;
         add_header Cache-Control "public, max-age=31536000, immutable" always;
-      '';
-
-      locations."~ /\.git".extraConfig = ''
-        deny all;
       '';
     };
 
