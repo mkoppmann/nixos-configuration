@@ -6,6 +6,16 @@
 let
   host = "idp.ncrypt.at";
 
+  # Upstream Authentik takes the first X-Forwarded-For entry as the client
+  # address, so Nginx replaces whatever the client sent instead of appending.
+  proxyHeaders = ''
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-Host $host;
+  '';
+
   # Real copies: Authentik rejects blueprints that resolve to a path outside
   # this directory, which rules out symlinks into other store paths.
   blueprints = pkgs.runCommand "authentik-blueprints" { } ''
@@ -58,6 +68,11 @@ in
         from = "Authentik ncrypt.at <idp@ncrypt.at>";
       };
       error_reporting.enabled = false;
+      # Only Nginx on this host may set forwarding headers.
+      listen.trusted_proxy_cidrs = [
+        "127.0.0.0/8"
+        "::1/128"
+      ];
       postgresql = {
         user = "authentik";
         name = "authentik";
@@ -117,10 +132,13 @@ in
       locations."/" = {
         proxyWebsockets = true;
         proxyPass = "https://localhost:9443";
+        recommendedProxySettings = false;
+        extraConfig = proxyHeaders;
       };
       locations."/api/v3/flows/executor/" = {
         proxyPass = "https://localhost:9443";
-        extraConfig = "limit_req zone=login burst=20 nodelay;";
+        recommendedProxySettings = false;
+        extraConfig = proxyHeaders + "limit_req zone=login burst=20 nodelay;";
       };
     };
   };
