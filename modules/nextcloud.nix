@@ -7,6 +7,7 @@
   sops = {
     secrets = {
       nextcloud_admin_password = { };
+      nextcloud_openid_client_secret.restartUnits = [ "nextcloud-oidc.service" ];
       nextcloud_instanceid = { };
       nextcloud_passwordsalt = { };
       nextcloud_secret = { };
@@ -91,6 +92,39 @@
   systemd.services."nextcloud-setup" = {
     requires = [ "postgresql.service" ];
     after = [ "postgresql.service" ];
+  };
+
+  # Login through Authentik; the matching provider is in the Authentik
+  # applications blueprint.
+  systemd.services.nextcloud-oidc = {
+    description = "Configure Nextcloud’s Authentik login";
+    requires = [ "nextcloud-setup.service" ];
+    after = [ "nextcloud-setup.service" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      # Keeps the unit active, so a deploy that changes it runs it again.
+      RemainAfterExit = true;
+      User = "nextcloud";
+      LoadCredential = config.systemd.services.nextcloud-setup.serviceConfig.LoadCredential ++ [
+        "oidc_client_secret:${config.sops.secrets.nextcloud_openid_client_secret.path}"
+      ];
+    };
+    script = ''
+      occ=${config.services.nextcloud.occ}/bin/nextcloud-occ
+      $occ user_oidc:provider Authentik \
+        --clientid=s20Aqu1UTDPWkhJqNhWcVtmFLXFiyGtWBmIG6Nf8 \
+        --clientsecret-file="$CREDENTIALS_DIRECTORY/oidc_client_secret" \
+        --discoveryuri=https://idp.ncrypt.at/application/o/nextcloud/.well-known/openid-configuration \
+        --scope="openid email offline_access profile" \
+        --mapping-uid=user_id \
+        --mapping-quota=quota \
+        --unique-uid=0 \
+        --check-bearer=0 \
+        --bearer-provisioning=0 \
+        --group-provisioning=0
+      $occ config:app:set user_oidc allow_multiple_user_backends --value=0
+    '';
   };
 
   environment.persistence."/persist".directories = [

@@ -1,18 +1,35 @@
 {
   config,
+  pkgs,
   ...
 }:
 let
   host = "idp.ncrypt.at";
+
+  # Real copies: Authentik rejects blueprints that resolve to a path outside
+  # this directory, which rules out symlinks into other store paths.
+  blueprints = pkgs.runCommand "authentik-blueprints" { } ''
+    cp -rL --no-preserve=mode ${config.services.authentik.authentikComponents.staticWorkdirDeps}/blueprints $out
+    install -D -m 0444 ${./authentik-applications.yaml} $out/apollo/applications.yaml
+  '';
 in
 {
   sops = {
-    secrets.authentik_secret_key = { };
-    secrets.authentik_smtp_password = { };
+    secrets = {
+      authentik_secret_key = { };
+      authentik_smtp_password = { };
+      immich_openid_client_secret = { };
+      matrix_openid_client_secret = { };
+    };
     templates."authentik.env" = {
+      # The client secrets are read by the applications blueprint.
       content = ''
         AUTHENTIK_SECRET_KEY=${config.sops.placeholder.authentik_secret_key}
         AUTHENTIK_EMAIL__PASSWORD=${config.sops.placeholder.authentik_smtp_password}
+        ACTUAL_CLIENT_SECRET=${config.sops.placeholder.actual_openid_client_secret}
+        IMMICH_CLIENT_SECRET=${config.sops.placeholder.immich_openid_client_secret}
+        MATRIX_CLIENT_SECRET=${config.sops.placeholder.matrix_openid_client_secret}
+        NEXTCLOUD_CLIENT_SECRET=${config.sops.placeholder.nextcloud_openid_client_secret}
       '';
       restartUnits = [
         "authentik.service"
@@ -28,6 +45,7 @@ in
     nginx.enable = false;
     settings = {
       avatars = "initials";
+      blueprints_dir = blueprints;
       cert_discovery_dir = "env://CREDENTIALS_DIRECTORY";
       disable_startup_analytics = true;
       disable_update_check = true;
