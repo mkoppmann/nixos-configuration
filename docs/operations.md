@@ -85,7 +85,7 @@ PersistentKeepalive = 25
 ```
 
 - `AllowedIPs = 10.100.0.0/24` reaches Apollo and its services through the tunnel; Apollo does not forward between peers. `0.0.0.0/0, ::/0` sends all traffic through Apollo; IPv6 is then dropped instead of bypassing the tunnel, because the tunnel carries only IPv4.
-- `DNS = 10.100.0.1` is needed for the [admin gate](services.md#applications): only then does `idp.ncrypt.at` resolve to the tunnel address. Leave it out on servers, whose name resolution would otherwise depend on Apollo.
+- `DNS = 10.100.0.1` is needed for the [admin gate](services.md#applications): only then does `idp.ncrypt.at` resolve to the tunnel address. Pleroma’s admin paths need `AllowedIPs = 0.0.0.0/0, ::/0` instead. Leave it out on servers, whose name resolution would otherwise depend on Apollo.
 - Servers that only answer Apollo, such as the photo upstream on `peer2`, use `AllowedIPs = 10.100.0.1/32`, which also drops traffic from other peers.
 
 ## Remote unlock

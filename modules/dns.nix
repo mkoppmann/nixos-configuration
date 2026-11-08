@@ -1,12 +1,16 @@
 { ... }:
 let
   wireguardNet = "10.100.0.0/24";
+
+  # Only hosts reached by whole-page navigations. Browsers ask before a public
+  # page fetches resources from a private address, so hosts whose pages load
+  # subresources (such as Pleroma's) keep their public address.
+  tunnelHosts = [ "idp.ncrypt.at" ];
 in
 {
   # Resolver for Apollo and its WireGuard clients, encrypted to Applied
-  # Privacy. For WireGuard clients it sends Authentik's host name to the tunnel
-  # address, so admins reach it from inside WireGuard (see the admin gate in
-  # the Authentik applications blueprint).
+  # Privacy. WireGuard clients get the tunnel address for tunnelHosts, so their
+  # requests to those hosts arrive from inside WireGuard.
   services.unbound = {
     enable = true;
     resolveLocalQueries = true;
@@ -29,8 +33,8 @@ in
           name = "wireguard";
           view-first = true;
           # Static: no IPv6 answer, which would bypass the tunnel.
-          local-zone = [ ''"idp.ncrypt.at." static'' ];
-          local-data = [ ''"idp.ncrypt.at. A 10.100.0.1"'' ];
+          local-zone = map (host: ''"${host}." static'') tunnelHosts;
+          local-data = map (host: ''"${host}. A 10.100.0.1"'') tunnelHosts;
         }
       ];
       forward-zone = [
