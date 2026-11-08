@@ -7,8 +7,16 @@ on:
 permissions:
   contents: read
 
+# A newer push to the same branch supersedes a running check.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   flake-check:
+    # Branches of this repository are already checked on push; pull requests
+    # only need their own run when they come from a fork.
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
     steps:
       - name: Free disk space for the system closure
