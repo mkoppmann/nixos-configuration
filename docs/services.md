@@ -49,7 +49,7 @@ Both sites are built from their repositories with their own locked nixpkgs and s
 | IPv6 | `2a0a:4cc0:100:23::bad:c0de/64`, gateway `fe80::1` on `ens3` |
 | DNS resolvers | Cloudflare `1.1.1.1`, `1.0.0.1`, `2606:4700:4700::1111`, `2606:4700:4700::1001` |
 | Firewall openings | TCP `22`, `80`, `443`, `2222`; UDP `51820` |
-| WireGuard | `wg0`, `10.100.0.1/24`; five peers at `10.100.0.2`–`10.100.0.6`, keepalive 25 seconds |
+| WireGuard | `wg0`, `10.100.0.1/24`; peers `peer2`–`peer6` at `10.100.0.2`–`10.100.0.6`, each with a preshared key; keepalive 25 seconds |
 | NAT | NixOS-managed NAT from `wg0` through `ens3` |
 | Administrator | `mcp`, wheel member, Fish shell, manually provisioned password hash |
 | SSH | [SSH configuration](../modules/ssh.nix): only through WireGuard (firewall and `AllowUsers`); `mcp` only, with keys declared in Nix; public-key authentication; post-quantum hybrid key exchange only, also for remote unlock; Ed25519 host key; SFTP; all forwarding disabled; key fingerprints logged |

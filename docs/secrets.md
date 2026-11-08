@@ -52,6 +52,7 @@ Paths below are configured readers or boot inputs. Files beneath persisted servi
 | `/run/secrets/healthchecks_backup_url`, `/run/secrets/healthchecks_heartbeat_url` | sops secrets: healthchecks.io ping URLs; anyone holding one can fake a ping | `root:root 0400` |
 | `/run/secrets/reporting_smtp_password` | sops secret `reporting_smtp_password`: password for `reporting@ncrypt.at` | `root:root 0400`; loaded into the SMTP worker using systemd credentials |
 | `/run/secrets/wireguard_private_key` | sops secret `wireguard_private_key` | `root:root 0400`; changing it requires peer coordination |
+| `/run/secrets/wireguard_psk_peer2` … `wireguard_psk_peer6` | sops secrets with the preshared key of each WireGuard peer, named after the last octet of its address | `root:root 0400`; each must match the peer’s client configuration |
 | `/run/secrets/actual_openid_client_secret` | sops secret `actual_openid_client_secret` for Actual's Authentik OIDC client | `root:root 0400`; passed to the dynamic user with `LoadCredential` |
 | `/run/secrets/rendered/authentik.env` | Template from `authentik_secret_key`, `authentik_smtp_password` and the OIDC client secrets `actual_openid_client_secret`, `immich_openid_client_secret`, `matrix_openid_client_secret` and `nextcloud_openid_client_secret`, which the applications blueprint reads; systemd environment file | `root:root 0400`; preserve the secret key with the database; each client secret must match the application’s copy |
 | `/run/secrets/rendered/synapse-secrets.yaml` | Template from the `synapse_*` secrets, merged into Synapse's configuration together with the email section | `matrix-synapse` reader, `0400` |
@@ -81,7 +82,7 @@ Actual's client secret must match Authentik's registration; MAS's homeserver sec
 
 Create `/persist/credentials` as `root:root 0700`. Stage new files privately outside the checkout with `umask 077`, then install them with explicit owner/group/mode. Provision boot credentials before installation/rebuild, and service credentials before starting their consumers. Use a service's actual runtime identity for static-reader files; avoid printing values in command arguments, journals or shared terminal recordings.
 
-On a new installation, password hashes can be generated interactively with `mkpasswd --method=yescrypt`, SSH keys with `ssh-keygen`, and WireGuard keys with `wg genkey`. Generate unrelated secrets independently. On recovery, restore the existing values; generating replacements does not preserve access to the existing repository or encrypted application state.
+On a new installation, password hashes can be generated interactively with `mkpasswd --method=yescrypt`, SSH keys with `ssh-keygen`, WireGuard keys with `wg genkey` and preshared keys with `wg genpsk`. Generate unrelated secrets independently. On recovery, restore the existing values; generating replacements does not preserve access to the existing repository or encrypted application state.
 
 For dynamic-user services, restore complete backing trees while stopped, retain an unchanged extracted copy, and let systemd manage state-directory access. Check credentials from the service's namespace with its sandbox settings in effect; host ownership listings alone can be misleading. Do not hard-code a historical dynamic UID or make the private parent directories traversable to other users.
 
