@@ -49,7 +49,7 @@ Both sites are built from their repositories with their own locked nixpkgs and s
 | IPv6 | `2a0a:4cc0:100:23::bad:c0de/64`, gateway `fe80::1` on `ens3` |
 | DNS resolver | [Unbound](../modules/dns.nix) on `127.0.0.1`, `::1` and `10.100.0.1`, forwarding over TLS to `dot1.applied-privacy.net` and resolving directly from the authoritative servers if that fails; for WireGuard clients it answers `idp.ncrypt.at` with `10.100.0.1` and without IPv6 address, so Authentik sees WireGuard clients by their tunnel address |
 | Firewall openings | Public: TCP `80`, `443`, UDP `51820`; on `wg0` only: TCP `22`, TCP and UDP `53`. The initrd has no firewall; its unlock SSH listens on TCP `2222` |
-| WireGuard | `wg0`, `10.100.0.1/24`; peers `peer2`–`peer6` at `10.100.0.2`–`10.100.0.6`, each with a preshared key; keepalive 25 seconds |
+| WireGuard | `wg0`, `10.100.0.1/24`; peers `peer2`–`peer6` at `10.100.0.2`–`10.100.0.6`, each with a preshared key; keepalive 25 seconds; peers reach Apollo and the internet, but not each other |
 | NAT | NixOS-managed NAT from `wg0` through `ens3` |
 | Administrator | `mcp`, wheel member, Fish shell, manually provisioned password hash |
 | SSH | [SSH configuration](../modules/ssh.nix): only through WireGuard (firewall and `AllowUsers`); `mcp` only, with keys declared in Nix; public-key authentication; post-quantum hybrid key exchange only, also for remote unlock; Ed25519 host key; SFTP; all forwarding disabled; key fingerprints logged |
