@@ -1,6 +1,7 @@
-# Applications, their OAuth2 providers and access groups. Authentik applies
-# this blueprint at startup and whenever it changes, overwriting edits made to
-# these objects in the admin interface. Group membership stays in the database.
+# Applications, their OAuth2 providers and access groups, and the admin gate.
+# Authentik applies this blueprint at startup and whenever it changes,
+# overwriting edits made to these objects in the admin interface. Group
+# membership stays in the database.
 version: 1
 metadata:
   name: Apollo applications
@@ -208,3 +209,55 @@ entries:
       target: !KeyOf nextcloud
     attrs:
       group: !KeyOf nextcloud-access
+
+  # Admin gate: superusers only sign in from WireGuard addresses. The deny
+  # stage comes after password and MFA, so it reveals nothing to anyone without
+  # them. Emergency access: `ak create_recovery_key 1 USERNAME` on Apollo.
+  - model: authentik_policies_expression.expressionpolicy
+    id: superuser-outside-wireguard
+    identifiers:
+      name: Superuser outside WireGuard
+    attrs:
+      expression: |
+        user = request.context.get("pending_user")
+        return bool(user and user.is_superuser) and ak_client_ip not in ip_network("10.100.0.0/24")
+  - model: authentik_stages_deny.denystage
+    id: deny-superuser-outside-wireguard
+    identifiers:
+      name: Deny superusers outside WireGuard
+    attrs:
+      deny_message: Administrators sign in through WireGuard.
+
+  - model: authentik_flows.flowstagebinding
+    id: authentication-admin-gate
+    identifiers:
+      target: !Find [authentik_flows.flow, [slug, default-authentication-flow]]
+      stage: !KeyOf deny-superuser-outside-wireguard
+    attrs:
+      # After MFA (30), before the login (100).
+      order: 90
+      evaluate_on_plan: false
+      re_evaluate_policies: true
+  - model: authentik_policies.policybinding
+    identifiers:
+      order: 0
+      target: !KeyOf authentication-admin-gate
+    attrs:
+      policy: !KeyOf superuser-outside-wireguard
+
+  - model: authentik_flows.flowstagebinding
+    id: recovery-admin-gate
+    identifiers:
+      target: !Find [authentik_flows.flow, [slug, default-recovery-flow]]
+      stage: !KeyOf deny-superuser-outside-wireguard
+    attrs:
+      # After the email link (20), before the new password is set (30).
+      order: 25
+      evaluate_on_plan: false
+      re_evaluate_policies: true
+  - model: authentik_policies.policybinding
+    identifiers:
+      order: 0
+      target: !KeyOf recovery-admin-gate
+    attrs:
+      policy: !KeyOf superuser-outside-wireguard
