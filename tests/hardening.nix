@@ -19,6 +19,17 @@ pkgs.testers.runNixOSTest {
         ../modules/kernel.nix
         ../modules/nginx.nix
         ../modules/ssh.nix
+        ../modules/wireguard.nix
+        (import ./sops.nix {
+          inherit pkgs inputs;
+          secrets = {
+            # nixpkgs’ public test key.
+            wireguard_private_key = wgKeys.peer0.privateKey; # gitleaks:allow
+          }
+          // lib.genAttrs (map (n: "wireguard_psk_peer${toString n}") (lib.range 2 6)) (
+            _: wgKeys.presharedKey
+          );
+        })
       ];
 
       environment.persistence = lib.mkForce { };
@@ -29,17 +40,13 @@ pkgs.testers.runNixOSTest {
         ];
         allowedUDPPorts = [ 51820 ];
       };
-      networking.wireguard.interfaces.wg0 = {
-        ips = [ "10.100.0.1/24" ];
-        listenPort = 51820;
-        privateKeyFile = wgPrivateKey "peer0";
-        peers = [
-          {
-            publicKey = wgPublicKey "peer1";
-            allowedIPs = [ "10.100.0.2/32" ];
-          }
-        ];
-      };
+      # Apollo's WireGuard module with the test client as its only peer.
+      networking.wireguard.interfaces.wg0.peers = lib.mkForce [
+        {
+          publicKey = wgPublicKey "peer1";
+          allowedIPs = [ "10.100.0.2/32" ];
+        }
+      ];
 
       users.users = {
         mcp = {
@@ -113,6 +120,9 @@ pkgs.testers.runNixOSTest {
 
     client.wait_for_unit("wireguard-wg0.service")
     client.wait_until_succeeds("ping -c 1 -W 1 10.100.0.1")
+
+    with subtest("WireGuard peers cannot reach each other through the server"):
+        server.succeed("iptables -C FORWARD -i wg0 -o wg0 -j DROP")
 
     with subtest("The resolver answers WireGuard clients with the tunnel address"):
         server.wait_for_unit("unbound.service")
