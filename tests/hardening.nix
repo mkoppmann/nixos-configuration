@@ -2,6 +2,9 @@
 let
   keys = import (pkgs.path + "/nixos/tests/ssh-keys.nix") pkgs;
   homeAuthorizedKeys = pkgs.writeText "authorized_keys" keys.snakeOilPublicKey;
+  wgKeys = import (pkgs.path + "/nixos/tests/wireguard/snakeoil-keys.nix");
+  wgPrivateKey = peer: toString (pkgs.writeText "wg-private" wgKeys.${peer}.privateKey);
+  wgPublicKey = peer: pkgs.lib.trim wgKeys.${peer}.publicKey;
   ssh = "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o BatchMode=yes -o IdentitiesOnly=yes -o ConnectTimeout=5";
 in
 pkgs.testers.runNixOSTest {
@@ -18,10 +21,24 @@ pkgs.testers.runNixOSTest {
       ];
 
       environment.persistence = lib.mkForce { };
-      networking.firewall.allowedTCPPorts = [
-        80
-        443
-      ];
+      networking.firewall = {
+        allowedTCPPorts = [
+          80
+          443
+        ];
+        allowedUDPPorts = [ 51820 ];
+      };
+      networking.wireguard.interfaces.wg0 = {
+        ips = [ "10.100.0.1/24" ];
+        listenPort = 51820;
+        privateKeyFile = wgPrivateKey "peer0";
+        peers = [
+          {
+            publicKey = wgPublicKey "peer1";
+            allowedIPs = [ "10.100.0.2/32" ];
+          }
+        ];
+      };
 
       users.users = {
         mcp = {
@@ -44,6 +61,17 @@ pkgs.testers.runNixOSTest {
     { pkgs, ... }:
     {
       environment.systemPackages = [ pkgs.curl ];
+      networking.wireguard.interfaces.wg0 = {
+        ips = [ "10.100.0.2/24" ];
+        privateKeyFile = wgPrivateKey "peer1";
+        peers = [
+          {
+            publicKey = wgPublicKey "peer0";
+            allowedIPs = [ "10.100.0.0/24" ];
+            endpoint = "server:51820";
+          }
+        ];
+      };
     };
 
   testScript = ''
@@ -59,7 +87,7 @@ pkgs.testers.runNixOSTest {
             key, _, value = line.partition(" ")
             effective.setdefault(key.lower(), []).append(value)
         expected = {
-            "allowusers": "mcp",
+            "allowusers": "mcp@10.100.0.0/24",
             "permitrootlogin": "no",
             "authenticationmethods": "publickey",
             "passwordauthentication": "no",
@@ -79,15 +107,25 @@ pkgs.testers.runNixOSTest {
     client.succeed("install -m 600 ${keys.snakeOilEd25519PrivateKey} /root/declared")
     client.succeed("install -m 600 ${keys.snakeOilPrivateKey} /root/homedir")
 
+    client.wait_for_unit("wireguard-wg0.service")
+    client.wait_until_succeeds("ping -c 1 -W 1 10.100.0.1")
+
+    with subtest("SSH answers only through WireGuard"):
+        client.succeed("${ssh} -i /root/declared mcp@10.100.0.1 true")
+        client.fail("${ssh} -i /root/declared mcp@server true")
+        # AllowUsers also refuses addresses outside WireGuard, firewall aside.
+        server.succeed("install -m 600 ${keys.snakeOilEd25519PrivateKey} /root/declared")
+        server.fail("${ssh} -i /root/declared mcp@127.0.0.1 true")
+        server.wait_until_succeeds("journalctl -u sshd.service | grep -q 'mcp from 127.0.0.1 not allowed'")
+
     with subtest("Only mcp logs in, only with keys declared in Nix"):
-        client.succeed("${ssh} -i /root/declared mcp@server true")
-        client.fail("${ssh} -i /root/declared root@server true")
+        client.fail("${ssh} -i /root/declared root@10.100.0.1 true")
         server.succeed("install -d -m 700 -o mcp -g users /home/mcp/.ssh")
         server.succeed("install -m 600 -o mcp -g users ${homeAuthorizedKeys} /home/mcp/.ssh/authorized_keys")
-        client.fail("${ssh} -i /root/homedir mcp@server true")
+        client.fail("${ssh} -i /root/homedir mcp@10.100.0.1 true")
 
     with subtest("Classical key exchange is refused"):
-        client.fail("${ssh} -i /root/declared -o KexAlgorithms=curve25519-sha256 mcp@server true")
+        client.fail("${ssh} -i /root/declared -o KexAlgorithms=curve25519-sha256 mcp@10.100.0.1 true")
 
     with subtest("Unknown host names get no response"):
         client.succeed("curl -sf -H 'Host: known.test' http://server/ | grep -q known")
