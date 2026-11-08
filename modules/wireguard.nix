@@ -1,6 +1,24 @@
-{ config, ... }:
+{ config, lib, ... }:
+let
+  # Named after the last octet of their address.
+  peers = {
+    peer2 = "+IFbnbONQDMU/o2+WElWUhrTBmxr1oU4cibRMZTLnlg=";
+    peer3 = "lxpp4+QWuxyx2eS/tjMQSecmK6Nydy5Mr9CP0hksdAY=";
+    peer4 = "4B4eX/YtE2QtTs1ykQ/pPcg1get4L0mGcBFe/GDmK1c=";
+    peer5 = "GXKLE+7Rz/LAgmig/XAvthAs5vBJh/czJ9pywODMoAI=";
+    peer6 = "GoSqFQkA5b0rx7a3OXPVPrxttF0s99Q5DW72dXPUTFI=";
+  };
+in
 {
-  sops.secrets.wireguard_private_key.restartUnits = [ "wireguard-wg0.service" ];
+  sops.secrets = {
+    wireguard_private_key.restartUnits = [ "wireguard-wg0.service" ];
+  }
+  // lib.mapAttrs' (
+    name: _:
+    lib.nameValuePair "wireguard_psk_${name}" {
+      restartUnits = [ "wireguard-wg0-peer-${name}.service" ];
+    }
+  ) peers;
 
   networking.wireguard = {
     enable = true;
@@ -9,33 +27,14 @@
       listenPort = 51820;
       privateKeyFile = config.sops.secrets.wireguard_private_key.path;
 
-      peers = [
-        {
-          publicKey = "+IFbnbONQDMU/o2+WElWUhrTBmxr1oU4cibRMZTLnlg=";
-          allowedIPs = [ "10.100.0.2/32" ];
-          persistentKeepalive = 25;
-        }
-        {
-          publicKey = "lxpp4+QWuxyx2eS/tjMQSecmK6Nydy5Mr9CP0hksdAY=";
-          allowedIPs = [ "10.100.0.3/32" ];
-          persistentKeepalive = 25;
-        }
-        {
-          publicKey = "4B4eX/YtE2QtTs1ykQ/pPcg1get4L0mGcBFe/GDmK1c=";
-          allowedIPs = [ "10.100.0.4/32" ];
-          persistentKeepalive = 25;
-        }
-        {
-          publicKey = "GXKLE+7Rz/LAgmig/XAvthAs5vBJh/czJ9pywODMoAI=";
-          allowedIPs = [ "10.100.0.5/32" ];
-          persistentKeepalive = 25;
-        }
-        {
-          publicKey = "GoSqFQkA5b0rx7a3OXPVPrxttF0s99Q5DW72dXPUTFI=";
-          allowedIPs = [ "10.100.0.6/32" ];
-          persistentKeepalive = 25;
-        }
-      ];
+      # The preshared keys protect recorded traffic against a future quantum
+      # computer, which could break the key exchange alone.
+      peers = lib.mapAttrsToList (name: publicKey: {
+        inherit name publicKey;
+        presharedKeyFile = config.sops.secrets."wireguard_psk_${name}".path;
+        allowedIPs = [ "10.100.0.${lib.removePrefix "peer" name}/32" ];
+        persistentKeepalive = 25;
+      }) peers;
     };
   };
 }
