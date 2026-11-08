@@ -15,8 +15,9 @@ in
 
   services.postgresql = {
     enable = true;
-    package = pkgs.postgresql_16_jit;
-    enableJIT = true;
+    # Must stay explicit: with stateVersion 23.11, authentik-nix would select
+    # PostgreSQL 14 otherwise.
+    package = pkgs.postgresql_16;
     enableTCPIP = false;
 
     authentication = pkgs.lib.mkForce ''
