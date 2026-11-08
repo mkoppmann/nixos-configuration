@@ -95,6 +95,10 @@
       };
     };
 
+    # ZFS would otherwise cache with nearly all RAM and push PostgreSQL and
+    # the applications into swap; see the budget in postgresql.nix.
+    kernelParams = [ "zfs.zfs_arc_max=${toString (4 * 1024 * 1024 * 1024)}" ];
+
     zfs = {
       devNodes = "/dev/disk/by-partuuid";
       forceImportRoot = false;

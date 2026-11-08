@@ -20,6 +20,23 @@ in
     package = pkgs.postgresql_16;
     enableTCPIP = false;
 
+    # Memory budget for 15 GiB of RAM: 4 GiB for the ZFS cache (see boot.nix),
+    # 2 GiB of shared buffers here, the rest for the applications.
+    settings = {
+      shared_buffers = "2GB";
+      effective_cache_size = "6GB";
+      work_mem = "16MB";
+      maintenance_work_mem = "512MB";
+      # Storage is SSD-backed.
+      random_page_cost = 1.1;
+      max_wal_size = "4GB";
+      # The default 20 % leaves tables with millions of rows unvacuumed for
+      # months.
+      autovacuum_vacuum_scale_factor = 0.05;
+      autovacuum_analyze_scale_factor = 0.02;
+      shared_preload_libraries = "pg_stat_statements";
+    };
+
     authentication = pkgs.lib.mkForce ''
       #type database  DBuser   auth-method
       local sameuser  all      peer

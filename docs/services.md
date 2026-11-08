@@ -60,6 +60,6 @@ The initrd uses the same static IPv4 route, IPv4 DNS resolvers and disabled IPv6
 
 ## Startup and certificate behavior
 
-PostgreSQL 16 is configured for Unix-socket access and peer authentication; TCP listening is disabled. `postgresql.target` groups the server and separate role/database setup service. Apollo's explicit Authentik, Nextcloud setup and MAS dependencies name `postgresql.service`, rather than completion of that target. Recovery must verify both server and provisioning readiness.
+PostgreSQL 16 is configured for Unix-socket access and peer authentication; TCP listening is disabled. Memory is budgeted for 15 GiB of RAM: the ZFS cache is capped at 4 GiB, PostgreSQL gets 2 GiB of shared buffers, and the applications the rest. Autovacuum starts at 5 % dead rows, and `pg_stat_statements` is loaded for query statistics. `postgresql.target` groups the server and separate role/database setup service. Apollo's explicit Authentik, Nextcloud setup and MAS dependencies name `postgresql.service`, rather than completion of that target. Recovery must verify both server and provisioning readiness.
 
 Authentik migration precedes its worker/server. The worker loads the IdP certificate and key through systemd credentials when it starts; Apollo declares no certificate-renewal hook to refresh that worker's credentials. Actual, Authentik and MAS use dynamic users and systemd state directories; see [ownership](storage.md#ownership-and-file-behavior).
