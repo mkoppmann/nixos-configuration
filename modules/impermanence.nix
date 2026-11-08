@@ -16,7 +16,6 @@ in
   environment.persistence."/persist" = {
     hideMounts = true;
     directories = [
-      "/etc/nixos"
       {
         directory = "/var/lib/logrotate";
         mode = "0700";
