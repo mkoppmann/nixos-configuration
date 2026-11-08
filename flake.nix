@@ -85,6 +85,10 @@
                 pkgs = nixpkgs.legacyPackages.x86_64-linux;
                 inherit inputs;
               };
+              backup = import ./tests/backup.nix {
+                pkgs = nixpkgs.legacyPackages.x86_64-linux;
+                inherit inputs;
+              };
               secrets = import ./tests/secrets.nix {
                 pkgs = nixpkgs.legacyPackages.x86_64-linux;
                 inherit inputs;
