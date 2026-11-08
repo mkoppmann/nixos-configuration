@@ -36,8 +36,5 @@ jobs:
       - name: Scan history for secrets
         run: nix run --inputs-from . nixpkgs#gitleaks -- git --redact --verbose .
 
-      - name: Python unit tests
-        run: python3 -m unittest discover -s tests -p 'test_*.py'
-
       - name: Build system and run checks
         run: nix flake check --print-build-logs --no-update-lock-file

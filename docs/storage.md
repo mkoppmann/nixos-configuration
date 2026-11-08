@@ -27,7 +27,7 @@ Impermanence binds the following directory trees to corresponding paths under `/
 | `/etc/nixos` | Deployment checkout |
 | `/root/.config/borg`, `/root/.cache/borg` | Borg configuration/security metadata and rebuildable cache; directories `0700` |
 | `/srv/www` | Mutable static websites |
-| `/var/backup` | PostgreSQL dumps, globals and capture manifest |
+| `/var/backup` | PostgreSQL dumps and globals |
 | `/var/lib/acme` | ACME accounts and certificates |
 | `/var/lib/bitwarden_rs` | Vaultwarden data and environment file |
 | `/var/lib/logrotate` | Rotation history at `status`; directory `0700` |
@@ -51,9 +51,8 @@ These paths live directly on the persistent dataset and need no additional bind 
 | --- | --- |
 | `/persist/etc/machine-id` | Source for `/etc/machine-id` |
 | `/persist/etc/ssh/ssh_host_ed25519_key` and `.pub` | Normal SSH host key, read directly by sshd |
-| `/persist/credentials` | Manually provisioned host, boot, backup and reporting credentials |
-| `/persist/var/lib/apollo-backup` | Private backup ledger, deployment hold and upload-success evidence; excluded from Borg |
-| `/persist/var/lib/apollo-alerts` | Private durable alert incidents/history; included in Borg |
+| `/persist/credentials` | initrd SSH host key |
+| `/persist/var/lib/sops-nix/key.txt` | sops host key |
 
 ## Ownership and file behavior
 
@@ -67,4 +66,4 @@ The random-seed service explicitly requires and follows Impermanence's generated
 
 Unlisted root/home files, `/run`, temporary files, caches and generated runtime configurations are disposable unless contained in a listed persistent tree. Nginx cache and Redis state are not separately persisted here. A runtime secret file can reference additional paths; those references require their own persistence assessment.
 
-Persistence retains data across root rollback. Backup coverage is narrower: the live database, Borg cache, random seed, backup ledger and selected logs are excluded. ZFS snapshots are local recovery points, not independent copies. Timer timestamp persistence preserves catch-up state only for timers that actually enable `Persistent=`; the coordinated capture and upload timers do not.
+Persistence retains data across root rollback. Backup coverage is narrower: the live database (covered by dumps), Borg cache, random seed and the Nginx access log are excluded. ZFS snapshots are local recovery points, not independent copies. Timer timestamp persistence lets timers with `Persistent=`, such as the backup, catch up after downtime.

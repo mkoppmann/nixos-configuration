@@ -2,7 +2,7 @@
 
 [Repository overview](../README.md) · [Storage](storage.md) · [Recovery](recovery.md)
 
-Service secrets are managed with [sops-nix](https://github.com/Mic92/sops-nix): `secrets/apollo.yaml` is encrypted to two post-quantum age recipients listed in `.sops.yaml`, the admin key and Apollo's host key. At activation, sops-nix decrypts the declared secrets to `/run/secrets` with the owner and mode each module declares; files that mix secret and non-secret settings are rendered from templates. Boot and backup credentials and the MAS files are still provisioned manually at the paths below. Never put secret values into Nix expressions: Nix-store files are readable by every user.
+Service secrets are managed with [sops-nix](https://github.com/Mic92/sops-nix): `secrets/apollo.yaml` is encrypted to two post-quantum age recipients listed in `.sops.yaml`, the admin key and Apollo's host key. At activation, sops-nix decrypts the declared secrets to `/run/secrets` with the owner and mode each module declares; files that mix secret and non-secret settings are rendered from templates. The initrd host key and the MAS files are still provisioned manually at the paths below. Never put secret values into Nix expressions: Nix-store files are readable by every user.
 
 ## Keys
 
@@ -47,8 +47,9 @@ Paths below are configured readers or boot inputs. Files beneath persisted servi
 | --- | --- | --- |
 | `/run/secrets-for-users/mcp_password_hash` | sops secret `mcp_password_hash`: yescrypt hash for `mcp`, decrypted before users are created | `root:root 0400`; retain the actual sudo password independently |
 | `/persist/credentials/initrd_host_ed25519_key` | Dedicated unencrypted Ed25519 SSH host key for initrd | `root:root 0600`; required when boot secrets are installed |
-| `/persist/credentials/borg_sidechest_passphrase` | Raw passphrase for the existing Borg repository | `root:root 0600`; a new random value cannot unlock existing archives |
-| `/persist/credentials/borg_sidechest_ssh` | Unencrypted SSH client key authorised on the Storage Box | `root:root 0600`; backup job supplies no interactive key passphrase |
+| `/run/secrets/borg_passphrase` | sops secret `borg_passphrase` for the Borg repository | `root:root 0400`; a new value cannot unlock existing archives; copy in KeePass |
+| `/run/secrets/borg_ssh_key` | sops secret `borg_ssh_key`: SSH client key authorised on the Storage Box, with trailing newline | `root:root 0400`; copy in KeePass |
+| `/run/secrets/healthchecks_backup_url`, `/run/secrets/healthchecks_heartbeat_url` | sops secrets: healthchecks.io ping URLs; anyone holding one can fake a ping | `root:root 0400` |
 | `/run/secrets/reporting_smtp_password` | sops secret `reporting_smtp_password`: password for `reporting@ncrypt.at` | `root:root 0400`; loaded into the SMTP worker using systemd credentials |
 | `/run/secrets/wireguard_private_key` | sops secret `wireguard_private_key` | `root:root 0400`; changing it requires peer coordination |
 | `/run/secrets/actual_openid_client_secret` | sops secret `actual_openid_client_secret` for Actual's Authentik OIDC client | `root:root 0400`; passed to the dynamic user with `LoadCredential` |
