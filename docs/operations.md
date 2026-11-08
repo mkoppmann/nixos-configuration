@@ -52,6 +52,42 @@ sudo wg show wg0
 
 After a reboot, also check the retained service paths, Fish history and application logins. For Vaultwarden notifications, confirm `/notifications/hub` has a WebSocket 101 handshake in a signed-in client and that a harmless edit reaches another client without manual sync; do not share URLs containing access tokens. WireGuard Internet routing is checked with fresh IPv4 connections from a peer; the photo proxy also depends on peer `10.100.0.2` being reachable.
 
+## WireGuard peers
+
+Peers are declared in the [WireGuard module](../modules/wireguard.nix) as `peerN`, where `N` is the last octet of their tunnel address. Each has a preshared key in sops (`wireguard_psk_peerN`) in addition to its key pair.
+
+To add a peer, create its key pair on the device or with `wg genkey | tee private.key | wg pubkey`, add its public key under the next free name, and store a new preshared key in sops on Apollo, using the host key:
+
+```bash
+sudo bash
+cd /etc/nixos
+psk=$(wg genpsk)
+printf %s "$psk" | nix shell nixpkgs#jq -c jq -Rs . \
+  | SOPS_AGE_KEY_FILE=/persist/var/lib/sops-nix/key.txt nix shell nixpkgs#sops -c \
+    sops set --value-stdin secrets/apollo.yaml '["wireguard_psk_peerN"]'
+echo "$psk"   # for the client configuration only
+```
+
+Client configuration:
+
+```ini
+[Interface]
+PrivateKey = …
+Address = 10.100.0.N/32
+DNS = 10.100.0.1
+
+[Peer]
+PublicKey = …                  # sudo wg show wg0 public-key
+PresharedKey = …
+Endpoint = 152.53.35.165:51820
+AllowedIPs = 10.100.0.0/24     # see below
+PersistentKeepalive = 25
+```
+
+- `AllowedIPs = 10.100.0.0/24` reaches Apollo and its services through the tunnel; Apollo does not forward between peers. `0.0.0.0/0, ::/0` sends all traffic through Apollo; IPv6 is then dropped instead of bypassing the tunnel, because the tunnel carries only IPv4.
+- `DNS = 10.100.0.1` is needed for the [admin gate](services.md#applications): only then does `idp.ncrypt.at` resolve to the tunnel address. Leave it out on servers, whose name resolution would otherwise depend on Apollo.
+- Servers that only answer Apollo, such as the photo upstream on `peer2`, use `AllowedIPs = 10.100.0.1/32`, which also drops traffic from other peers.
+
 ## Remote unlock
 
 During initrd, connect from an independent administrator machine using the private key matching the declared administrator public key:
