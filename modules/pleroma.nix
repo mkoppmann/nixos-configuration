@@ -48,13 +48,85 @@ in
           email: "shibayashi@cypherpunk.observer",
           limit: 9001,
           registrations_open: false,
+          cleanup_attachments: true,
+          safe_dm_mentions: true,
           static_dir: "/var/lib/pleroma/static/"
 
-        config :pleroma, :media_proxy,
-          enabled: true
+        config :pleroma, :restrict_unauthenticated,
+          timelines: %{local: :if_instance_is_private, federated: true}
 
-        config :pleroma, :shout,
-          enabled: false
+        config :pleroma, :frontend_configurations,
+          pleroma_fe: %{
+            background: "https://communicating.cypherpunk.observer/media/98ac7550-ed5e-4da3-9fde-bb50cc52a226/background.gif",
+            logo: "/static/logo.png",
+            theme: "pleroma-dark",
+            alwaysShowSubjectInput: true,
+            collapseMessageWithSubject: false,
+            disableChat: true,
+            greentext: true,
+            hidePostStats: false,
+            hideSitename: false,
+            hideUserStats: false,
+            redirectRootLogin: "/main/friends",
+            redirectRootNoLogin: "/main/all",
+            scopeCopy: true,
+            showFeaturesPanel: false,
+            showInstanceSpecificPanel: false,
+            subjectLineBehavior: "email",
+            enableEmojiPicker: true,
+            formattingOptionsEnabled: true,
+            scopeOptionsEnabled: true,
+            stickers: true
+          },
+          masto_fe: %{showInstanceSpecificPanel: false}
+
+        config :pleroma, :static_fe, enabled: false
+
+        config :pleroma, :shout, enabled: false
+
+        config :pleroma, :markup,
+          allow_headings: true,
+          allow_tables: true,
+          allow_fonts: true
+
+        config :pleroma, :mrf,
+          policies: [
+            Pleroma.Web.ActivityPub.MRF.ObjectAgePolicy,
+            Pleroma.Web.ActivityPub.MRF.StealEmojiPolicy
+          ]
+
+        config :pleroma, :media_proxy,
+          enabled: true,
+          base_url: "https://media.communicating.cypherpunk.observer",
+          proxy_opts: [redirect_on_failure: true],
+          invalidation: [enabled: true]
+
+        config :pleroma, :media_preview_proxy, enabled: true
+
+        config :pleroma, :instances_favicons, enabled: true
+
+        config :pleroma, Pleroma.Upload,
+          filters: [
+            Pleroma.Upload.Filter.Dedupe,
+            Pleroma.Upload.Filter.AnonymizeFilename,
+            Pleroma.Upload.Filter.Mogrify
+          ]
+
+        config :pleroma, Pleroma.Upload.Filter.Mogrify, args: ["strip", "auto-orient"]
+
+        config :pleroma, Pleroma.Captcha, enabled: false
+
+        config :pleroma, :oauth2, clean_expired_tokens: true
+
+        config :pleroma, :rate_limit,
+          search: [{1000, 10}, {1000, 30}],
+          timeline: {500, 3},
+          app_account_creation: {1_800_000, 25},
+          relations_actions: {10_000, 10},
+          relation_id_action: {60_000, 2},
+          statuses_actions: {10_000, 15},
+          status_id_action: {60_000, 3},
+          authentication: {60_000, 15}
 
         config :pleroma, Pleroma.Repo,
           adapter: Ecto.Adapters.Postgres,
@@ -72,7 +144,8 @@ in
           subject: "mailto:shibayashi@cypherpunk.observer",
           public_key: "BAAFL_q8nM3gu75uK4VfcNQEmkn8wn3At_xl1gf3AN4ZqqrAHNleOYy78du2TdJyd7St6BDMc98ZZPaqGLRUHhg"
 
-        config :pleroma, configurable_from_database: true
+        # Settings changed in the admin interface would override this file.
+        config :pleroma, configurable_from_database: false
       ''
     ];
   };
