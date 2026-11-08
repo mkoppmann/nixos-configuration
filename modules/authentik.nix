@@ -1,14 +1,8 @@
 {
   config,
-  lib,
-  pkgs,
   ...
 }:
 let
-  inherit (lib.modules)
-    mkOverride
-    ;
-
   host = "idp.ncrypt.at";
 in
 {
@@ -83,8 +77,6 @@ in
       ];
     };
   };
-
-  services.postgresql.package = mkOverride 998 pkgs.postgresql_16_jit;
 
   environment.persistence."/persist".directories = [
     "/var/lib/private/authentik"
