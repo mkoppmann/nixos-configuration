@@ -128,6 +128,7 @@ pkgs.testers.runNixOSTest {
         dig = "dig +short +time=2 +tries=1"
         assert client.succeed(f"{dig} @10.100.0.1 idp.ncrypt.at A").strip() == "10.100.0.1"
         assert client.succeed(f"{dig} @10.100.0.1 idp.ncrypt.at AAAA").strip() == ""
+        assert client.succeed(f"{dig} @10.100.0.1 media.communicating.cypherpunk.observer A").strip() == "10.100.0.1"
         client.fail(f"{dig} @server idp.ncrypt.at A")
 
     with subtest("SSH answers only through WireGuard"):

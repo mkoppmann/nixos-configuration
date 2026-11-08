@@ -28,7 +28,7 @@ Nextcloud's packaged apps are Calendar, Contacts, Notes, Tasks and User OIDC; au
 - Login form submissions are rate-limited per client address to 10 per minute with a burst of 20: Authentik's flow executor, Vaultwarden's token endpoint and Nextcloud's `/login`. Only POST requests count; exceeding the limit returns 429. The applications' own login throttling applies as well.
 
 - Matrix discovery is served on `ncrypt.at`. Login/logout/refresh compatibility routes go to MAS; other `/_matrix` and `/_synapse/client` routes go to Synapse; `/_synapse/mas` is not exposed. Other requests to the Matrix host return 404.
-- Pleroma media redirects to `media.communicating.cypherpunk.observer`, which proxies and caches media. `/proxy` on the main Pleroma host returns 404.
+- Pleroma media redirects to `media.communicating.cypherpunk.observer`, which proxies and caches media. `/proxy` on the main Pleroma host returns 404. Pleroma’s admin API, admin frontend and dashboards (`/api/v1/pleroma/admin`, `/pleroma/admin`, `/pleroma/live_dashboard`, `/pleroma/oban`) answer only WireGuard addresses.
 - Authentik, Vaultwarden and the photo proxy enable WebSocket forwarding. Actual has its own cross-origin isolation headers and retains the application's CSP. Header policies vary by host and location.
 - The configured limits differ: Nextcloud `16G`, Synapse `100M` with unlimited Nginx request bodies on its proxy locations, Pleroma's main virtual host `100m`, and the photo proxy `50000M` with 600-second proxy/send timeouts. Other limits come from application and module defaults.
 
@@ -47,7 +47,7 @@ Both sites are built from their repositories with their own locked nixpkgs and s
 | Network | Static `ens3`; DHCP and NetworkManager disabled |
 | IPv4 | `152.53.35.165/22`, gateway `152.53.32.1` |
 | IPv6 | `2a0a:4cc0:100:23::bad:c0de/64`, gateway `fe80::1` on `ens3` |
-| DNS resolver | [Unbound](../modules/dns.nix) on `127.0.0.1`, `::1` and `10.100.0.1`, forwarding over TLS to `dot1.applied-privacy.net` and resolving directly from the authoritative servers if that fails; for WireGuard clients it answers `idp.ncrypt.at` with `10.100.0.1` and without IPv6 address, so Authentik sees WireGuard clients by their tunnel address |
+| DNS resolver | [Unbound](../modules/dns.nix) on `127.0.0.1`, `::1` and `10.100.0.1`, forwarding over TLS to `dot1.applied-privacy.net` and resolving directly from the authoritative servers if that fails; for WireGuard clients it answers `idp.ncrypt.at`, `communicating.cypherpunk.observer` and `media.communicating.cypherpunk.observer` with `10.100.0.1` and without IPv6 address, so those requests arrive from the tunnel address |
 | Firewall openings | Public: TCP `80`, `443`, UDP `51820`; on `wg0` only: TCP `22`, TCP and UDP `53`. The initrd has no firewall; its unlock SSH listens on TCP `2222` |
 | WireGuard | `wg0`, `10.100.0.1/24`; peers `peer2`–`peer6` at `10.100.0.2`–`10.100.0.6`, each with a preshared key; keepalive 25 seconds; peers reach Apollo and the internet, but not each other |
 | NAT | NixOS-managed NAT from `wg0` through `ens3` |

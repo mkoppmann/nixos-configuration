@@ -215,6 +215,17 @@ in
       locations."/proxy" = {
         return = "404";
       };
+
+      # Admin API, admin frontend and dashboards only from WireGuard. The
+      # resolver for WireGuard clients points this host at the tunnel.
+      locations."~ ^/(api/v1/pleroma/admin|pleroma/(admin|live_dashboard|oban))(/|$)" = {
+        recommendedProxySettings = false;
+        proxyPass = "http://phoenix";
+        extraConfig = ''
+          allow 10.100.0.0/24;
+          deny all;
+        '';
+      };
     };
 
     virtualHosts."media.communicating.cypherpunk.observer" = {
