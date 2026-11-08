@@ -17,6 +17,10 @@
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # The sites build with their own locked nixpkgs, so Apollo's updates
+    # cannot break them.
+    website.url = "github:mkoppmann/website";
+    wtcvss.url = "github:mkoppmann/wtcvss";
   };
 
   outputs =
