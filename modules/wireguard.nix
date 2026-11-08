@@ -20,6 +20,18 @@ in
     }
   ) peers;
 
+  # Peers reach Apollo and, through NAT, the internet, but not each other.
+  # The iptables firewall has no forward filtering of its own.
+  networking.firewall = {
+    extraCommands = ''
+      iptables -w -D FORWARD -i wg0 -o wg0 -j DROP 2>/dev/null || true
+      iptables -w -I FORWARD -i wg0 -o wg0 -j DROP
+    '';
+    extraStopCommands = ''
+      iptables -w -D FORWARD -i wg0 -o wg0 -j DROP 2>/dev/null || true
+    '';
+  };
+
   networking.wireguard = {
     enable = true;
     interfaces.wg0 = {
