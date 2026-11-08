@@ -50,7 +50,8 @@ in
           registrations_open: false,
           cleanup_attachments: true,
           safe_dm_mentions: true,
-          static_dir: "/var/lib/pleroma/static/"
+          static_dir: "/var/lib/pleroma/static/",
+          remote_post_retention_days: 365
 
         config :pleroma, :restrict_unauthenticated,
           timelines: %{local: :if_instance_is_private, federated: true}
@@ -148,6 +149,23 @@ in
         config :pleroma, configurable_from_database: false
       ''
     ];
+  };
+
+  # Pleroma keeps every remote post it ever received. This deletes remote
+  # threads older than remote_post_retention_days, except threads with local
+  # activity, bookmarked ones and non-public ones.
+  systemd.services.pleroma-prune = {
+    description = "Delete old remote Pleroma posts";
+    startAt = "*-*-02 04:00:00 Europe/Vienna";
+    environment.RELEASE_COOKIE = "/var/lib/pleroma/.cookie";
+    path = [ pkgs.bash ];
+    serviceConfig = {
+      Type = "oneshot";
+      User = config.services.pleroma.user;
+      Group = config.services.pleroma.group;
+      WorkingDirectory = "~";
+      ExecStart = "${config.services.pleroma.package}/bin/pleroma_ctl database prune_objects --keep-threads --keep-non-public --prune-orphaned-activities";
+    };
   };
 
   systemd.services.pleroma.path = [
