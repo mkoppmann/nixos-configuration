@@ -13,7 +13,7 @@ nix fmt
 nix flake check --no-build --all-systems
 ```
 
-`--no-build` evaluates the complete `x86_64-linux` system without building it. [CI](../.github/workflows/check.yml) runs on every push: it scans the Git history for secrets and builds every flake check (the system closure and NixOS VM tests). Do not deploy a commit whose CI run failed.
+`--no-build` evaluates the complete `x86_64-linux` system without building it. [CI](../.github/workflows/check.yml) runs on every push: it scans the Git history for secrets and builds every flake check (the system closure and NixOS VM tests). Its own build results go to the public Cachix cache `mkoppmann-apollo`, so later runs rebuild only what changed. Apollo does not use that cache. Do not deploy a commit whose CI run failed.
 
 ## Deployment
 
