@@ -61,10 +61,10 @@ ssh -t -p 2222 -i /PATH/TO/ADMINISTRATOR_KEY root@152.53.35.165 \
   systemd-tty-ask-password-agent --watch
 ```
 
-Verify the separate initrd host fingerprint and enter the ZFS unlock secret at the password-agent prompt. SSH may disconnect as boot transitions. After boot, normal access is:
+Verify the separate initrd host fingerprint and enter the ZFS unlock secret at the password-agent prompt. SSH may disconnect as boot transitions. After boot, SSH is reachable only through WireGuard:
 
 ```bash
-ssh -p 22 -i /PATH/TO/ADMINISTRATOR_KEY mcp@152.53.35.165
+ssh -i /PATH/TO/ADMINISTRATOR_KEY mcp@10.100.0.1
 ```
 
-If SSH/unlock is unavailable, use the provider console or rescue environment. The configured password hash does not recover the plaintext sudo password. Disk encryption has no documented bypass; independent backup credentials provide the alternative recovery path.
+If WireGuard, SSH or unlock is unavailable, use the provider console or rescue environment. The configured password hash does not recover the plaintext sudo password. Disk encryption has no documented bypass; independent backup credentials provide the alternative recovery path.
