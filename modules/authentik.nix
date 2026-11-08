@@ -6,15 +6,8 @@
 let
   host = "idp.ncrypt.at";
 
-  # Upstream Authentik takes the first X-Forwarded-For entry as the client
-  # address, so Nginx replaces whatever the client sent instead of appending.
-  proxyHeaders = ''
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $remote_addr;
-    proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_set_header X-Forwarded-Host $host;
-  '';
+  # Upstream Authentik takes the first X-Forwarded-For entry.
+  proxyHeaders = (import ../lib/nginx-proxy.nix).clientAddressHeaders;
 
   # Real copies: Authentik rejects blueprints that resolve to a path outside
   # this directory, which rules out symlinks into other store paths.

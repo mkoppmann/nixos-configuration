@@ -4,6 +4,13 @@
 }:
 let
   inherit (config.sops) placeholder;
+
+  # Synapse takes the first X-Forwarded-For entry as the client address.
+  synapse = extraConfig: {
+    proxyPass = "http://127.0.0.1:8008";
+    recommendedProxySettings = false;
+    extraConfig = (import ../lib/nginx-proxy.nix).clientAddressHeaders + extraConfig;
+  };
 in
 {
   sops = {
@@ -124,26 +131,10 @@ in
         proxyPass = "http://127.0.0.1:8091";
       };
 
-      locations."/_matrix" = {
-        extraConfig = ''
-          client_max_body_size 0;
-        '';
-        proxyPass = "http://127.0.0.1:8008";
-      };
+      locations."/_matrix" = synapse "client_max_body_size 0;";
 
-      locations."/_synapse/client" = {
-        extraConfig = ''
-          client_max_body_size 0;
-        '';
-        proxyPass = "http://127.0.0.1:8008";
-      };
-
-      locations."/_synapse/mas" = {
-        extraConfig = ''
-          client_max_body_size 0;
-        '';
-        proxyPass = "http://127.0.0.1:8008";
-      };
+      locations."/_synapse/client" = synapse "client_max_body_size 0;";
+      locations."/_synapse/mas" = synapse "client_max_body_size 0;";
     };
   };
 }
