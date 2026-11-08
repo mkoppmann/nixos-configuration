@@ -5,28 +5,9 @@
   ...
 }:
 let
-  backup = config.services.postgresqlBackup;
-  declaredDatabases = lib.unique config.services.postgresql.ensureDatabases;
-  missingDatabases = lib.subtractLists backup.databases declaredDatabases;
-  globalsDirectory = "${backup.location}/globals";
+  globalsDirectory = "/var/backup/postgresql/globals";
 in
 {
-  assertions = [
-    {
-      assertion = backup.enable;
-      message = "Apollo PostgreSQL backup: services.postgresqlBackup.enable must remain true.";
-    }
-    {
-      assertion = !backup.backupAll;
-      message = "Apollo PostgreSQL backup: services.postgresqlBackup.backupAll must remain false to retain custom-format per-database dumps.";
-    }
-    {
-      assertion = missingDatabases == [ ];
-      message = "Apollo PostgreSQL backup: missing declared databases: ${lib.concatStringsSep ", " missingDatabases}.";
-    }
-  ];
-
-  # Databases and roles are declared by the modules of their services.
   environment.persistence."/persist".directories = [
     "/var/backup"
     "/var/lib/postgresql"
@@ -45,45 +26,32 @@ in
     '';
   };
 
+  # The Borg job starts the dumps; see backup.nix.
   services.postgresqlBackup = {
     enable = true;
-    backupAll = false;
     startAt = [ ];
     location = "/var/backup/postgresql";
     compression = "none";
     pgdumpOptions = "--format=custom";
-
-    # Include declarations contributed by service modules.
-    databases = declaredDatabases;
+    # Databases are declared by the modules of their services.
+    databases = lib.unique config.services.postgresql.ensureDatabases;
   };
 
-  systemd.tmpfiles.rules = [
-    "d '${globalsDirectory}' 0700 postgres postgres - -"
-  ];
+  systemd.tmpfiles.rules = [ "d ${globalsDirectory} 0700 postgres postgres - -" ];
 
+  # Roles, their password hashes and memberships are not part of the dumps.
   systemd.services.postgresql-globals-backup = {
     description = "Backup of PostgreSQL globals";
     requires = [ "postgresql.target" ];
     after = [ "postgresql.target" ];
-    unitConfig.RequiresMountsFor = [ globalsDirectory ];
-    inherit (backup) startAt;
-
-    path = [
-      pkgs.coreutils
-      config.services.postgresql.package
-    ];
-    environment = {
-      PGHOST = "/run/postgresql";
-      PGPORT = toString config.services.postgresql.settings.port;
-      PGUSER = "postgres";
-      PG_BACKUP_DIR = globalsDirectory;
-    };
-    script = builtins.readFile ../scripts/postgresql-globals-backup.sh;
-
+    path = [ config.services.postgresql.package ];
+    script = ''
+      pg_dumpall --globals-only > ${globalsDirectory}/globals.in-progress.sql
+      mv ${globalsDirectory}/globals.in-progress.sql ${globalsDirectory}/globals.sql
+    '';
     serviceConfig = {
       Type = "oneshot";
       User = "postgres";
-      Group = "postgres";
       UMask = "0077";
     };
   };

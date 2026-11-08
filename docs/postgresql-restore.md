@@ -4,7 +4,7 @@
 
 Use logical restoration with PostgreSQL 16 tools and the application versions appropriate to the selected data. The live cluster under `/var/lib/postgresql/16` is excluded from Borg. Application `.sql` files are custom-format archives for `pg_restore`; globals are plain SQL for `psql`.
 
-Run in root Bash with `set -euo pipefail` and `umask 077`. Set `recovery_case` to the private archive-staging directory prepared in [recovery](recovery.md#select-and-extract-an-archive). Keep application clients, background jobs, setup/migration units and backup writers stopped. These steps require an isolated replacement or the [targeted-restore preservation procedure](recovery.md#targeted-restoration-on-apollo).
+Run in root Bash with `set -euo pipefail` and `umask 077`, with an archive extracted to `/recovery` as described in [recovery](recovery.md#extract-an-archive). Keep the affected applications, their background jobs and setup units stopped.
 
 ## Prepare roles and dependencies
 
@@ -19,15 +19,15 @@ sudo -u postgres psql -X --host=/run/postgresql --dbname=postgres \
 
 Require both services to be ready. The target includes the server and separate provisioning service in the [locked PostgreSQL module](https://github.com/NixOS/nixpkgs/blob/f546a0b3db840c7c8a7c705265fc6b42bcbfe278/nixos/modules/services/databases/postgresql.nix). Apollo uses peer authentication: OS user `postgres` can administer all databases without an application password.
 
-Declarative provisioning creates the [configured databases and owning roles](backups.md#consistency-and-coverage). It does not reconstruct arbitrary role attributes, memberships, tablespaces or extension packages. Inspect the selected exports for those dependencies and verify source encoding, locale provider/collation, database settings, owners and grants. Supply matching extension binaries and required tablespace directories before restoration. Do not suppress missing-owner/ACL errors and treat that as equivalent recovery.
+Declarative provisioning creates the [configured databases and owning roles](backups.md#nightly-run). It does not reconstruct arbitrary role attributes, memberships, tablespaces or extension packages. Inspect the selected exports for those dependencies and verify source encoding, locale provider/collation, database settings, owners and grants. Supply matching extension binaries and required tablespace directories before restoration. Do not suppress missing-owner/ACL errors and treat that as equivalent recovery.
 
 ## Restore globals
 
 Preserve the original export and privately review a copy:
 
 ```bash
-globals_dump="$recovery_case/extracted/persist/var/backup/postgresql/globals/globals.sql"
-globals_reviewed="$recovery_case/globals-reviewed.sql"
+globals_dump="/recovery/persist/var/backup/postgresql/globals/globals.sql"
+globals_reviewed="/recovery/globals-reviewed.sql"
 test -s "$globals_dump"
 test ! -e "$globals_reviewed"
 cp -- "$globals_dump" "$globals_reviewed"
@@ -51,14 +51,14 @@ Choose one database from the backup inventory; this example uses Nextcloud:
 
 ```bash
 restore_database=nextcloud
-restore_dump="$recovery_case/extracted/persist/var/backup/postgresql/$restore_database.sql"
+restore_dump="/recovery/persist/var/backup/postgresql/$restore_database.sql"
 test -s "$restore_dump"
-sudo -u postgres pg_restore --list < "$restore_dump" > "$recovery_case/$restore_database-toc.txt"
+sudo -u postgres pg_restore --list < "$restore_dump" > "/recovery/$restore_database-toc.txt"
 sudo -u postgres pg_restore --schema-only --create < "$restore_dump" \
-  > "$recovery_case/$restore_database-schema.sql"
+  > "/recovery/$restore_database-schema.sql"
 ```
 
-Review the outputs privately. Confirm the original database name inside the archive is exactly the intended destination, and check ownership, extensions, creation properties/settings and grants. Root opens the input/output files in these examples so the `postgres` process need not traverse private staging directories. Verify the export hashes against the selected capture manifest before use.
+Review the outputs privately. Confirm the original database name inside the archive is exactly the intended destination, and check ownership, extensions, creation properties/settings and grants. Root opens the input/output files in these examples so the `postgres` process need not traverse private staging directories.
 
 ## Restore and verify
 

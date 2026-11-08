@@ -11,10 +11,9 @@ On a machine with Nix and flakes enabled:
 ```bash
 nix fmt
 nix flake check --no-build --all-systems
-python3 -m unittest discover -s tests -p 'test_*.py'
 ```
 
-`--no-build` evaluates the complete `x86_64-linux` system without building it. [CI](../.github/workflows/check.yml) runs on every push: it scans the Git history for secrets, runs the Python tests and builds every flake check (the system closure and NixOS VM tests). Do not deploy a commit whose CI run failed.
+`--no-build` evaluates the complete `x86_64-linux` system without building it. [CI](../.github/workflows/check.yml) runs on every push: it scans the Git history for secrets and builds every flake check (the system closure and NixOS VM tests). Do not deploy a commit whose CI run failed.
 
 ## Deployment
 
@@ -29,7 +28,7 @@ journalctl -u nixos-upgrade.service -n 100
 
 To deploy exactly the lockfile from Git instead, run `sudo nixos-rebuild switch --flake .#apollo`. Never use `path:.#apollo`: a `path:` flake copies untracked files from `/etc/nixos` into the world-readable Nix store.
 
-Until the coordinated backup is replaced, avoid deploying while `apollo-backup.service` is active (daily capture at 03:00). After activation, check `systemctl --failed` and application logins. A switch may restart Nginx and briefly interrupt every site. A system-generation rollback does not undo application data migrations.
+After activation, check `systemctl --failed` and application logins. A switch may restart Nginx and briefly interrupt every site. A system-generation rollback does not undo application data migrations.
 
 To publish the server's lockfile, copy `/etc/nixos/flake.lock` into the repository and commit it.
 
@@ -44,9 +43,7 @@ Each run leaves an audit trail in `journalctl -u nixos-upgrade.service`: `nix fl
 ```bash
 systemctl --failed
 systemctl list-timers --all
-sudo apollo-backup status
-sudo apollo-backup check-resumed
-sudo apollo-alert status
+sudo borg-job-sidechest info --last 1
 sudo zpool status rpool
 findmnt --mountpoint /persist
 findmnt --mountpoint /var/log
