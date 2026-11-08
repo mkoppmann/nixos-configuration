@@ -31,6 +31,8 @@ pkgs.testers.runNixOSTest {
 
       services.borgbackup.jobs.sidechest.repo = lib.mkForce repo;
       services.postgresql = {
+        # The VM has far less memory than Apollo.
+        settings.shared_buffers = lib.mkForce "128MB";
         ensureDatabases = [ "app" ];
         ensureUsers = [
           {
