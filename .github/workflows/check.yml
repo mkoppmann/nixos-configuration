@@ -38,6 +38,12 @@ jobs:
             extra-trusted-public-keys = nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=
             system-features = nixos-test benchmark big-parallel kvm
 
+      # Forks get no token and only download from the cache.
+      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+        with:
+          name: mkoppmann-apollo
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+
       - name: Scan history for secrets
         run: nix run --inputs-from . nixpkgs#gitleaks -- git --redact --verbose .
 
