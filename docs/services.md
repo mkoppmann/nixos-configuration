@@ -48,7 +48,8 @@ Both sites are built from their repositories with their own locked nixpkgs and s
 | IPv4 | `152.53.35.165/22`, gateway `152.53.32.1` |
 | IPv6 | `2a0a:4cc0:100:23::bad:c0de/64`, gateway `fe80::1` on `ens3` |
 | DNS resolvers | Cloudflare `1.1.1.1`, `1.0.0.1`, `2606:4700:4700::1111`, `2606:4700:4700::1001` |
-| Firewall openings | TCP `22`, `80`, `443`, `2222`; UDP `51820` |
+| Resolver for WireGuard clients | [Unbound](../modules/dns.nix) on `10.100.0.1`, forwarding over TLS to `dot1.applied-privacy.net`; answers `idp.ncrypt.at` with `10.100.0.1` and without IPv6 address, so Authentik sees WireGuard clients by their tunnel address |
+| Firewall openings | Public: TCP `80`, `443`, UDP `51820`; on `wg0` only: TCP `22`, TCP and UDP `53`. The initrd has no firewall; its unlock SSH listens on TCP `2222` |
 | WireGuard | `wg0`, `10.100.0.1/24`; peers `peer2`–`peer6` at `10.100.0.2`–`10.100.0.6`, each with a preshared key; keepalive 25 seconds |
 | NAT | NixOS-managed NAT from `wg0` through `ens3` |
 | Administrator | `mcp`, wheel member, Fish shell, manually provisioned password hash |

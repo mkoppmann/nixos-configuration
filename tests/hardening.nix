@@ -15,6 +15,7 @@ pkgs.testers.runNixOSTest {
     {
       imports = [
         inputs.impermanence.nixosModules.impermanence
+        ../modules/dns.nix
         ../modules/kernel.nix
         ../modules/nginx.nix
         ../modules/ssh.nix
@@ -60,7 +61,10 @@ pkgs.testers.runNixOSTest {
   nodes.client =
     { pkgs, ... }:
     {
-      environment.systemPackages = [ pkgs.curl ];
+      environment.systemPackages = [
+        pkgs.curl
+        pkgs.dig
+      ];
       networking.wireguard.interfaces.wg0 = {
         ips = [ "10.100.0.2/24" ];
         privateKeyFile = wgPrivateKey "peer1";
@@ -109,6 +113,13 @@ pkgs.testers.runNixOSTest {
 
     client.wait_for_unit("wireguard-wg0.service")
     client.wait_until_succeeds("ping -c 1 -W 1 10.100.0.1")
+
+    with subtest("The resolver answers WireGuard clients with the tunnel address"):
+        server.wait_for_unit("unbound.service")
+        dig = "dig +short +time=2 +tries=1"
+        assert client.succeed(f"{dig} @10.100.0.1 idp.ncrypt.at A").strip() == "10.100.0.1"
+        assert client.succeed(f"{dig} @10.100.0.1 idp.ncrypt.at AAAA").strip() == ""
+        client.fail(f"{dig} @server idp.ncrypt.at A")
 
     with subtest("SSH answers only through WireGuard"):
         client.succeed("${ssh} -i /root/declared mcp@10.100.0.1 true")

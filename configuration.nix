@@ -9,6 +9,7 @@
     ./modules/auto-upgrade.nix
     ./modules/backup.nix
     ./modules/boot.nix
+    ./modules/dns.nix
     ./modules/element-web.nix
     ./modules/impermanence.nix
     ./modules/kernel.nix
