@@ -59,12 +59,12 @@ in
     virtualHosts."www.cypherpunk.observer" = {
       enableACME = true;
       forceSSL = true;
-      root = "/srv/www/cypherpunk.observer/";
 
       extraConfig = default-headers;
 
-      locations."~ /\.git".extraConfig = ''
-        deny all;
+      locations."/".extraConfig = ''
+        default_type text/html;
+        return 200 "";
       '';
     };
 
