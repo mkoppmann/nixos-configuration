@@ -261,3 +261,91 @@ entries:
       target: !KeyOf recovery-admin-gate
     attrs:
       policy: !KeyOf superuser-outside-wireguard
+
+  # Admin sessions end as soon as their IP address changes, so a stolen admin
+  # session cookie is useless elsewhere. Admins sign in from a fixed WireGuard
+  # address anyway. Without ASN data, which private addresses never have, this
+  # binding means: same IP or log out.
+  - model: authentik_policies_expression.expressionpolicy
+    id: superuser
+    identifiers:
+      name: Pending user is superuser
+    attrs:
+      expression: |
+        user = request.context.get("pending_user")
+        return bool(user and user.is_superuser)
+  - model: authentik_stages_user_login.userloginstage
+    id: ip-bound-login
+    identifiers:
+      name: Login bound to the client IP
+    attrs:
+      network_binding: bind_asn_network_ip
+      geoip_binding: no_binding
+
+  # The flows' regular logins (100), referenced by id because policy bindings
+  # need the binding's policy target, which only !KeyOf returns. Policies must
+  # see the identified user, so they are evaluated when the stage is reached.
+  - model: authentik_flows.flowstagebinding
+    id: authentication-login
+    identifiers:
+      target: !Find [authentik_flows.flow, [slug, default-authentication-flow]]
+      order: 100
+    attrs:
+      evaluate_on_plan: false
+      re_evaluate_policies: true
+  - model: authentik_flows.flowstagebinding
+    id: recovery-login
+    identifiers:
+      target: !Find [authentik_flows.flow, [slug, default-recovery-flow]]
+      order: 100
+    attrs:
+      evaluate_on_plan: false
+      re_evaluate_policies: true
+
+  - model: authentik_flows.flowstagebinding
+    id: authentication-ip-bound-login
+    identifiers:
+      target: !Find [authentik_flows.flow, [slug, default-authentication-flow]]
+      stage: !KeyOf ip-bound-login
+    attrs:
+      order: 99
+      evaluate_on_plan: false
+      re_evaluate_policies: true
+  - model: authentik_policies.policybinding
+    identifiers:
+      order: 0
+      target: !KeyOf authentication-ip-bound-login
+    attrs:
+      policy: !KeyOf superuser
+  # The regular login only for everyone else; a second login would replace
+  # the binding.
+  - model: authentik_policies.policybinding
+    identifiers:
+      order: 0
+      target: !KeyOf authentication-login
+    attrs:
+      policy: !KeyOf superuser
+      negate: true
+
+  - model: authentik_flows.flowstagebinding
+    id: recovery-ip-bound-login
+    identifiers:
+      target: !Find [authentik_flows.flow, [slug, default-recovery-flow]]
+      stage: !KeyOf ip-bound-login
+    attrs:
+      order: 99
+      evaluate_on_plan: false
+      re_evaluate_policies: true
+  - model: authentik_policies.policybinding
+    identifiers:
+      order: 0
+      target: !KeyOf recovery-ip-bound-login
+    attrs:
+      policy: !KeyOf superuser
+  - model: authentik_policies.policybinding
+    identifiers:
+      order: 0
+      target: !KeyOf recovery-login
+    attrs:
+      policy: !KeyOf superuser
+      negate: true
