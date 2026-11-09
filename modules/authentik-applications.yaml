@@ -19,6 +19,7 @@ context:
     refresh_token_validity: days=30
     include_claims_in_id_token: true
     issuer_mode: per_provider
+    signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
     logout_method: backchannel
 
 entries:
@@ -71,7 +72,6 @@ entries:
           url: https://budget.ncrypt.at/openid/callback
       refresh_token_threshold: hours=1
       sub_mode: hashed_user_id
-      signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-openid]]
         - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-email]]
@@ -94,7 +94,6 @@ entries:
           url: https://photos.mkoppmann.at/user-settings
       refresh_token_threshold: seconds=0
       sub_mode: hashed_user_id
-      signing_key: !Find [authentik_crypto.certificatekeypair, [name, idp.ncrypt.at]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-openid]]
         - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-email]]
@@ -114,7 +113,6 @@ entries:
       logout_uri: https://auth.matrix.ncrypt.at/upstream/backchannel-logout/01KHPE6SE3SVE65KJY6RHN4G7J
       refresh_token_threshold: seconds=0
       sub_mode: hashed_user_id
-      signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-openid]]
         - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-email]]
@@ -135,7 +133,6 @@ entries:
       refresh_token_threshold: seconds=0
       # Nextcloud links accounts by username; changing this breaks them.
       sub_mode: user_username
-      signing_key: !Find [authentik_crypto.certificatekeypair, [name, idp.ncrypt.at]]
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-openid]]
         - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-email]]
