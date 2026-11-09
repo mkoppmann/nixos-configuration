@@ -9,7 +9,7 @@ The [backup module](../modules/backup.nix) uses the upstream `services.borgbacku
 `borgbackup-job-sidechest.timer` starts the job at 03:00 Europe/Vienna; a run missed while Apollo was down starts after boot. Applications keep running. The job:
 
 1. Dumps every database declared in `services.postgresql.ensureDatabases` to `/var/backup/postgresql/NAME.sql` (custom format for `pg_restore`, despite the suffix) and the roles to `globals/globals.sql` (plain SQL for `psql`). The previous dump of each database is kept as `NAME.prev.sql`.
-2. Snapshots `rpool/safe/persist` and `rpool/safe/log` in one atomic `zfs snapshot` and mounts both read-only inside the unit's private mount namespace.
+2. Snapshots `rpool/safe/persist` and `rpool/safe/log` in one atomic `zfs snapshot` and mounts both read-only inside the unit’s private mount namespace.
 3. Archives the snapshots as `persist/…` and `var/log/…`, prunes and compacts.
 4. Unmounts and destroys the snapshots, also after a failure.
 
@@ -26,9 +26,9 @@ Each dump is transactionally consistent. Application files are crash-consistent 
 | Credentials | sops secrets `borg_passphrase` and `borg_ssh_key` |
 | Excluded | `persist/var/lib/postgresql` (the dumps cover it), `persist/root/.cache/borg`, `persist/var/lib/systemd/random-seed`, `var/log/nginx/access.log` |
 
-Archives do not contain the Nix store, the ESP, ZFS properties or the photo server's data. The Storage Box keeps its own snapshots of the repository. The repository key is exported to KeePass; see [recovery](recovery.md#independent-prerequisites).
+Archives do not contain the Nix store, the ESP, ZFS properties or the photo server’s data. The Storage Box keeps its own snapshots of the repository. The repository key is exported to KeePass; see [recovery](recovery.md#independent-prerequisites).
 
-`borgbackup-check-sidechest.timer` runs `borg check --verify-data --last 1` on the first of every month: it checks the repository's consistency on the Storage Box and reads back all data of the latest archive.
+`borgbackup-check-sidechest.timer` runs `borg check --verify-data --last 1` on the first of every month: it checks the repository’s consistency on the Storage Box and reads back all data of the latest archive.
 
 ## Local snapshots
 

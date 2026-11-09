@@ -6,7 +6,7 @@ The [monitoring module](../modules/monitoring.nix) reports problems by mail to `
 
 | Source | Reports |
 | --- | --- |
-| Any systemd service entering the failed state | Mail from `notify-failure@UNIT.service` with the unit's status and last 30 journal lines |
+| Any systemd service entering the failed state | Mail from `notify-failure@UNIT.service` with the unit’s status and last 30 journal lines |
 | ZFS event daemon | Pool and device errors and finished scrubs (monthly) |
 | `disk-space-check.timer`, daily | Fails, and so mails, while `rpool` or `/boot` is more than 80% full |
 | healthchecks.io | The nightly backup and a heartbeat every five minutes; alerts when a ping is late |

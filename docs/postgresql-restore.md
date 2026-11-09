@@ -62,7 +62,7 @@ Review the outputs privately. Confirm the original database name inside the arch
 
 ## Restore and verify
 
-The following command **drops and recreates the database named inside the archive**. Use it only for the confirmed application database on an isolated replacement, or after preserving and stopping that application's current state on Apollo:
+The following command **drops and recreates the database named inside the archive**. Use it only for the confirmed application database on an isolated replacement, or after preserving and stopping that application’s current state on Apollo:
 
 ```bash
 sudo -u postgres pg_restore --host=/run/postgresql --dbname=postgres \

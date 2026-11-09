@@ -55,11 +55,11 @@ These paths live directly on the persistent dataset and need no additional bind 
 
 ## Ownership and file behavior
 
-Static service data must retain its service owner and file-specific permissions. Impermanence's creation settings do not repair arbitrary existing trees. Do not apply one recursive owner or mode across all restored state.
+Static service data must retain its service owner and file-specific permissions. Impermanence’s creation settings do not repair arbitrary existing trees. Do not apply one recursive owner or mode across all restored state.
 
-Actual, Authentik and MAS use `DynamicUser` and `StateDirectory`. Their ordinary service paths resolve through the host's `/var/lib/private` tree. Both `/var/lib/private` and `/persist/var/lib/private` are restricted to `root:root 0700` by activation, without recursively changing their children. Dynamic account IDs and ID-mapped ownership can differ across boots or hosts; inspect service-namespace access rather than assigning old numeric UIDs. See [secret access](secrets.md#provisioning-and-access).
+Actual, Authentik and MAS use `DynamicUser` and `StateDirectory`. Their ordinary service paths resolve through the host’s `/var/lib/private` tree. Both `/var/lib/private` and `/persist/var/lib/private` are restricted to `root:root 0700` by activation, without recursively changing their children. Dynamic account IDs and ID-mapped ownership can differ across boots or hosts; inspect service-namespace access rather than assigning old numeric UIDs. See [secret access](secrets.md#provisioning-and-access).
 
-The random-seed service explicitly requires and follows Impermanence's generated file-persistence service. On a replacement, leave the backing seed absent so systemd can initialise a new one. Persist the Fish and logrotate directories rather than individual files because both replace state files atomically.
+The random-seed service explicitly requires and follows Impermanence’s generated file-persistence service. On a replacement, leave the backing seed absent so systemd can initialise a new one. Persist the Fish and logrotate directories rather than individual files because both replace state files atomically.
 
 ## Disposable state and backup boundaries
 
