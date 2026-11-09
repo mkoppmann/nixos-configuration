@@ -82,24 +82,13 @@ in
   systemd.services = {
     authentik-migrate = {
       requires = [ "postgresql.service" ];
-      after = [
-        "network-online.target"
-        "postgresql.service"
-      ];
+      after = [ "postgresql.service" ];
     };
 
     authentik-worker = {
       serviceConfig.LoadCredential = [
         "${host}.pem:${config.security.acme.certs.${host}.directory}/fullchain.pem"
         "${host}.key:${config.security.acme.certs.${host}.directory}/key.pem"
-      ];
-    };
-
-    authentik = {
-      after = [
-        "network-online.target"
-        "redis-authentik.service"
-        "postgresql.service"
       ];
     };
   };
