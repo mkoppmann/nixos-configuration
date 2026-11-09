@@ -48,7 +48,7 @@
         ];
       };
 
-      formatter = forAllSystems (pkgs: pkgs.nixfmt);
+      formatter = forAllSystems (pkgs: pkgs.nixfmt-tree);
 
       devShells = forAllSystems (pkgs: {
         default = pkgs.mkShellNoCC {
