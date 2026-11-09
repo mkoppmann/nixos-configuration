@@ -46,6 +46,10 @@ in
     '';
   };
 
+  systemd.services.postgresql-setup.script = lib.mkAfter ''
+    psql -d postgres -c 'CREATE EXTENSION IF NOT EXISTS pg_stat_statements'
+  '';
+
   # The Borg job starts the dumps; see backup.nix.
   services.postgresqlBackup = {
     enable = true;
