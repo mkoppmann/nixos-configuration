@@ -4,8 +4,6 @@
   ...
 }:
 let
-  host = "idp.ncrypt.at";
-
   # Upstream Authentik takes the first X-Forwarded-For entry.
   proxyHeaders = (import ../lib/nginx-proxy.nix).clientAddressHeaders;
 
@@ -49,7 +47,6 @@ in
     settings = {
       avatars = "initials";
       blueprints_dir = blueprints;
-      cert_discovery_dir = "env://CREDENTIALS_DIRECTORY";
       disable_startup_analytics = true;
       disable_update_check = true;
       email = {
@@ -83,13 +80,6 @@ in
     authentik-migrate = {
       requires = [ "postgresql.service" ];
       after = [ "postgresql.service" ];
-    };
-
-    authentik-worker = {
-      serviceConfig.LoadCredential = [
-        "${host}.pem:${config.security.acme.certs.${host}.directory}/fullchain.pem"
-        "${host}.key:${config.security.acme.certs.${host}.directory}/key.pem"
-      ];
     };
   };
 

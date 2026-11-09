@@ -64,7 +64,6 @@ Paths below are configured readers or boot inputs. Files beneath persisted servi
 | `/run/secrets/nextcloud_admin_password` | sops secret `nextcloud_admin_password` for initial creation of administrator `ncroot` | `root:root 0400`; must remain nonempty for the setup service |
 | `/run/secrets/rendered/pleroma-secret.exs` | Template from `pleroma_secret_key_base` and `pleroma_vapid_private_key`; the VAPID public key is in Nix | `pleroma` reader, `0400`; the VAPID key pair must match |
 | `/run/secrets/rendered/vaultwarden.env` | Template from `vaultwarden_smtp_password`; systemd environment file | `root:root 0400` |
-| `/var/lib/acme/idp.ncrypt.at/fullchain.pem` and `key.pem` | ACME-managed certificate/key loaded by the Authentik worker | Preserve module-managed ownership and restrictive permissions |
 
 sops values are stored without quotes or trailing newline; templates insert them verbatim. Environment-file syntax is not shell syntax; do not source these files. The remaining MAS files still have to be preserved as a whole: the checkout cannot establish their complete contents.
 
@@ -74,7 +73,7 @@ Nextcloud’s `config.adminuser` and `config.adminpassFile` set administrator cr
 
 The normal Ed25519 SSH host key and the machine ID are sourced from `/persist/etc`, as listed in [storage](storage.md#retained-paths). Keep the private host key root-owned `0600` and the public key `0644`. The initrd host key is separate; reinstall boot artifacts after changing its source, and verify the resulting fingerprint. Its inclusion in boot artifacts means it may reside on the unencrypted ESP.
 
-Restore generated identities with their containing state: Synapse signing keys, MAS encryption/signing keys, Nextcloud instance configuration, Vaultwarden keys, Pleroma secrets/cookie and ACME account keys. Restoring database contents alone does not recover an application’s identity or encrypted data.
+Restore generated identities with their containing state: Synapse signing keys, MAS encryption/signing keys, Nextcloud instance configuration, Vaultwarden keys, Pleroma secrets/cookie, Authentik’s token signing key in its database and ACME account keys. Restoring database contents alone does not recover an application’s identity or encrypted data.
 
 MAS’s homeserver secret must match Synapse’s integration configuration. MAS local passwords are disabled, so the upstream login configuration in its runtime YAML is required for authentication.
 
