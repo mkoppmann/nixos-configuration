@@ -67,7 +67,12 @@ If the repository's key is damaged, `borg key import` restores it from the expor
    ```
 
    This restores the SSH host keys, the initrd host key in `/persist/credentials`, the sops host key and the checkout in `/persist/etc/nixos`.
-4. Install: `nixos-install --root /mnt --flake /mnt/persist/etc/nixos#apollo --no-root-passwd`.
+4. Install. The checkout belongs to `deploy`, and Nix refuses a repository owned by another user unless it is marked safe:
+
+   ```bash
+   git config --global --add safe.directory /mnt/persist/etc/nixos
+   nixos-install --root /mnt --flake /mnt/persist/etc/nixos#apollo --no-root-passwd
+   ```
 5. Boot with the applications held back, so that none of them initialises an empty database: append `systemd.mask=UNIT` arguments for `nginx.service`, the application services and `timers.target` in the boot menu. PostgreSQL may run.
 6. Restore the globals and databases as in [PostgreSQL restoration](postgresql-restore.md).
 7. Boot without the masks, check every application and run `sudo systemctl start borgbackup-job-sidechest.service` to confirm backups work from the new server.

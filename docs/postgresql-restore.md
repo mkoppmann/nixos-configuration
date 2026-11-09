@@ -17,7 +17,7 @@ sudo -u postgres psql -X --host=/run/postgresql --dbname=postgres \
   --set=ON_ERROR_STOP=1 --command='\l+'
 ```
 
-Require both services to be ready. The target includes the server and separate provisioning service in the [locked PostgreSQL module](https://github.com/NixOS/nixpkgs/blob/f546a0b3db840c7c8a7c705265fc6b42bcbfe278/nixos/modules/services/databases/postgresql.nix). Apollo uses peer authentication: OS user `postgres` can administer all databases without an application password.
+Require both services to be ready. The target includes the server and separate provisioning service in the NixOS PostgreSQL module. Apollo uses peer authentication: OS user `postgres` can administer all databases without an application password.
 
 Declarative provisioning creates the [configured databases and owning roles](backups.md#nightly-run). It does not reconstruct arbitrary role attributes, memberships, tablespaces or extension packages. Inspect the selected exports for those dependencies and verify source encoding, locale provider/collation, database settings, owners and grants. Supply matching extension binaries and required tablespace directories before restoration. Do not suppress missing-owner/ACL errors and treat that as equivalent recovery.
 

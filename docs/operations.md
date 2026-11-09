@@ -56,17 +56,18 @@ After a reboot, also check the retained service paths, Fish history and applicat
 
 Peers are declared in the [WireGuard module](../modules/wireguard.nix) as `peerN`, where `N` is the last octet of their tunnel address. Each has a preshared key in sops (`wireguard_psk_peerN`) in addition to its key pair.
 
-To add a peer, create its key pair on the device or with `wg genkey | tee private.key | wg pubkey`, add its public key under the next free name, and store a new preshared key in sops on Apollo, using the host key:
+To add a peer, create its key pair on the device or with `wg genkey | tee private.key | wg pubkey`, add its public key under the next free name, and store a new preshared key in sops on Apollo, using the host key, outside the checkout:
 
 ```bash
 sudo bash
-cd /etc/nixos
+cd /root && umask 077 && cp /etc/nixos/secrets/apollo.yaml .
 psk=$(wg genpsk)
-printf %s "$psk" | nix shell nixpkgs#jq -c jq -Rs . \
-  | SOPS_AGE_KEY_FILE=/persist/var/lib/sops-nix/key.txt nix shell nixpkgs#sops -c \
-    sops set --value-stdin secrets/apollo.yaml '["wireguard_psk_peerN"]'
+printf %s "$psk" | nix shell nixpkgs#sops nixpkgs#jq -c bash -c 'jq -Rs . | SOPS_AGE_KEY_FILE=/persist/var/lib/sops-nix/key.txt sops set --value-stdin apollo.yaml "[\"wireguard_psk_peerN\"]"'
 echo "$psk"   # for the client configuration only
+install -o mcp -m 644 apollo.yaml /home/mcp/ && rm apollo.yaml
 ```
+
+Then copy `apollo.yaml` into the checkout as described in [secrets](secrets.md#editing-secrets).
 
 Client configuration:
 

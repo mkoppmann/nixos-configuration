@@ -50,11 +50,11 @@ Paths below are configured readers or boot inputs. Files beneath persisted servi
 | `/run/secrets/borg_passphrase` | sops secret `borg_passphrase` for the Borg repository | `root:root 0400`; a new value cannot unlock existing archives; copy in KeePass |
 | `/run/secrets/borg_ssh_key` | sops secret `borg_ssh_key`: SSH client key authorised on the Storage Box, with trailing newline | `root:root 0400`; copy in KeePass |
 | `/run/secrets/healthchecks_backup_url`, `/run/secrets/healthchecks_heartbeat_url` | sops secrets: healthchecks.io ping URLs; anyone holding one can fake a ping | `root:root 0400` |
-| `/run/secrets/reporting_smtp_password` | sops secret `reporting_smtp_password`: password for `reporting@ncrypt.at` | `root:root 0400`; loaded into the SMTP worker using systemd credentials |
+| `/run/secrets/reporting_smtp_password` | sops secret `reporting_smtp_password`: password for `reporting@ncrypt.at` | `root:root 0400`; read by msmtp, so only root can send reports |
 | `/run/secrets/wireguard_private_key` | sops secret `wireguard_private_key` | `root:root 0400`; changing it requires peer coordination |
 | `/run/secrets/wireguard_psk_peer2` … `wireguard_psk_peer6` | sops secrets with the preshared key of each WireGuard peer, named after the last octet of its address | `root:root 0400`; each must match the peer’s client configuration |
 | `/run/secrets/actual_openid_client_secret` | sops secret `actual_openid_client_secret` for Actual's Authentik OIDC client | `root:root 0400`; passed to the dynamic user with `LoadCredential` |
-| `/run/secrets/rendered/authentik.env` | Template from `authentik_secret_key`, `authentik_smtp_password` and the OIDC client secrets `actual_openid_client_secret`, `immich_openid_client_secret`, `matrix_openid_client_secret` and `nextcloud_openid_client_secret`, which the applications blueprint reads; systemd environment file | `root:root 0400`; preserve the secret key with the database; each client secret must match the application’s copy |
+| `/run/secrets/rendered/authentik.env` | Template from `authentik_secret_key`, `authentik_smtp_password` and the OIDC client secrets `actual_openid_client_secret`, `immich_openid_client_secret`, `matrix_openid_client_secret` and `nextcloud_openid_client_secret`, which the applications blueprint reads; systemd environment file | `root:root 0400`; preserve the secret key with the database; Actual and Nextcloud read the same client secrets, Immich’s and MAS’s copies must match |
 | `/run/secrets/rendered/synapse-secrets.yaml` | Template from the `synapse_*` secrets, merged into Synapse's configuration together with the email section | `matrix-synapse` reader, `0400` |
 | `/var/lib/matrix-synapse/mas_secret` | Raw MAS/Synapse integration secret, same value as MAS's `homeserver_secret` | `matrix-synapse` reader, `0600` |
 | `/var/lib/private/matrix-authentication-service/secrets.yaml` | YAML containing MAS encryption/signing keys, provider/client settings and SMTP password | Dynamic MAS reader, `0600` |
@@ -68,7 +68,7 @@ Paths below are configured readers or boot inputs. Files beneath persisted servi
 
 sops values are stored without quotes or trailing newline; templates insert them verbatim. Environment-file syntax is not shell syntax; do not source these files. The remaining MAS files still have to be preserved as a whole: the checkout cannot establish their complete contents.
 
-Nextcloud's `config.adminuser` and `config.adminpassFile` set administrator credentials only during initial installation. Changing them does not rename an existing account or reset its password. The [locked Nextcloud module](https://github.com/NixOS/nixpkgs/blob/f546a0b3db840c7c8a7c705265fc6b42bcbfe278/nixos/modules/services/web-apps/nextcloud.nix) still loads and checks the password file on each setup-service invocation, including for an existing installation.
+Nextcloud's `config.adminuser` and `config.adminpassFile` set administrator credentials only during initial installation. Changing them does not rename an existing account or reset its password. The NixOS Nextcloud module still loads and checks the password file on each setup-service invocation, including for an existing installation.
 
 ## Identity and shared keys
 
@@ -76,7 +76,7 @@ The normal Ed25519 SSH host key and the machine ID are sourced from `/persist/et
 
 Restore generated identities with their containing state: Synapse signing keys, MAS encryption/signing keys, Nextcloud instance configuration, Vaultwarden keys, Pleroma secrets/cookie and ACME account keys. Restoring database contents alone does not recover an application's identity or encrypted data.
 
-Actual's client secret must match Authentik's registration; MAS's homeserver secret must match Synapse's integration configuration. MAS local passwords are disabled, so the upstream login configuration in its runtime YAML is required for authentication.
+MAS’s homeserver secret must match Synapse's integration configuration. MAS local passwords are disabled, so the upstream login configuration in its runtime YAML is required for authentication.
 
 ## Provisioning and access
 
