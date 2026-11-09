@@ -46,13 +46,7 @@
               }
             ];
 
-            networkConfig = {
-              DNS = [
-                "1.1.1.1"
-                "1.0.0.1"
-              ];
-              IPv6AcceptRA = false;
-            };
+            networkConfig.IPv6AcceptRA = false;
 
             linkConfig.RequiredForOnline = "routable";
           };
