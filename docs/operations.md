@@ -2,7 +2,7 @@
 
 [Repository overview](../README.md) · [Services](services.md) · [Backups](backups.md) · [Recovery](recovery.md)
 
-Commands below run from the checkout in Bash. On Apollo, enter `bash` from the administrator's Fish shell. Use the pinned lockfile when validating an existing checkout; changing it changes the system being evaluated.
+Commands below run from the checkout in Bash. On Apollo, enter `bash` from the administrator’s Fish shell. Use the pinned lockfile when validating an existing checkout; changing it changes the system being evaluated.
 
 ## Local validation
 
@@ -17,7 +17,7 @@ nix flake check --no-build --all-systems
 
 ## Deployment
 
-Apollo's checkout is `/etc/nixos`. It belongs to the user `deploy`, which has no login: Git runs as `sudo -u deploy git …`, never as root, and changing what root builds still takes the sudo password. Root only reads the checkout when building; read-only Git commands also work as `mcp`. Its `flake.lock` is usually newer than Git's because of [automatic updates](#automatic-updates). Discard it before pulling; the upgrade service updates it again before switching, so inputs never move backwards:
+Apollo’s checkout is `/etc/nixos`. It belongs to the user `deploy`, which has no login: Git runs as `sudo -u deploy git …`, never as root, and changing what root builds still takes the sudo password. Root only reads the checkout when building; read-only Git commands also work as `mcp`. Its `flake.lock` is usually newer than Git’s because of [automatic updates](#automatic-updates). Discard it before pulling; the upgrade service updates it again before switching, so inputs never move backwards:
 
 ```bash
 cd /etc/nixos
@@ -30,7 +30,7 @@ To deploy exactly the lockfile from Git instead, run `sudo nixos-rebuild switch 
 
 After activation, check `systemctl --failed` and application logins. A switch may restart Nginx and briefly interrupt every site. A system-generation rollback does not undo application data migrations.
 
-To publish the server's lockfile, copy `/etc/nixos/flake.lock` into the repository and commit it.
+To publish the server’s lockfile, copy `/etc/nixos/flake.lock` into the repository and commit it.
 
 ## Automatic updates
 

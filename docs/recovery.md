@@ -16,7 +16,7 @@ The Borg passphrase and SSH key are also in sops, but decrypting sops needs a wo
 
 ## Recent mistakes: local snapshots
 
-For files changed or deleted within the last week, copy them back from Sanoid's snapshots, for example:
+For files changed or deleted within the last week, copy them back from Sanoid’s snapshots, for example:
 
 ```bash
 ls /persist/.zfs/snapshot/
@@ -27,7 +27,7 @@ Databases cannot be restored this way; use the dumps below.
 
 ## Extract an archive
 
-On Apollo the job's wrapper already knows the repository and credentials. Elsewhere, install the Storage Box host key from the [backup module](../modules/backup.nix) into `known_hosts` and set the environment by hand:
+On Apollo the job’s wrapper already knows the repository and credentials. Elsewhere, install the Storage Box host key from the [backup module](../modules/backup.nix) into `known_hosts` and set the environment by hand:
 
 ```bash
 umask 077
@@ -44,7 +44,7 @@ mkdir -m 0700 /recovery && cd /recovery
 borg extract --numeric-ids ::apollo-sidechest-DATE persist var/log
 ```
 
-If the repository's key is damaged, `borg key import` restores it from the exported copy.
+If the repository’s key is damaged, `borg key import` restores it from the exported copy.
 
 ## Restore one application on Apollo
 
