@@ -153,18 +153,29 @@ in
 
   # Pleroma keeps every remote post it ever received. This deletes remote
   # threads older than remote_post_retention_days, except threads with local
-  # activity, bookmarked ones and non-public ones.
+  # activity, bookmarked ones and non-public ones, and then the activities left
+  # without their post.
   systemd.services.pleroma-prune = {
     description = "Delete old remote Pleroma posts";
     startAt = "*-*-02 04:00:00 Europe/Vienna";
     environment.RELEASE_COOKIE = "/var/lib/pleroma/.cookie";
-    path = [ pkgs.bash ];
+    path = [
+      pkgs.bash
+      pkgs.gawk
+    ];
+    # pleroma_ctl exits successfully even when a query fails, which Ecto logs as
+    # QUERY ERROR.
+    script = ''
+      set -o pipefail
+      ${config.services.pleroma.package}/bin/pleroma_ctl database prune_objects \
+        --keep-threads --keep-non-public --prune-orphaned-activities 2>&1 \
+        | awk '{ print; fflush() } /QUERY ERROR/ { failed = 1 } END { exit failed }'
+    '';
     serviceConfig = {
       Type = "oneshot";
       User = config.services.pleroma.user;
       Group = config.services.pleroma.group;
       WorkingDirectory = "~";
-      ExecStart = "${config.services.pleroma.package}/bin/pleroma_ctl database prune_objects --keep-threads --keep-non-public --prune-orphaned-activities";
     };
   };
 
