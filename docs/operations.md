@@ -34,7 +34,7 @@ To publish the server’s lockfile, copy `/etc/nixos/flake.lock` into the reposi
 
 ## Automatic updates
 
-[Automatic upgrade configuration](../modules/auto-upgrade.nix) schedules `nixos-upgrade` at 00:00, 06:00, 12:00 and 18:00 Europe/Vienna with up to 30 minutes of random delay. Its pre-start runs `nix flake update` for all inputs in `/etc/nixos` as `deploy`, then the service rebuilds and switches without writing to the checkout. The timer is persistent, so a missed run can trigger after boot. Automatic reboot is disabled.
+[Automatic upgrade configuration](../modules/auto-upgrade.nix) schedules `nixos-upgrade` at 00:00, 06:00, 12:00 and 18:00 Europe/Vienna with up to 30 minutes of random delay. Its pre-start runs `nix flake update` for all inputs in `/etc/nixos` as `deploy`, then the service rebuilds and switches without writing to the checkout. The timer is persistent, so a missed run can trigger after boot. `pleroma-prune.service` stops the timer while it runs and starts it again afterwards, which catches up a missed run. Automatic reboot is disabled.
 
 Each run leaves an audit trail in `journalctl -u nixos-upgrade.service`: `nix flake update` lists every changed input revision, and the post-start step prints `nix store diff-closures` between the previous and new system. Major application/database migrations arrive unreviewed this way; there is no automatic data-migration rollback.
 
