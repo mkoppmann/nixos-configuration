@@ -23,6 +23,8 @@ in
     # Memory budget for 15 GiB of RAM: 4 GiB for the ZFS cache (see boot.nix),
     # 2 GiB of shared buffers here, the rest for the applications.
     settings = {
+      # Without TCP, PostgreSQL still listens on localhost.
+      listen_addresses = lib.mkForce "";
       shared_buffers = "2GB";
       effective_cache_size = "6GB";
       work_mem = "16MB";
