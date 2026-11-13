@@ -176,6 +176,9 @@ in
       User = config.services.pleroma.user;
       Group = config.services.pleroma.group;
       WorkingDirectory = "~";
+      # An upgrade that restarts PostgreSQL would cancel the deletion.
+      ExecStartPre = "+${config.systemd.package}/bin/systemctl stop nixos-upgrade.timer";
+      ExecStopPost = "+${config.systemd.package}/bin/systemctl start nixos-upgrade.timer";
     };
   };
 
