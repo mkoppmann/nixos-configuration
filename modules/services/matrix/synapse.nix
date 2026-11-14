@@ -92,6 +92,9 @@ in
       password_config.enabled = false;
       push.include_content = false;
       encryption_enabled_by_default_for_room_type = "invite";
+      # Twice the default size for every cache: fewer database queries for
+      # more memory.
+      caches.global_factor = 1.0;
 
       matrix_authentication_service = {
         enabled = true;
