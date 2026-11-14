@@ -15,7 +15,14 @@ sudo systemctl start nixos-upgrade.service
 journalctl -u nixos-upgrade.service -n 100
 ```
 
-To deploy exactly the lockfile from Git instead, run `sudo nixos-rebuild switch --flake .#apollo`. Never use `path:.#apollo`: a `path:` flake copies untracked files from `/etc/nixos` into the world-readable Nix store.
+`nixos-rebuild` builds from the checkout’s lock file as it is. After a pull that is Git’s, which is usually older than the system Apollo runs: building from it moves packages backwards, and Nextcloud refuses to start on data of a newer version. Before running `nixos-rebuild` directly, for example with `test`, update the same inputs as the upgrade service:
+
+```bash
+sudo -u deploy nix flake update nixpkgs nixpkgs-unstable website wtcvss
+sudo nixos-rebuild test --flake .#apollo
+```
+
+Never use `path:.#apollo`: a `path:` flake copies untracked files from `/etc/nixos` into the world-readable Nix store.
 
 Apply changes to the network, the firewall or SSH with `sudo nixos-rebuild test --flake .#apollo` first, with a second session open. After activation, check `systemctl --failed` and application logins. A switch may restart Nginx and briefly interrupt every site. A system-generation rollback does not undo application data migrations.
 
