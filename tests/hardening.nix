@@ -183,8 +183,16 @@ pkgs.testers.runNixOSTest {
             "net.ipv4.conf.all.accept_source_route": "0",
             "net.ipv6.conf.all.accept_source_route": "0",
             "kernel.kexec_load_disabled": "1",
+            "kernel.io_uring_disabled": "2",
+            "dev.tty.ldisc_autoload": "0",
         }.items():
             actual = server.succeed(f"sysctl -n {key}").strip()
             assert actual == value, f"{key}: {actual}"
+
+    with subtest("Unused network protocols stay unloaded"):
+        sctp = "import socket; socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_SCTP)"
+        error = server.fail(f"${pkgs.python3.interpreter} -c '{sctp}' 2>&1")
+        assert "Protocol not supported" in error, error
+        server.fail("lsmod | grep -qw sctp")
   '';
 }
