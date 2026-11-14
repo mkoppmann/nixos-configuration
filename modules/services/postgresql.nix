@@ -32,6 +32,8 @@ in
       maintenance_work_mem = "512MB";
       # Storage is SSD-backed.
       random_page_cost = 1.1;
+      effective_io_concurrency = 200;
+      wal_compression = "zstd";
       max_wal_size = "4GB";
       # The default 20 % leaves tables with millions of rows unvacuumed for
       # months.
