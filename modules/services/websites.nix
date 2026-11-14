@@ -10,6 +10,7 @@ let
     referrer-policy
     x-frame-options
     x-content-type-options
+    revalidate
     default-headers
     default-headers-without-csp
     ;
@@ -94,6 +95,7 @@ in
         + referrer-policy
         + x-frame-options
         + x-content-type-options
+        + revalidate
         + ''
           add_header Content-Security-Policy "default-src 'none'; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self'; script-src 'self' 'unsafe-inline'; frame-ancestors 'none'; base-uri 'self'; form-action 'none'; upgrade-insecure-requests;" always;
         '';
@@ -104,32 +106,15 @@ in
       forceSSL = true;
       root = site "website";
 
-      extraConfig =
-        hsts
-        + referrer-policy
-        + x-frame-options
-        + x-content-type-options
-        + ''
-          etag on;
-        '';
-
-      locations."= /".extraConfig = default-headers-without-csp + ''
-        add_header Cache-Control "no-cache, no-store, must-revalidate" always;
-      '';
-
-      locations."~* \\.html$".extraConfig = default-headers-without-csp + ''
-        add_header Cache-Control "no-cache, no-store, must-revalidate" always;
-      '';
+      extraConfig = hsts + referrer-policy + x-frame-options + x-content-type-options + revalidate;
 
       locations."~* ^/_astro/".extraConfig = default-headers-without-csp + ''
-        expires 1y;
         add_header Cache-Control "public, max-age=31536000, immutable" always;
       '';
     };
 
     virtualHosts."ncrypt.at" = {
       enableACME = true;
-      extraConfig = hsts;
       forceSSL = true;
 
       extraConfig = hsts;
@@ -144,6 +129,7 @@ in
     virtualHosts."www.ncrypt.at" = {
       enableACME = true;
       forceSSL = true;
+      extraConfig = hsts;
       locations."/".return = "200";
     };
   };
