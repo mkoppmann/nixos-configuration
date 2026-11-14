@@ -1,5 +1,6 @@
 {
   config,
+  lib,
   pkgs,
   ...
 }:
@@ -182,11 +183,47 @@ in
     };
   };
 
-  systemd.services.pleroma.path = [
-    pkgs.exiftool
-    pkgs.ffmpeg
-    pkgs.imagemagick
-  ];
+  systemd.services.pleroma = {
+    path = [
+      pkgs.exiftool
+      pkgs.ffmpeg
+      pkgs.imagemagick
+    ];
+    # The sandbox of nixpkgs’ Akkoma module. Without MemoryDenyWriteExecute,
+    # which the Erlang VM’s JIT can’t run under.
+    serviceConfig = {
+      ProtectSystem = lib.mkForce "strict";
+      PrivateDevices = lib.mkForce true;
+      CapabilityBoundingSet = lib.mkForce "";
+      DevicePolicy = "closed";
+      UMask = "0077";
+      ProtectProc = "noaccess";
+      ProcSubset = "pid";
+      PrivateIPC = true;
+      ProtectHostname = true;
+      ProtectClock = true;
+      ProtectKernelTunables = true;
+      ProtectKernelModules = true;
+      ProtectKernelLogs = true;
+      ProtectControlGroups = true;
+      RestrictAddressFamilies = [
+        "AF_UNIX"
+        "AF_INET"
+        "AF_INET6"
+      ];
+      RestrictNamespaces = true;
+      LockPersonality = true;
+      RestrictRealtime = true;
+      RestrictSUIDSGID = true;
+      RemoveIPC = true;
+      SystemCallArchitectures = "native";
+      SystemCallFilter = [
+        "@system-service"
+        "~@privileged"
+        "@chown"
+      ];
+    };
+  };
 
   environment.persistence."/persist".directories = [
     "/var/lib/pleroma"
