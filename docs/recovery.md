@@ -57,7 +57,7 @@ If the repository’s key is damaged, `borg key import` restores it from the exp
 ## Rebuild on a new server
 
 1. Fence off the old server so it cannot run with the same identities.
-2. In the rescue system, recreate the pool layout: an encrypted `rpool` with `local/root` (snapshot `local/root@blank` while empty), `local/nix`, `safe/persist` and `safe/log`, and the ESP. Adjust `hardware-configuration.nix` and the network settings if the hardware differs.
+2. In the rescue system, recreate the layout from the [storage configuration](../modules/storage.nix). Adjust the disk device there, `hardware-configuration.nix` and the network settings if the hardware differs.
 3. Mount the target at `/mnt` (with `/mnt/boot`, `/mnt/nix`, `/mnt/persist`, `/mnt/var/log`), extract the archive and copy it into place, leaving out the live database and the random seed:
 
    ```bash

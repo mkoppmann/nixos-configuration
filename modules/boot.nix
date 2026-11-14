@@ -100,19 +100,6 @@
     };
   };
 
-  fileSystems = {
-    "/".options = [
-      "noatime"
-      "x-systemd.device-timeout=infinity"
-    ];
-    "/boot".options = [ "umask=0077" ];
-    "/var/log".options = [ "noatime" ];
-    "/var/log".neededForBoot = true;
-    "/nix".options = [ "noatime" ];
-    "/persist".options = [ "noatime" ];
-    "/persist".neededForBoot = true;
-  };
-
   zramSwap.enable = true;
 
   services.zfs = {
