@@ -55,7 +55,6 @@ pkgs.testers.runNixOSTest {
         "systemd-tmpfiles --create",
         "mkdir -p /persist/data /mnt/log/nginx",
         "echo original > /persist/data/file",
-        "echo request > /mnt/log/nginx/access.log",
         "echo problem > /mnt/log/nginx/error.log",
         "runuser -u postgres -- psql -d app -c 'CREATE TABLE t (v int); INSERT INTO t VALUES (42)'",
         "${borg} init --encryption repokey-blake2 ${repo}",
@@ -79,7 +78,6 @@ pkgs.testers.runNixOSTest {
             "var/log/nginx/error.log",
         ]:
             assert path in paths, path
-        assert "var/log/nginx/access.log" not in paths
 
     with subtest("Restore"):
         machine.succeed(

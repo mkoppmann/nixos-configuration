@@ -63,4 +63,4 @@ The Fish and logrotate directories are persisted rather than individual files, b
 
 Unlisted root/home files, `/run`, temporary files, caches and generated runtime configurations are disposable unless contained in a listed persistent tree. Nginx cache and Redis state are not separately persisted here. A runtime secret file can reference additional paths; those references require their own persistence assessment.
 
-Persistence retains data across root rollback. Backup coverage is narrower: the live database (covered by dumps), Borg cache and the Nginx access log are excluded. ZFS snapshots are local recovery points, not independent copies. Timer timestamp persistence lets timers with `Persistent=`, such as the backup, catch up after downtime.
+Persistence retains data across root rollback. Backup coverage is narrower: the live database (covered by dumps) and the Borg cache are excluded. ZFS snapshots are local recovery points, not independent copies. Timer timestamp persistence lets timers with `Persistent=`, such as the backup, catch up after downtime.

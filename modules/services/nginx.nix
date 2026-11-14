@@ -26,6 +26,9 @@
     # Service modules apply `limit_req zone=login` to their login endpoints.
     # Only POST requests count, so page loads and reads stay unlimited.
     appendHttpConfig = ''
+      # Requests are not logged; a host that wants a log declares its own.
+      access_log off;
+
       map $request_method $login_limit_key {
         POST $binary_remote_addr;
         default "";
