@@ -57,7 +57,7 @@ Both sites are built from their repositories with their own locked nixpkgs and s
 | Timezone | `Europe/Vienna` |
 | Compatibility version | NixOS `stateVersion = "23.11"` |
 
-The initrd has the same IPv4 address and route, but no IPv6 and no DNS resolver. [Remote unlock](operations.md#remote-unlock) uses a separate SSH host key on port 2222. The normal root password is locked. [Kernel settings](../modules/kernel.nix) hide kernel pointers and logs from unprivileged users, restrict ptrace and BPF, ignore ICMP redirects and source routing, and disable kexec and hibernation. Zram swap, ZFS scrub/trim, weekly Nix garbage collection of generations older than 30 days and automatic store optimisation are enabled. The boot menu lists the ten newest generations.
+The initrd has the same IPv4 address and route, but no IPv6 and no DNS resolver. [Remote unlock](operations.md#remote-unlock) uses a separate SSH host key on port 2222. The normal root password is locked. [Kernel settings](../modules/kernel.nix) hide kernel pointers and logs from unprivileged users, restrict ptrace, BPF and writes through `/proc/PID/mem`, ignore ICMP redirects and source routing, keep slab caches apart, and disable kexec, hibernation, io_uring, 32-bit system calls, debugfs and the automatic loading of unused network protocols and line disciplines. Zram swap, ZFS scrub/trim, weekly Nix garbage collection of generations older than 30 days and automatic store optimisation are enabled. The boot menu lists the ten newest generations.
 
 ## Startup and certificate behavior
 
