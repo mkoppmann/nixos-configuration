@@ -8,7 +8,6 @@
 
   sops = {
     secrets = {
-      nextcloud_admin_password = { };
       nextcloud_openid_client_secret.restartUnits = [ "nextcloud-oidc.service" ];
       nextcloud_instanceid = { };
       nextcloud_passwordsalt = { };
@@ -56,8 +55,9 @@
     };
 
     config = {
-      adminuser = "ncroot";
-      adminpassFile = config.sops.secrets.nextcloud_admin_password.path;
+      # Administrators sign in through Authentik.
+      adminuser = null;
+      adminpassFile = null;
 
       dbtype = "pgsql";
       dbhost = "/run/postgresql";
