@@ -12,6 +12,11 @@ let
     "website"
     "wtcvss"
   ];
+
+  lock = lib.importJSON ../../flake.lock;
+  pinnedInputs = lib.mapAttrs (_: node: lock.nodes.${node}.locked) (
+    removeAttrs lock.nodes.root.inputs updatedInputs
+  );
 in
 {
   # The deployment checkout belongs to a user without login, so Git never runs
@@ -74,5 +79,65 @@ in
         echo "No previous system recorded; skipping package diff."
       fi
     '';
+  };
+
+  # The pinned inputs get no updates by themselves. Once a week this unit
+  # fails, and so mails, when their branches have commits that the lock file
+  # lacks, and lists the newest of them.
+  systemd.services.pinned-inputs-check = {
+    description = "Fail when pinned flake inputs are behind their branches";
+    startAt = "Mon 07:00 Europe/Vienna";
+    wants = [ "network-online.target" ];
+    after = [ "network-online.target" ];
+    path = [
+      pkgs.curl
+      pkgs.jq
+    ];
+    script = ''
+      behind=0
+      check() {
+        comparison=$(curl -fsS -m 30 --retry 3 "https://api.github.com/repos/$2/$3/compare/$4...HEAD")
+        count=$(jq -er .ahead_by <<< "$comparison")
+        if [ "$count" -gt 0 ]; then
+          echo "$1: $count new commits, the newest:"
+          jq -r '.commits[-5:][] | "  " + (.commit.message | split("\n")[0])' <<< "$comparison"
+          behind=1
+        fi
+      }
+      ${lib.concatStrings (
+        lib.mapAttrsToList (
+          name: locked:
+          assert locked.type == "github";
+          "check ${
+            lib.escapeShellArgs [
+              name
+              locked.owner
+              locked.repo
+              locked.rev
+            ]
+          }\n"
+        ) pinnedInputs
+      )}
+      [ "$behind" = 0 ]
+    '';
+    serviceConfig = {
+      Type = "oneshot";
+      DynamicUser = true;
+      CapabilityBoundingSet = "";
+      PrivateDevices = true;
+      ProtectHome = true;
+      ProtectKernelTunables = true;
+      ProtectKernelModules = true;
+      ProtectControlGroups = true;
+      RestrictAddressFamilies = [
+        "AF_INET"
+        "AF_INET6"
+      ];
+      SystemCallArchitectures = "native";
+      SystemCallFilter = [
+        "@system-service"
+        "~@privileged"
+      ];
+    };
   };
 }
