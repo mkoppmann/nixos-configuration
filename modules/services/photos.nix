@@ -32,6 +32,9 @@ in
           proxy_send_timeout 600s;
           send_timeout 600s;
           proxy_redirect off;
+          # Uploads go straight to the photo server instead of to a temporary
+          # file on Apollo first.
+          proxy_request_buffering off;
         '';
       };
 

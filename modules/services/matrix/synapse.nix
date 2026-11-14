@@ -133,11 +133,12 @@ in
         proxyPass = "http://127.0.0.1:8091";
       };
 
-      locations."/_matrix" = synapse "client_max_body_size 0;";
+      # As large as Synapse’s max_upload_size.
+      locations."/_matrix" = synapse "client_max_body_size 100M;";
 
       # Other /_synapse paths stay internal, such as /_synapse/mas, which MAS
       # reaches directly.
-      locations."/_synapse/client" = synapse "client_max_body_size 0;";
+      locations."/_synapse/client" = synapse "";
     };
   };
 }
