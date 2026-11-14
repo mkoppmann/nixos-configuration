@@ -2,7 +2,7 @@
 
 [Repository overview](../README.md) · [Secrets](secrets.md) · [Backups](backups.md) · [Recovery](recovery.md)
 
-Storage is declared in [hardware configuration](../hardware-configuration.nix), [boot configuration](../modules/boot.nix) and [persistence configuration](../modules/impermanence.nix); each [service module](../modules/) declares its own retained paths. The repository defines mounts and retained paths; it does not define disk partition sizes, pool/vdev creation, encryption roots or encryption-key storage.
+Storage is declared in [storage configuration](../modules/storage.nix), [boot configuration](../modules/boot.nix) and [persistence configuration](../modules/impermanence.nix); each [service module](../modules/) declares its own retained paths. The storage configuration describes the disk with [disko](https://github.com/nix-community/disko): a 512 MiB EFI system partition and the encrypted ZFS pool `rpool` on the rest. New installs create the layout from it, and the mounts below come from it. The pool’s passphrase is not in the repository; booting asks for it.
 
 ## Filesystems and boot
 
@@ -12,11 +12,11 @@ Storage is declared in [hardware configuration](../hardware-configuration.nix), 
 | `/nix` | `rpool/local/nix` | Persistent Nix store |
 | `/persist` | `rpool/safe/persist` | Persistent backing tree and credentials; needed for boot |
 | `/var/log` | `rpool/safe/log` | Separate persistent logs; needed for boot |
-| `/boot` | FAT filesystem UUID `9CEC-3C03` | EFI system partition; `umask=0077` |
+| `/boot` | Partition named `ESP` | EFI system partition; `umask=0077` |
 
 The ZFS mounts use `noatime`. The ZFS host ID is `e538f1c9`; forced root-pool import is disabled and encryption credentials are requested during boot. There is no disk swap declaration; zram swap is enabled.
 
-`zfs-rollback.service` runs `zfs rollback -r "rpool/local/root@blank"` after pool import and before `sysroot.mount`. The snapshot must already exist. The unit has no explicit failure-reporting or recovery hook. The repository does not establish the behavior of a failed rollback on the running host.
+`zfs-rollback.service` runs `zfs rollback -r "rpool/local/root@blank"` after pool import and before `sysroot.mount`. disko takes the snapshot right after creating the dataset. The unit has no explicit failure-reporting or recovery hook. The repository does not establish the behavior of a failed rollback on the running host.
 
 ## Retained paths
 

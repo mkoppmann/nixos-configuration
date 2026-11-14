@@ -25,6 +25,7 @@
     ./modules/postgresql.nix
     ./modules/secrets.nix
     ./modules/ssh.nix
+    ./modules/storage.nix
     ./modules/users.nix
     ./modules/vaultwarden.nix
     ./modules/websites.nix
