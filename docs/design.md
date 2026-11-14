@@ -23,7 +23,7 @@ The reasons behind the configuration, and what is deliberately left out. The oth
 ## Updates and deployment
 
 - **Automatic updates of nixpkgs and the websites.** Apollo updates these inputs every six hours and switches without review, so security fixes arrive within hours. nixpkgs’ release branches are built and tested before they advance, and the websites are packages built in the sandbox. The upgrade journal records every changed revision and package.
-- **Pinned module inputs.** `authentik-nix`, `sops-nix`, `impermanence` and `disko` provide NixOS modules, which run as root, from branches that nobody reviews for Apollo. They only change with a reviewed commit to the lock file. The cost is that an Authentik fix waits for the operator; a daily check mails when authentik-nix offers a newer release.
+- **Pinned module inputs.** `authentik-nix`, `sops-nix`, `impermanence` and `disko` provide NixOS modules, which run as root, from branches that nobody reviews for Apollo. They only change with a reviewed commit to the lock file. The cost is that their fixes wait for the operator: a weekly check mails what the pinned revisions miss, and a daily one when authentik-nix offers a newer Authentik.
 - **A third-party binary cache for Authentik.** Building Authentik takes Apollo a long time, so Nix may fetch it from the nix-community cache. Nix asks cache.nixos.org first; the accepted risk is that the second cache can supply any path the first one lacks.
 - **Manual deploys.** The operator deploys reviewed commits from `main` after CI passed. Apollo’s lockfile is newer than Git’s in the automatically updated inputs, a combination CI hasn’t tested.
 - **No CI that writes.** A scheduled workflow that updates and tests the lockfile needs write access, and whoever controls it could then change Apollo.
@@ -57,7 +57,7 @@ Not used:
 | System-wide hardened allocator | The exposed runtimes use their own allocators; risk of slowdowns and breakage |
 | fail2ban | Login endpoints are rate-limited by Nginx, and the applications throttle logins themselves |
 | nix-mineral as an input | Desktop-oriented defaults, written for unstable; another module input to review. The kernel settings here are set individually |
-| Vulnerability scanners on the closure | Name and version matching is noisy, and nixpkgs’ fixes reach Apollo within hours anyway. The one pinned application, Authentik, has its own release check |
+| Vulnerability scanners on the closure | Name and version matching is noisy, and nixpkgs’ fixes reach Apollo within hours anyway. The pinned inputs have their own checks against their branches |
 | Hiding addresses and host names | No security gain |
 
 ZFS encryption protects disks at rest, not against a provider with access to the running machine.
