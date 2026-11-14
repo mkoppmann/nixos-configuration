@@ -68,7 +68,7 @@ ZFS encryption protects disks at rest, not against a provider with access to the
 - **Administration from the tunnel.** Authentik superusers may only sign in from WireGuard addresses, Authentik’s API accepts tokens only from there, and Pleroma’s admin paths only answer WireGuard addresses.
 - **Tunnel addresses in DNS only for navigation-only hosts.** Browsers ask before a public page loads resources from a private address. Hosts whose pages embed resources, such as Pleroma’s, keep their public address.
 - **Client addresses.** Authentik and Synapse take the first `X-Forwarded-For` entry, so Nginx replaces the header for them instead of appending to it.
-- **No local Nextcloud administrator.** Administrators sign in through Authentik; `nextcloud-occ` on Apollo is the fallback.
+- **No local Nextcloud administrator.** Authentik’s superusers are Nextcloud’s administrators, so the admin gate covers them too; `nextcloud-occ` on Apollo is the fallback.
 
 ## Data, backups and monitoring
 
