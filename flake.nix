@@ -117,6 +117,10 @@
                 pkgs = nixpkgs.legacyPackages.x86_64-linux;
                 inherit inputs;
               };
+              nginx-config = import ./tests/nginx-config.nix {
+                pkgs = nixpkgs.legacyPackages.x86_64-linux;
+                inherit (self.nixosConfigurations) apollo;
+              };
               nextcloud = import ./tests/nextcloud.nix {
                 pkgs = nixpkgs.legacyPackages.x86_64-linux;
                 inherit (self.nixosConfigurations.apollo.config.services.nextcloud) package;
