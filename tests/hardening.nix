@@ -33,6 +33,7 @@ pkgs.testers.runNixOSTest {
       ];
 
       environment.persistence = lib.mkForce { };
+      networking.nftables.enable = true;
       networking.firewall = {
         allowedTCPPorts = [
           80
@@ -121,8 +122,14 @@ pkgs.testers.runNixOSTest {
     client.wait_for_unit("wireguard-wg0.service")
     client.wait_until_succeeds("ping -c 1 -W 1 10.100.0.1")
 
-    with subtest("WireGuard peers cannot reach each other through the server"):
-        server.succeed("iptables -C FORWARD -i wg0 -o wg0 -j DROP")
+    with subtest("Only WireGuard peers are forwarded, and only to the internet"):
+        assert "policy drop" in server.succeed("nft list chain inet nixos-fw forward")
+        allowed = [
+            line.strip()
+            for line in server.succeed("nft list chain inet nixos-fw forward-allow").splitlines()
+            if "wg0" in line
+        ]
+        assert len(allowed) == 1 and "ens3" in allowed[0], allowed
 
     with subtest("The resolver answers WireGuard clients with the tunnel address"):
         server.wait_for_unit("unbound.service")

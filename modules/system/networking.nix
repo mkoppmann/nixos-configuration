@@ -5,6 +5,7 @@
     networkmanager.enable = false;
     useDHCP = false;
 
+    nftables.enable = true;
     firewall = {
       enable = true;
       allowedTCPPorts = [
@@ -12,12 +13,6 @@
         443
       ];
       allowedUDPPorts = [ 51820 ];
-    };
-
-    nat = {
-      enable = true;
-      externalInterface = "ens3";
-      internalInterfaces = [ "wg0" ];
     };
 
     interfaces.ens3 = {
