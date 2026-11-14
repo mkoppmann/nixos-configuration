@@ -10,6 +10,7 @@ The [monitoring module](../modules/system/monitoring.nix) reports problems by ma
 | ZFS event daemon | Pool and device errors and finished scrubs (monthly) |
 | `disk-space-check.timer`, daily | Fails, and so mails, while `rpool` or `/boot` is more than 80% full |
 | `authentik-update-check.timer`, daily | Fails, and so mails, while authentik-nix offers another Authentik release than the pinned one |
+| `zfs-rollback-check.service`, at boot | Fails, and so mails, when the root dataset was not rolled back |
 | healthchecks.io | The nightly backup and a heartbeat every five minutes; alerts when a ping is late |
 
 A service restarted by `Restart=` only fails once its restart limit is hit. ACME renewals report through their failing `acme-*.service` units.

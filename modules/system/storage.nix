@@ -120,9 +120,21 @@ in
       unitConfig.DefaultDependencies = false;
       serviceConfig.Type = "oneshot";
       path = [ pkgs.zfs ];
+      # Apollo still boots when the rollback fails; /run survives into the
+      # booted system, where the unit below reports it.
       script = ''
-        zfs rollback -r "rpool/local/root@blank"
+        zfs rollback -r "rpool/local/root@blank" || touch /run/zfs-rollback-failed
       '';
+    };
+  };
+
+  systemd.services.zfs-rollback-check = {
+    description = "Fail when the root dataset was not rolled back at boot";
+    wantedBy = [ "multi-user.target" ];
+    script = "! test -e /run/zfs-rollback-failed";
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
     };
   };
 
