@@ -50,9 +50,9 @@ in
       wants = [ "network-online.target" ];
       after = [
         "network-online.target"
-        "postgresql.service"
+        "postgresql.target"
       ];
-      requires = [ "postgresql.service" ];
+      requires = [ "postgresql.target" ];
       wantedBy = [ "multi-user.target" ];
 
       environment = {
