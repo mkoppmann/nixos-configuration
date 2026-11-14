@@ -5,6 +5,13 @@
   ...
 }:
 let
+  # Erlang’s node-to-node protocol, which pleroma_ctl uses, would listen on
+  # every interface. Pleroma’s node is named pleroma@127.0.0.1.
+  distribution = {
+    ERL_EPMD_ADDRESS = "127.0.0.1";
+    ERL_FLAGS = "-kernel inet_dist_use_interface {127,0,0,1}";
+  };
+
   # A location with its own proxy_set_header does not inherit the parent's, so
   # the media location repeats them.
   pleroma-proxy-headers = ''
@@ -159,7 +166,9 @@ in
   systemd.services.pleroma-prune = {
     description = "Delete old remote Pleroma posts";
     startAt = "*-*-02 04:00:00 Europe/Vienna";
-    environment.RELEASE_COOKIE = "/var/lib/pleroma/.cookie";
+    environment = distribution // {
+      RELEASE_COOKIE = "/var/lib/pleroma/.cookie";
+    };
     path = [
       pkgs.bash
       pkgs.gawk
@@ -183,7 +192,10 @@ in
     };
   };
 
+  systemd.services.pleroma-migrations.environment = distribution;
+
   systemd.services.pleroma = {
+    environment = distribution;
     path = [
       pkgs.exiftool
       pkgs.ffmpeg

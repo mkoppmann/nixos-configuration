@@ -65,11 +65,26 @@ in
         from = "Authentik ncrypt.at <idp@ncrypt.at>";
       };
       error_reporting.enabled = false;
-      # Only Nginx on this host may set forwarding headers.
-      listen.trusted_proxy_cidrs = [
-        "127.0.0.0/8"
-        "::1/128"
-      ];
+      listen = {
+        # Only Nginx reaches Authentik; the default is every interface.
+        http = [
+          "127.0.0.1:9000"
+          "[::1]:9000"
+        ];
+        https = [
+          "127.0.0.1:9443"
+          "[::1]:9443"
+        ];
+        metrics = [
+          "127.0.0.1:9300"
+          "[::1]:9300"
+        ];
+        # Only Nginx on this host may set forwarding headers.
+        trusted_proxy_cidrs = [
+          "127.0.0.0/8"
+          "::1/128"
+        ];
+      };
       postgresql = {
         user = "authentik";
         name = "authentik";
