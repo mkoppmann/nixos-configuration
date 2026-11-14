@@ -62,7 +62,7 @@ in
         encryption = "aes-256-gcm";
         keyformat = "passphrase";
         # The installer reads the passphrase from this file; booting asks for it.
-        keylocation = "file:///tmp/zfs.key";
+        keylocation = "file:///tmp/secret.key";
       };
       postCreateHook = "zfs set keylocation=prompt rpool";
 

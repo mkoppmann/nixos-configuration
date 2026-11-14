@@ -97,6 +97,10 @@
                 pkgs = nixpkgs.legacyPackages.x86_64-linux;
                 inherit inputs;
               };
+              disk-layout = import ./tests/disk-layout.nix {
+                pkgs = nixpkgs.legacyPackages.x86_64-linux;
+                inherit inputs;
+              };
               secrets = import ./tests/secrets.nix {
                 pkgs = nixpkgs.legacyPackages.x86_64-linux;
                 inherit inputs;
