@@ -14,7 +14,7 @@ Storage is declared in [storage configuration](../modules/system/storage.nix), [
 | `/var/log` | `rpool/safe/log` | Separate persistent logs; needed for boot |
 | `/boot` | Partition named `ESP` | EFI system partition; `umask=0077` |
 
-The ZFS mounts use `noatime`. The ZFS host ID is `e538f1c9`; forced root-pool import is disabled and encryption credentials are requested during boot. There is no disk swap declaration; zram swap is enabled.
+The ZFS mounts use `noatime`. Quotas keep the datasets that requests from outside can fill away from the applications’ data: 32 GiB for `/`, which holds Nginx’s cache and temporary files, and 16 GiB for `/var/log`. disko sets them on a new pool; on an existing one, `zfs set quota=…` does. The ZFS host ID is `e538f1c9`; forced root-pool import is disabled and encryption credentials are requested during boot. There is no disk swap declaration; zram swap is enabled.
 
 `zfs-rollback.service` runs `zfs rollback -r "rpool/local/root@blank"` after pool import and before `sysroot.mount`. disko takes the snapshot right after creating the dataset. If the rollback fails, Apollo boots with the previous root, and `zfs-rollback-check.service` fails in the booted system, which sends a [failure mail](monitoring.md).
 

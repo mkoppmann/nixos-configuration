@@ -77,6 +77,11 @@ in
         };
         "local/nix" = legacy "/nix";
         "local/root" = legacy "/" // {
+          options = {
+            mountpoint = "legacy";
+            # Nginx’s cache and temporary files can’t fill the pool.
+            quota = "32G";
+          };
           mountOptions = [
             "noatime"
             "x-systemd.device-timeout=infinity"
@@ -86,7 +91,12 @@ in
               zfs snapshot rpool/local/root@blank
           '';
         };
-        "safe/log" = legacy "/var/log";
+        "safe/log" = legacy "/var/log" // {
+          options = {
+            mountpoint = "legacy";
+            quota = "16G";
+          };
+        };
         "safe/persist" = legacy "/persist";
       };
     };
