@@ -2,7 +2,7 @@
 
 [Repository overview](../README.md) · [Storage](storage.md) · [Recovery](recovery.md)
 
-Service secrets are managed with [sops-nix](https://github.com/Mic92/sops-nix): `secrets/apollo.yaml` is encrypted to two post-quantum age recipients listed in `.sops.yaml`, the admin key and Apollo’s host key. At activation, sops-nix decrypts the declared secrets to `/run/secrets` with the owner and mode each module declares; files that mix secret and non-secret settings are rendered from templates. The initrd host key and the MAS files are still provisioned manually at the paths below. Never put secret values into Nix expressions: Nix-store files are readable by every user.
+Service secrets are managed with [sops-nix](https://github.com/Mic92/sops-nix): `secrets/apollo.yaml` is encrypted to two post-quantum age recipients listed in `.sops.yaml`, the admin key and Apollo’s host key. At activation, sops-nix decrypts the declared secrets to `/run/secrets` with the owner and mode each module declares; files that mix secret and non-secret settings are rendered from templates. The initrd host key and the MAS files are provisioned manually at the paths below. Never put secret values into Nix expressions: Nix-store files are readable by every user.
 
 ## Keys
 
@@ -64,7 +64,7 @@ Paths below are configured readers or boot inputs. Files beneath persisted servi
 | `/run/secrets/rendered/pleroma-secret.exs` | Template from `pleroma_secret_key_base` and `pleroma_vapid_private_key`; the VAPID public key is in Nix | `pleroma` reader, `0400`; the VAPID key pair must match |
 | `/run/secrets/rendered/vaultwarden.env` | Template from `vaultwarden_smtp_password`; systemd environment file | `root:root 0400` |
 
-sops values are stored without quotes or trailing newline; templates insert them verbatim. Environment-file syntax is not shell syntax; do not source these files. The remaining MAS files still have to be preserved as a whole: the checkout cannot establish their complete contents.
+sops values are stored without quotes or trailing newline; templates insert them verbatim. Environment-file syntax is not shell syntax; do not source these files. The MAS files have to be preserved as a whole; the repository doesn’t declare their contents.
 
 ## Identity and shared keys
 

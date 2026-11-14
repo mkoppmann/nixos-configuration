@@ -28,11 +28,11 @@ Each dump is transactionally consistent. Application files are crash-consistent 
 
 Archives do not contain the Nix store, the ESP, ZFS properties or the photo server’s data. The Storage Box keeps its own snapshots of the repository. The repository key is exported to KeePass; see [recovery](recovery.md#independent-prerequisites).
 
-`borgbackup-check-sidechest.timer` runs `borg check --verify-data --last 1` on the first of every month: it checks the repository’s consistency on the Storage Box and reads back all data of the latest archive.
+`borgbackup-check-sidechest.timer` runs `borg check --verify-data --last 1` on the first of every month: it checks the repository’s consistency on the Storage Box, reads back and verifies every chunk of the repository, not only those of the latest archive, and checks the latest archive’s metadata.
 
 ## Local snapshots
 
-Sanoid keeps 24 hourly and 7 daily snapshots of `rpool/safe/persist`. To recover a file deleted or changed in the last week, copy it from `/persist/.zfs/snapshot/autosnap_…/`. Local snapshots share the pool with the data and are no backup.
+Sanoid keeps 24 hourly and 7 daily snapshots of `rpool/safe/persist`, which includes the live PostgreSQL cluster. To recover a file deleted or changed in the last week, copy it from `/persist/.zfs/snapshot/autosnap_…/`. Local snapshots share the pool with the data and are no backup.
 
 ## Operations
 

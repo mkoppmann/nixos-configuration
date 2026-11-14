@@ -2,7 +2,7 @@
 
 [Repository overview](../README.md) · [Development](development.md) · [Services](services.md)
 
-Goals, decisions and rejected alternatives that the configuration itself doesn’t show. The other documents describe what is configured; this one records why, and what was deliberately left out. Change it together with the decisions it describes.
+The reasons behind the configuration, and what is deliberately left out. The other documents describe what is configured. Change this one together with the decisions it describes.
 
 ## Goals
 
@@ -45,12 +45,12 @@ Kernel settings, per-service systemd sandboxes and network restrictions each lim
 - **Network.** Services can’t reach the WireGuard network unless their unit allows it. PostgreSQL and Redis have no network at all; their clients use Unix sockets. Backends listen on loopback, behind Nginx. Apollo forwards packets only from WireGuard peers to the internet.
 - **Kernel.** Targeted settings instead of a hardening profile; see [services](services.md#host-and-network).
 
-Considered and rejected:
+Not used:
 
 | Measure | Reason |
 | --- | --- |
 | NixOS hardened profile, locked kernel modules | Break ZFS, WireGuard, NAT and PHP |
-| `linux-hardened` | Removed from nixpkgs for lack of maintenance |
+| `linux-hardened` | Not in nixpkgs |
 | Kernel lockdown, enforced module signatures | NixOS kernels are built without module signing; ZFS is an external module |
 | `init_on_free`, panic on oops | Cost with ZFS and PostgreSQL; every panic would need a remote unlock |
 | Extra compiler hardening | Every package would lose the binary cache and build on Apollo |
@@ -77,4 +77,4 @@ ZFS encryption protects disks at rest, not against a provider with access to the
 - **Off-site copies.** The Storage Box keeps snapshots that Apollo can’t delete. Local snapshots are for mistakes, not a backup.
 - **Logs stay in the journal.** They reach the Storage Box every night with the backup; central logging would add little for one host.
 - **PostgreSQL** listens on its socket only, with a fixed memory budget next to the ZFS cache. Major upgrades go through dump and restore, which also reclaims space.
-- **Pleroma stays.** Akkoma integrates better with NixOS, but moving there is large and one-way. Old remote posts are pruned monthly with Pleroma’s own task.
+- **Pleroma, not Akkoma.** Akkoma integrates better with NixOS, but moving there is large and one-way. Old remote posts are pruned monthly with Pleroma’s own task.

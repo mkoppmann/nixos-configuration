@@ -49,7 +49,7 @@ If the repository’s key is damaged, `borg key import` restores it from the exp
 ## Restore one application on Apollo
 
 1. Stop the application, its workers and timers, and `nixos-upgrade.timer`.
-2. Keep a copy of its current files and a fresh `pg_dump` of its database.
+2. Keep a copy of its current files and a fresh `pg_dump --format=custom` of its database.
 3. Copy its files from `/recovery/persist/…` back with their ownership (`rsync -aHAX --numeric-ids`).
 4. Restore its database from `/recovery/persist/var/backup/postgresql/NAME.sql`; see [PostgreSQL restoration](postgresql-restore.md).
 5. Start it again and check logins and data. For Nextcloud, run `occ files:scan --all`.
