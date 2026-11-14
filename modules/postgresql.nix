@@ -23,7 +23,8 @@ in
     # Memory budget for 15 GiB of RAM: 4 GiB for the ZFS cache (see storage.nix),
     # 2 GiB of shared buffers here, the rest for the applications.
     settings = {
-      # Without TCP, PostgreSQL still listens on localhost.
+      # Without TCP, PostgreSQL still listens on localhost. Clients use the
+      # socket, so the unit has no network at all (PrivateNetwork below).
       listen_addresses = lib.mkForce "";
       shared_buffers = "2GB";
       effective_cache_size = "6GB";
@@ -45,6 +46,8 @@ in
       local all       postgres peer
     '';
   };
+
+  systemd.services.postgresql.serviceConfig.PrivateNetwork = true;
 
   systemd.services.postgresql-setup.script = lib.mkAfter ''
     psql -d postgres -c 'CREATE EXTENSION IF NOT EXISTS pg_stat_statements'
