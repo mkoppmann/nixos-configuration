@@ -26,7 +26,7 @@ Impermanence binds the following directory trees to corresponding paths under `/
 | --- | --- |
 | `/etc/nixos` | Deployment checkout, owned by `deploy` |
 | `/root/.config/borg`, `/root/.cache/borg` | Borg configuration/security metadata and rebuildable cache; directories `0700` |
-| `/var/backup` | PostgreSQL dumps and globals |
+| `/var/backup` | PostgreSQL dumps and globals, only while a backup runs |
 | `/var/lib/acme` | ACME accounts and certificates |
 | `/var/lib/bitwarden_rs` | Vaultwarden data and environment file |
 | `/var/lib/logrotate` | Rotation history at `status`; directory `0700` |
