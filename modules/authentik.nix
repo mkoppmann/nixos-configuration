@@ -15,6 +15,8 @@ let
   '';
 in
 {
+  imports = [ ./authentik-sandbox.nix ];
+
   sops = {
     secrets = {
       authentik_secret_key = { };
