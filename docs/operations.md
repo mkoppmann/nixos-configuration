@@ -17,7 +17,7 @@ journalctl -u nixos-upgrade.service -n 100
 
 To deploy exactly the lockfile from Git instead, run `sudo nixos-rebuild switch --flake .#apollo`. Never use `path:.#apollo`: a `path:` flake copies untracked files from `/etc/nixos` into the world-readable Nix store.
 
-After activation, check `systemctl --failed` and application logins. A switch may restart Nginx and briefly interrupt every site. A system-generation rollback does not undo application data migrations.
+Apply changes to the network, the firewall or SSH with `sudo nixos-rebuild test --flake .#apollo` first, with a second session open. After activation, check `systemctl --failed` and application logins. A switch may restart Nginx and briefly interrupt every site. A system-generation rollback does not undo application data migrations.
 
 To publish the server’s lockfile, copy `/etc/nixos/flake.lock` into the repository and commit it.
 

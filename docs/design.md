@@ -40,7 +40,7 @@ Goals, decisions and rejected alternatives that the configuration itself doesn�
 Kernel settings, per-service systemd sandboxes and network restrictions each limit what a compromised service can do on its own.
 
 - **Sandboxes.** Internet-facing services run with system call filters, minimal capabilities and a read-only system. `MemoryDenyWriteExecute` is only set where no JIT compiler runs; the Erlang VM needs one. Small helper units and units that need root by design stay unsandboxed.
-- **Network.** Services can’t reach the WireGuard network unless their unit allows it. PostgreSQL and Redis have no network at all; their clients use Unix sockets.
+- **Network.** Services can’t reach the WireGuard network unless their unit allows it. PostgreSQL and Redis have no network at all; their clients use Unix sockets. Backends listen on loopback, behind Nginx. Apollo forwards packets only from WireGuard peers to the internet.
 - **Kernel.** Targeted settings instead of a hardening profile; see [services](services.md#host-and-network).
 
 Considered and rejected:

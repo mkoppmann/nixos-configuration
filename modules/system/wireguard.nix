@@ -20,16 +20,14 @@ in
     }
   ) peers;
 
-  # Peers reach Apollo and, through NAT, the internet, but not each other.
-  # The iptables firewall has no forward filtering of its own.
-  networking.firewall = {
-    extraCommands = ''
-      iptables -w -D FORWARD -i wg0 -o wg0 -j DROP 2>/dev/null || true
-      iptables -w -I FORWARD -i wg0 -o wg0 -j DROP
-    '';
-    extraStopCommands = ''
-      iptables -w -D FORWARD -i wg0 -o wg0 -j DROP 2>/dev/null || true
-    '';
+  # Peers reach Apollo and, through NAT, the internet. Everything else that
+  # would pass through Apollo is dropped: packets between peers, and packets
+  # from the internet to a peer.
+  networking.firewall.filterForward = true;
+  networking.nat = {
+    enable = true;
+    externalInterface = "ens3";
+    internalInterfaces = [ "wg0" ];
   };
 
   # Services exchange packets with the tunnel network only where their own
