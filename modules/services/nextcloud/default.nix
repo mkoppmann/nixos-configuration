@@ -97,7 +97,9 @@
   };
 
   # Login through Authentik; the matching provider is in the Authentik
-  # applications blueprint.
+  # applications blueprint. Every login sets the membership of Nextcloud’s
+  # admin group from the groups claim: Authentik’s superusers are Nextcloud’s
+  # administrators. Other groups stay as they are in Nextcloud.
   systemd.services.nextcloud-oidc = {
     description = "Configure Nextcloud’s Authentik login";
     requires = [ "nextcloud-setup.service" ];
@@ -124,7 +126,8 @@
         --unique-uid=0 \
         --check-bearer=0 \
         --bearer-provisioning=0 \
-        --group-provisioning=0
+        --group-provisioning=1 \
+        --group-whitelist-regex='^admin$'
       $occ config:app:set user_oidc allow_multiple_user_backends --value=0
     '';
   };

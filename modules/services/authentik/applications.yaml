@@ -47,13 +47,11 @@ entries:
     attrs:
       scope_name: profile
       expression: |
-        groups = [group.name for group in user.ak_groups.all()]
-        # Nextcloud grants admin rights to its "admin" group.
-        if user.is_superuser and "admin" not in groups:
-            groups.append("admin")
         return {
             "name": request.user.name,
-            "groups": groups,
+            # Nextcloud takes the membership of its "admin" group from this
+            # claim and ignores every other group.
+            "groups": ["admin"] if user.is_superuser else [],
             "quota": user.group_attributes().get("nextcloud_quota", "10 GB"),
             # Links an existing Nextcloud account to this user.
             "user_id": user.attributes.get("nextcloud_user_id", str(user.uuid)),
@@ -131,7 +129,8 @@ entries:
         - matching_mode: strict
           url: https://cloud.ncrypt.at/apps/user_oidc/code
       refresh_token_threshold: seconds=0
-      # Nextcloud links accounts by username; changing this breaks them.
+      # Nextcloud takes the account from the user_id claim of the profile
+      # scope, not from the subject.
       sub_mode: user_username
       property_mappings:
         - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-openid]]
