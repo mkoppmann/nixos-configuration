@@ -10,6 +10,7 @@ let
     persist = "rpool/safe/persist";
     "var/log" = "rpool/safe/log";
   };
+  dumpDirectory = config.services.postgresqlBackup.location;
   snapshots = lib.mapAttrsToList (_: dataset: "${dataset}@borg") datasets;
   root = "/run/borgbackup-sidechest";
   zfs = config.boot.zfs.package;
@@ -91,6 +92,9 @@ in
       for snapshot in ${lib.escapeShellArgs snapshots}; do
         ${zfs}/bin/zfs destroy "$snapshot" || true
       done
+      # The dumps only exist for the archive. Left in place, the hourly and
+      # daily snapshots of the dataset would keep a week of them.
+      ${pkgs.findutils}/bin/find ${dumpDirectory} -name '*.sql' -delete || true
     '';
 
     prune.keep = {
@@ -105,6 +109,7 @@ in
     Type = "oneshot";
     # The snapshot mounts live in the unit's private mount namespace.
     RuntimeDirectory = "borgbackup-sidechest";
+    ReadWritePaths = [ dumpDirectory ];
     ExecStartPre = [ "-${pkgs.writeShellScript "ping-start" (ping "/start")}" ];
     ExecStartPost = [ "-${pkgs.writeShellScript "ping-success" (ping "")}" ];
   };

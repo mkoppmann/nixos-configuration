@@ -8,10 +8,10 @@ The [backup module](../modules/system/backup.nix) uses the upstream `services.bo
 
 `borgbackup-job-sidechest.timer` starts the job at 03:00 Europe/Vienna; a run missed while Apollo was down starts after boot. Applications keep running. The job:
 
-1. Dumps every database declared in `services.postgresql.ensureDatabases` to `/var/backup/postgresql/NAME.sql` (custom format for `pg_restore`, despite the suffix) and the roles to `globals/globals.sql` (plain SQL for `psql`). The previous dump of each database is kept as `NAME.prev.sql`.
+1. Dumps every database declared in `services.postgresql.ensureDatabases` to `/var/backup/postgresql/NAME.sql` (custom format for `pg_restore`, despite the suffix) and the roles to `globals/globals.sql` (plain SQL for `psql`). The dumps are uncompressed, so Borg only stores what changed since the previous night and compresses it itself.
 2. Snapshots `rpool/safe/persist` and `rpool/safe/log` in one atomic `zfs snapshot` and mounts both read-only inside the unit’s private mount namespace.
 3. Archives the snapshots as `persist/…` and `var/log/…`, prunes and compacts.
-4. Unmounts and destroys the snapshots, also after a failure.
+4. Unmounts and destroys the snapshots and deletes the dumps, also after a failure. The local snapshots taken during the run keep that night’s dumps for a day.
 
 Each dump is transactionally consistent. Application files are crash-consistent as of the snapshot, a few seconds after the dumps; a file written in between can exist without its database row or the other way round. For Nextcloud, `occ files:scan --all` reconciles this after a restore.
 

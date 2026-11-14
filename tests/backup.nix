@@ -64,6 +64,7 @@ pkgs.testers.runNixOSTest {
     with subtest("Backup run"):
         machine.succeed("systemctl start borgbackup-job-sidechest.service")
         machine.fail("zfs list -H -t snapshot -o name | grep @borg")
+        machine.fail("find /var/backup -name '*.sql' | grep .")
         archive = machine.succeed("${borg} list --short ${repo}").strip()
         assert archive.startswith("machine-sidechest-"), archive
 
