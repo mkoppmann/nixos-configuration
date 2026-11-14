@@ -4,6 +4,8 @@
   ...
 }:
 {
+  imports = [ ./nextcloud-sandbox.nix ];
+
   sops = {
     secrets = {
       nextcloud_admin_password = { };
