@@ -5,7 +5,12 @@
 }:
 {
   boot = {
-    loader.systemd-boot.enable = true;
+    loader.systemd-boot = {
+      enable = true;
+      # The 512 MiB boot partition holds the kernel and initrd of each entry.
+      # Rollbacks with nixos-rebuild use the system profile, which keeps more.
+      configurationLimit = 10;
+    };
     loader.efi.canTouchEfiVariables = true;
     initrd = {
       availableKernelModules = [
