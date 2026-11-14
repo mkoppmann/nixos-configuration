@@ -2,6 +2,7 @@
   ...
 }:
 let
+  inherit (import ../../../lib/nginx-headers.nix) proxy-hsts;
   secretsDir = "/var/lib/private/matrix-authentication-service";
 in
 {
@@ -104,6 +105,7 @@ in
   ];
 
   services.postgresql = {
+      extraConfig = proxy-hsts;
     ensureDatabases = [ "matrix-authentication-service" ];
     ensureUsers = [
       {

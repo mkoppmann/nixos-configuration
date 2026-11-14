@@ -5,6 +5,8 @@
   ...
 }:
 let
+  inherit (import ../../lib/nginx-headers.nix) proxy-hsts;
+
   # Erlang’s node-to-node protocol, which pleroma_ctl uses, would listen on
   # every interface. Pleroma’s node is named pleroma@127.0.0.1.
   distribution = {
@@ -275,9 +277,7 @@ in
       enableACME = true;
       forceSSL = true;
 
-      extraConfig = ''
-        etag on;
-
+      extraConfig = proxy-hsts + ''
         proxy_http_version 1.1;
         ${pleroma-proxy-headers}
 
@@ -313,10 +313,12 @@ in
       enableACME = true;
       forceSSL = true;
 
-      extraConfig = ''
-        proxy_http_version 1.1;
-      ''
-      + pleroma-proxy-headers;
+      extraConfig =
+        proxy-hsts
+        + ''
+          proxy_http_version 1.1;
+        ''
+        + pleroma-proxy-headers;
 
       locations."/" = {
         return = "404";

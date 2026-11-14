@@ -129,6 +129,7 @@ in
 
     virtualHosts."ncrypt.at" = {
       enableACME = true;
+      extraConfig = hsts;
       forceSSL = true;
 
       extraConfig = hsts;

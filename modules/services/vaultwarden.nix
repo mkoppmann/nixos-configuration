@@ -2,6 +2,9 @@
   config,
   ...
 }:
+let
+  inherit (import ../../lib/nginx-headers.nix) proxy-hsts;
+in
 {
   sops = {
     secrets.vaultwarden_smtp_password = { };
@@ -60,6 +63,7 @@
     virtualHosts."pw.ncrypt.at" = {
       enableACME = true;
       forceSSL = true;
+      extraConfig = proxy-hsts;
       locations."/" = {
         proxyPass = "http://127.0.0.1:${toString config.services.vaultwarden.config.ROCKET_PORT}";
         proxyWebsockets = true;
