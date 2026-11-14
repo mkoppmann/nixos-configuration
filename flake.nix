@@ -117,6 +117,10 @@
                 pkgs = nixpkgs.legacyPackages.x86_64-linux;
                 inherit inputs;
               };
+              pleroma = import ./tests/pleroma.nix {
+                pkgs = nixpkgs.legacyPackages.x86_64-linux;
+                inherit inputs;
+              };
               nginx-config = import ./tests/nginx-config.nix {
                 pkgs = nixpkgs.legacyPackages.x86_64-linux;
                 inherit (self.nixosConfigurations) apollo;
