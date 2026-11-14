@@ -1,4 +1,4 @@
-{ ... }:
+{ lib, ... }:
 let
   wireguardNet = "10.100.0.0/24";
 
@@ -54,7 +54,12 @@ in
     };
   };
 
-  systemd.services.unbound.serviceConfig.IPAddressAllow = wireguardNet;
+  systemd.services.unbound.serviceConfig = {
+    IPAddressAllow = wireguardNet;
+    # Without CAP_NET_RAW, which nixpkgs grants for ip-transparent.
+    AmbientCapabilities = lib.mkForce [ "CAP_NET_BIND_SERVICE" ];
+    CapabilityBoundingSet = lib.mkForce [ "CAP_NET_BIND_SERVICE" ];
+  };
 
   networking.firewall.interfaces.wg0 = {
     allowedUDPPorts = [ 53 ];
