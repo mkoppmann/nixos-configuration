@@ -37,10 +37,6 @@ in
           proxy_request_buffering off;
         '';
       };
-
-      locations."= /.well-known/immich" = {
-        proxyPass = "http://10.100.0.2:2283";
-      };
     };
   };
 }

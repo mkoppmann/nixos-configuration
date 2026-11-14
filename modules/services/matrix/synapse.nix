@@ -16,7 +16,6 @@ in
 {
   sops = {
     secrets = {
-      synapse_registration_shared_secret = { };
       synapse_macaroon_secret_key = { };
       synapse_form_secret = { };
       synapse_smtp_password = { };
@@ -26,7 +25,6 @@ in
       # Synapse replaces whole top-level sections with those from extra config
       # files, so the complete email section lives here.
       content = builtins.toJSON {
-        registration_shared_secret = placeholder.synapse_registration_shared_secret;
         macaroon_secret_key = placeholder.synapse_macaroon_secret_key;
         form_secret = placeholder.synapse_form_secret;
         email = {
@@ -123,9 +121,9 @@ in
 
   services.nginx = {
     virtualHosts."matrix.ncrypt.at" = {
-      extraConfig = proxy-hsts;
       enableACME = true;
       forceSSL = true;
+      extraConfig = proxy-hsts;
 
       locations."/".return = "404";
 

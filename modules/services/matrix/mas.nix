@@ -72,20 +72,7 @@ in
         username = "mas@ncrypt.at";
       };
 
-      passwords = {
-        enabled = false;
-        schemes = [
-          {
-            version = 1;
-            algorithm = "bcrypt";
-            unicode_normalization = true;
-          }
-          {
-            version = 2;
-            algorithm = "argon2id";
-          }
-        ];
-      };
+      passwords.enabled = false;
 
       account = {
         email_change_allowed = true;
@@ -105,7 +92,6 @@ in
   ];
 
   services.postgresql = {
-      extraConfig = proxy-hsts;
     ensureDatabases = [ "matrix-authentication-service" ];
     ensureUsers = [
       {
@@ -119,6 +105,7 @@ in
     virtualHosts."auth.matrix.ncrypt.at" = {
       enableACME = true;
       forceSSL = true;
+      extraConfig = proxy-hsts;
 
       locations."/" = {
         proxyPass = "http://127.0.0.1:8091";
