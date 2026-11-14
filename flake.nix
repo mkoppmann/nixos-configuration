@@ -79,6 +79,14 @@
               statix check --config ${self}/statix.toml ${self}
               touch $out
             '';
+            # Files, directories and headings that Markdown links point to.
+            links = pkgs.runCommand "links" { nativeBuildInputs = [ pkgs.lychee ]; } ''
+              # lychee sets up its HTTP client even when offline, which fails
+              # without CA certificates.
+              export SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
+              lychee --offline --include-fragments --no-progress '${self}/**/*.md'
+              touch $out
+            '';
             secrets-encrypted = pkgs.runCommand "secrets-encrypted" { nativeBuildInputs = [ pkgs.sops ]; } ''
               for file in ${self}/secrets/*; do
                 sops filestatus "$file" | grep -q '"encrypted":true' || { echo "$file is not encrypted"; exit 1; }
