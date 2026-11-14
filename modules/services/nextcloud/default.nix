@@ -92,8 +92,8 @@
   };
 
   systemd.services."nextcloud-setup" = {
-    requires = [ "postgresql.service" ];
-    after = [ "postgresql.service" ];
+    requires = [ "postgresql.target" ];
+    after = [ "postgresql.target" ];
   };
 
   # Login through Authentik; the matching provider is in the Authentik
