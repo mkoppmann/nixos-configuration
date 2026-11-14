@@ -50,7 +50,6 @@ in
         inherit name publicKey;
         presharedKeyFile = config.sops.secrets."wireguard_psk_${name}".path;
         allowedIPs = [ "10.100.0.${lib.removePrefix "peer" name}/32" ];
-        persistentKeepalive = 25;
       }) peers;
     };
   };

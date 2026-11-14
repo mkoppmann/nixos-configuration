@@ -87,7 +87,7 @@ in
         RestrictRealtime = true;
         RestrictSUIDSGID = true;
         LockPersonality = true;
-        MemoryDenyWriteExecute = false; # WASM policy engine needs W^X
+        MemoryDenyWriteExecute = false; # The WASM policy engine compiles at run time.
         SystemCallFilter = [
           "@system-service"
           "~@privileged"
