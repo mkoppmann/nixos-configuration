@@ -9,7 +9,7 @@ pkgs.testers.runNixOSTest {
   name = "nextcloud";
 
   nodes.machine = {
-    imports = [ ../modules/nextcloud-sandbox.nix ];
+    imports = [ ../modules/services/nextcloud/sandbox.nix ];
 
     virtualisation.memorySize = 2048;
 

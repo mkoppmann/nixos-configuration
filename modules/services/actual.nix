@@ -5,7 +5,7 @@
   ...
 }:
 let
-  inherit (import ../lib/nginx-headers.nix) hsts referrer-policy;
+  inherit (import ../../lib/nginx-headers.nix) hsts referrer-policy;
 
   # A location with add_header must repeat its complete response-header policy.
   actual-headers =

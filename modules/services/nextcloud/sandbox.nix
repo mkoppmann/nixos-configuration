@@ -1,6 +1,6 @@
 # Sandboxes the units that run Nextcloud’s code: web requests, background jobs
 # and the push daemon; also takes the network from its Redis. Separate from
-# nextcloud.nix so its test can use it.
+# default.nix so its test can use it.
 { config, lib, ... }:
 let
   cfg = config.services.nextcloud;

@@ -5,7 +5,7 @@
   ...
 }:
 let
-  inherit (import ../lib/nginx-headers.nix)
+  inherit (import ../../lib/nginx-headers.nix)
     hsts
     referrer-policy
     x-frame-options

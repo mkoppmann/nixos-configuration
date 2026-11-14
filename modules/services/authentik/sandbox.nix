@@ -1,5 +1,5 @@
 # Sandboxes Authentik’s server and worker; `ak` runs with the server’s
-# settings. Separate from authentik.nix so its test can use it.
+# settings. Separate from default.nix so its test can use it.
 { config, lib, ... }:
 let
   # DynamicUser already makes the system read-only and /tmp private, and rules

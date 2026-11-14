@@ -19,8 +19,8 @@ pkgs.testers.runNixOSTest {
           };
         })
         inputs.impermanence.nixosModules.impermanence
-        ../modules/backup.nix
-        ../modules/postgresql.nix
+        ../modules/system/backup.nix
+        ../modules/services/postgresql.nix
       ];
 
       environment.persistence = lib.mkForce { };

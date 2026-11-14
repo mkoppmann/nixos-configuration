@@ -1,6 +1,6 @@
 { pkgs, ... }:
 let
-  inherit (import ../lib/nginx-headers.nix) hsts referrer-policy x-content-type-options;
+  inherit (import ../../../lib/nginx-headers.nix) hsts referrer-policy x-content-type-options;
 in
 {
   services.nginx = {

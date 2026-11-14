@@ -2,7 +2,7 @@
 
 [Repository overview](../README.md) · [Storage](storage.md) · [Monitoring](monitoring.md) · [Recovery](recovery.md)
 
-The [backup module](../modules/backup.nix) uses the upstream `services.borgbackup` job `sidechest`; [PostgreSQL configuration](../modules/postgresql.nix) defines the database dumps.
+The [backup module](../modules/system/backup.nix) uses the upstream `services.borgbackup` job `sidechest`; [PostgreSQL configuration](../modules/services/postgresql.nix) defines the database dumps.
 
 ## Nightly run
 

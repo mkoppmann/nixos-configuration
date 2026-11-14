@@ -2,7 +2,7 @@
 
 [Repository overview](../README.md) · [Storage](storage.md) · [Operations](operations.md)
 
-The declarations are in [service modules](../modules/), [host configuration](../configuration.nix) and the [local MAS module](../nixos-modules/matrix-authentication-service.nix). Package revisions come from [flake.lock](../flake.lock).
+The declarations are in [service modules](../modules/services/), [system modules](../modules/system/) and the [local MAS module](../nixos-modules/matrix-authentication-service.nix); [configuration.nix](../configuration.nix) imports them. Package revisions come from [flake.lock](../flake.lock).
 
 ## Applications
 
@@ -18,11 +18,11 @@ The declarations are in [service modules](../modules/), [host configuration](../
 | Vaultwarden | `pw.ncrypt.at` → `127.0.0.1:8222` | PostgreSQL `vaultwarden`; attachments, sends, keys and SMTP; WebSocket forwarding enabled |
 | Photo proxy | `photos.mkoppmann.at` → `10.100.0.2:2283` | Upstream reached through WireGuard; its database and media are outside Apollo’s backup coverage |
 
-Nextcloud’s packaged apps are Calendar, Contacts, Notes, Tasks, User OIDC and Client Push (`notify_push`); automatic app updates are disabled. It has no local administrator: administrators sign in through Authentik, and `nextcloud-occ` on Apollo works even when Authentik is down. Its Authentik login is set by `nextcloud-oidc.service`. The [applications blueprint](../modules/authentik-applications.yaml) defines Authentik’s OAuth2 providers and applications for Actual, Immich, Matrix and Nextcloud and their access groups; group membership stays in Authentik’s database. Its admin gate denies superusers that sign in or recover their password from outside the WireGuard network, and their sessions end as soon as their IP address changes; `sudo ak create_recovery_key 1 USERNAME` on Apollo creates a one-time login link for emergencies. Synapse, Pleroma and Vaultwarden have public registration disabled. Vaultwarden has no admin page; organisation admins invite new users by email. Pleroma ignores settings stored in its database; the admin interface can no longer change its configuration.
+Nextcloud’s packaged apps are Calendar, Contacts, Notes, Tasks, User OIDC and Client Push (`notify_push`); automatic app updates are disabled. It has no local administrator: administrators sign in through Authentik, and `nextcloud-occ` on Apollo works even when Authentik is down. Its Authentik login is set by `nextcloud-oidc.service`. The [applications blueprint](../modules/services/authentik/applications.yaml) defines Authentik’s OAuth2 providers and applications for Actual, Immich, Matrix and Nextcloud and their access groups; group membership stays in Authentik’s database. Its admin gate denies superusers that sign in or recover their password from outside the WireGuard network, and their sessions end as soon as their IP address changes; `sudo ak create_recovery_key 1 USERNAME` on Apollo creates a one-time login link for emergencies. Synapse, Pleroma and Vaultwarden have public registration disabled. Vaultwarden has no admin page; organisation admins invite new users by email. Pleroma ignores settings stored in its database; the admin interface can no longer change its configuration.
 
 ## HTTP routing and limits
 
-[Nginx configuration](../modules/nginx.nix) terminates HTTPS using ACME certificates. Each service module declares its own virtual host; [websites](../modules/websites.nix) holds the static sites and redirects. Nginx enables the recommended proxy, TLS, gzip and optimisation settings and uses the stable Nginx package.
+[Nginx configuration](../modules/services/nginx.nix) terminates HTTPS using ACME certificates. Each service module declares its own virtual host; [websites](../modules/services/websites.nix) holds the static sites and redirects. Nginx enables the recommended proxy, TLS, gzip and optimisation settings and uses the stable Nginx package.
 
 - Requests for unknown host names, including bare IP addresses, are closed without a response; TLS handshakes for them are rejected, so no certificate is revealed.
 - Login form submissions are rate-limited per client address to 10 per minute with a burst of 20: Authentik’s flow executor, Vaultwarden’s token endpoint and Nextcloud’s `/login`. Only POST requests count; exceeding the limit returns 429. The applications’ own login throttling applies as well.
@@ -38,7 +38,7 @@ Nextcloud’s packaged apps are Calendar, Contacts, Notes, Tasks, User OIDC and 
 | `www.mkoppmann.at` | Flake input `website` ([mkoppmann/website](https://github.com/mkoppmann/website)) |
 | `wtcvss.mkoppmann.at` | Flake input `wtcvss` ([mkoppmann/wtcvss](https://github.com/mkoppmann/wtcvss)) |
 
-Both sites are built from their repositories with their own locked nixpkgs and served from the Nix store. Each automatic upgrade picks up their latest commits; a site that fails to build fails the whole upgrade. The MTA-STS policies for both domains are defined in the [websites module](../modules/websites.nix). The bare `cypherpunk.observer` and `mkoppmann.at` domains redirect to their `www` hosts. `ncrypt.at` redirects non-discovery requests to `www.ncrypt.at`. `www.ncrypt.at` and `www.cypherpunk.observer` answer every request with an empty HTTP 200.
+Both sites are built from their repositories with their own locked nixpkgs and served from the Nix store. Each automatic upgrade picks up their latest commits; a site that fails to build fails the whole upgrade. The MTA-STS policies for both domains are defined in the [websites module](../modules/services/websites.nix). The bare `cypherpunk.observer` and `mkoppmann.at` domains redirect to their `www` hosts. `ncrypt.at` redirects non-discovery requests to `www.ncrypt.at`. `www.ncrypt.at` and `www.cypherpunk.observer` answer every request with an empty HTTP 200.
 
 ## Host and network
 
@@ -48,16 +48,16 @@ Both sites are built from their repositories with their own locked nixpkgs and s
 | Network | Static `ens3`; DHCP and NetworkManager disabled |
 | IPv4 | `152.53.35.165/22`, gateway `152.53.32.1` |
 | IPv6 | `2a0a:4cc0:100:23::bad:c0de/64`, gateway `fe80::1` on `ens3` |
-| DNS resolver | [Unbound](../modules/dns.nix) on `127.0.0.1`, `::1` and `10.100.0.1`, forwarding over TLS to `dot1.applied-privacy.net` and resolving directly from the authoritative servers if that fails; for WireGuard clients it answers `idp.ncrypt.at` with `10.100.0.1` and without IPv6 address, so Authentik sees WireGuard clients by their tunnel address |
+| DNS resolver | [Unbound](../modules/system/dns.nix) on `127.0.0.1`, `::1` and `10.100.0.1`, forwarding over TLS to `dot1.applied-privacy.net` and resolving directly from the authoritative servers if that fails; for WireGuard clients it answers `idp.ncrypt.at` with `10.100.0.1` and without IPv6 address, so Authentik sees WireGuard clients by their tunnel address |
 | Firewall openings | Public: TCP `80`, `443`, UDP `51820`; on `wg0` only: TCP `22`, TCP and UDP `53`. The initrd has no firewall; its unlock SSH listens on TCP `2222` |
 | WireGuard | `wg0`, `10.100.0.1/24`; peers `peer2`–`peer6` at `10.100.0.2`–`10.100.0.6`, each with a preshared key; keepalive 25 seconds; peers reach Apollo and the internet, but not each other |
 | NAT | NixOS-managed NAT from `wg0` through `ens3` |
 | Administrator | `mcp`, wheel member, Fish shell, password hash from sops |
-| SSH | [SSH configuration](../modules/ssh.nix): only through WireGuard (firewall and `AllowUsers`); `mcp` only, with keys declared in Nix; public-key authentication; post-quantum hybrid key exchange only, also for remote unlock; Ed25519 host key; SFTP; all forwarding disabled; key fingerprints logged |
+| SSH | [SSH configuration](../modules/system/ssh.nix): only through WireGuard (firewall and `AllowUsers`); `mcp` only, with keys declared in Nix; public-key authentication; post-quantum hybrid key exchange only, also for remote unlock; Ed25519 host key; SFTP; all forwarding disabled; key fingerprints logged |
 | Timezone | `Europe/Vienna` |
 | Compatibility version | NixOS `stateVersion = "23.11"` |
 
-The initrd has the same IPv4 address and route, but no IPv6 and no DNS resolver. [Remote unlock](operations.md#remote-unlock) uses a separate SSH host key on port 2222. The normal root password is locked. [Kernel settings](../modules/kernel.nix) hide kernel pointers and logs from unprivileged users, restrict ptrace, BPF and writes through `/proc/PID/mem`, ignore ICMP redirects and source routing, keep slab caches apart, and disable kexec, hibernation, io_uring, 32-bit system calls, debugfs and the automatic loading of unused network protocols and line disciplines. Zram swap, ZFS scrub/trim, weekly Nix garbage collection of generations older than 30 days and automatic store optimisation are enabled. The boot menu lists the ten newest generations.
+The initrd has the same IPv4 address and route, but no IPv6 and no DNS resolver. [Remote unlock](operations.md#remote-unlock) uses a separate SSH host key on port 2222. The normal root password is locked. [Kernel settings](../modules/system/kernel.nix) hide kernel pointers and logs from unprivileged users, restrict ptrace, BPF and writes through `/proc/PID/mem`, ignore ICMP redirects and source routing, keep slab caches apart, and disable kexec, hibernation, io_uring, 32-bit system calls, debugfs and the automatic loading of unused network protocols and line disciplines. Zram swap, ZFS scrub/trim, weekly Nix garbage collection of generations older than 30 days and automatic store optimisation are enabled. The boot menu lists the ten newest generations.
 
 ## Startup and certificate behavior
 
