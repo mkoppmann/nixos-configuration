@@ -58,11 +58,11 @@ If the repository’s key is damaged, `borg key import` restores it from the exp
 
 1. Fence off the old server so it cannot run with the same identities.
 2. In the rescue system, recreate the layout from the [storage configuration](../modules/system/storage.nix). Adjust the disk device there, `hardware-configuration.nix` and the network settings if the hardware differs.
-3. Mount the target at `/mnt` (with `/mnt/boot`, `/mnt/nix`, `/mnt/persist`, `/mnt/var/log`), extract the archive and copy it into place, leaving out the live database and the random seed:
+3. Mount the target at `/mnt` (with `/mnt/boot`, `/mnt/nix`, `/mnt/persist`, `/mnt/var/log`), extract the archive and copy it into place, leaving out the live database:
 
    ```bash
    rsync -aHAX --numeric-ids --exclude='/var/lib/postgresql/***' \
-     --exclude='/var/lib/systemd/random-seed' /recovery/persist/ /mnt/persist/
+     /recovery/persist/ /mnt/persist/
    rsync -aHAX --numeric-ids /recovery/var/log/ /mnt/var/log/
    ```
 

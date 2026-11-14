@@ -24,7 +24,7 @@ Each dump is transactionally consistent. Application files are crash-consistent 
 | Archive names | `apollo-sidechest-DATE` |
 | Retention | 7 daily, 4 weekly, 6 monthly |
 | Credentials | sops secrets `borg_passphrase` and `borg_ssh_key` |
-| Excluded | `persist/var/lib/postgresql` (the dumps cover it), `persist/root/.cache/borg`, `persist/var/lib/systemd/random-seed`, `var/log/nginx/access.log` |
+| Excluded | `persist/var/lib/postgresql` (the dumps cover it), `persist/root/.cache/borg`, `var/log/nginx/access.log` |
 
 Archives do not contain the Nix store, the ESP, ZFS properties or the photo server’s data. The Storage Box keeps its own snapshots of the repository. The repository key is exported to KeePass; see [recovery](recovery.md#independent-prerequisites).
 
