@@ -53,7 +53,7 @@ Both sites are built from their repositories with their own locked nixpkgs and s
 | WireGuard | `wg0`, `10.100.0.1/24`; peers `peer2`–`peer6` at `10.100.0.2`–`10.100.0.6`, each with a preshared key; peers reach Apollo and the internet, but not each other, and the internet doesn’t reach them through Apollo |
 | NAT | NixOS-managed NAT from `wg0` through `ens3` |
 | Administrator | `mcp`, wheel member, Fish shell, password hash from sops |
-| SSH | [SSH configuration](../modules/system/ssh.nix): only through WireGuard (firewall and `AllowUsers`); `mcp` only, with keys declared in Nix; public-key authentication; post-quantum hybrid key exchange only, also for remote unlock; Ed25519 host key; SFTP; all forwarding disabled; key fingerprints logged |
+| SSH | [SSH configuration](../modules/system/ssh.nix): only through WireGuard (firewall and `AllowUsers`); `mcp` only, with keys declared in Nix; public-key authentication; post-quantum hybrid key exchange only, also for remote unlock, where the keys only answer the passphrase prompt; Ed25519 host key; SFTP; all forwarding disabled; key fingerprints logged |
 | Timezone | `Europe/Vienna` |
 | Compatibility version | NixOS `stateVersion = "23.11"` |
 
