@@ -9,7 +9,7 @@ let
   synapse = extraConfig: {
     proxyPass = "http://127.0.0.1:8008";
     recommendedProxySettings = false;
-    extraConfig = (import ../lib/nginx-proxy.nix).clientAddressHeaders + extraConfig;
+    extraConfig = (import ../../../lib/nginx-proxy.nix).clientAddressHeaders + extraConfig;
   };
 in
 {

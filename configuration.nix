@@ -4,32 +4,32 @@
     inputs.authentik-nix.nixosModules.default
     inputs.impermanence.nixosModules.impermanence
     ./hardware-configuration.nix
-    ./modules/actual.nix
-    ./modules/authentik.nix
-    ./modules/auto-upgrade.nix
-    ./modules/backup.nix
-    ./modules/boot.nix
-    ./modules/dns.nix
-    ./modules/element-web.nix
-    ./modules/impermanence.nix
-    ./modules/kernel.nix
-    ./modules/mas.nix
-    ./modules/matrix-synapse.nix
-    ./modules/monitoring.nix
-    ./modules/networking.nix
-    ./modules/nextcloud.nix
-    ./modules/nginx.nix
-    ./modules/nix.nix
-    ./modules/photos.nix
-    ./modules/pleroma.nix
-    ./modules/postgresql.nix
-    ./modules/secrets.nix
-    ./modules/ssh.nix
-    ./modules/storage.nix
-    ./modules/users.nix
-    ./modules/vaultwarden.nix
-    ./modules/websites.nix
-    ./modules/wireguard.nix
+    ./modules/system/auto-upgrade.nix
+    ./modules/system/backup.nix
+    ./modules/system/boot.nix
+    ./modules/system/dns.nix
+    ./modules/system/impermanence.nix
+    ./modules/system/kernel.nix
+    ./modules/system/monitoring.nix
+    ./modules/system/networking.nix
+    ./modules/system/nix.nix
+    ./modules/system/secrets.nix
+    ./modules/system/ssh.nix
+    ./modules/system/storage.nix
+    ./modules/system/users.nix
+    ./modules/system/wireguard.nix
+    ./modules/services/actual.nix
+    ./modules/services/authentik
+    ./modules/services/matrix/element-web.nix
+    ./modules/services/matrix/mas.nix
+    ./modules/services/matrix/synapse.nix
+    ./modules/services/nextcloud
+    ./modules/services/nginx.nix
+    ./modules/services/photos.nix
+    ./modules/services/pleroma.nix
+    ./modules/services/postgresql.nix
+    ./modules/services/vaultwarden.nix
+    ./modules/services/websites.nix
     ./nixos-modules/matrix-authentication-service.nix
   ];
 

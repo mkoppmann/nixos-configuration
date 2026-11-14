@@ -2,7 +2,7 @@
 
 [Repository overview](../README.md) · [Secrets](secrets.md) · [Backups](backups.md) · [Recovery](recovery.md)
 
-Storage is declared in [storage configuration](../modules/storage.nix), [boot configuration](../modules/boot.nix) and [persistence configuration](../modules/impermanence.nix); each [service module](../modules/) declares its own retained paths. The storage configuration describes the disk with [disko](https://github.com/nix-community/disko): a 512 MiB EFI system partition and the encrypted ZFS pool `rpool` on the rest. New installs create the layout from it, and the mounts below come from it. The pool’s passphrase is not in the repository; booting asks for it.
+Storage is declared in [storage configuration](../modules/system/storage.nix), [boot configuration](../modules/system/boot.nix) and [persistence configuration](../modules/system/impermanence.nix); each [service module](../modules/services/) declares its own retained paths. The storage configuration describes the disk with [disko](https://github.com/nix-community/disko): a 512 MiB EFI system partition and the encrypted ZFS pool `rpool` on the rest. New installs create the layout from it, and the mounts below come from it. The pool’s passphrase is not in the repository; booting asks for it.
 
 ## Filesystems and boot
 

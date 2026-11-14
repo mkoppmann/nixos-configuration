@@ -15,11 +15,11 @@ pkgs.testers.runNixOSTest {
     {
       imports = [
         inputs.impermanence.nixosModules.impermanence
-        ../modules/dns.nix
-        ../modules/kernel.nix
-        ../modules/nginx.nix
-        ../modules/ssh.nix
-        ../modules/wireguard.nix
+        ../modules/system/dns.nix
+        ../modules/system/kernel.nix
+        ../modules/services/nginx.nix
+        ../modules/system/ssh.nix
+        ../modules/system/wireguard.nix
         (import ./sops.nix {
           inherit pkgs inputs;
           secrets = {

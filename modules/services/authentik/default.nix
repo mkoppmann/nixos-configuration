@@ -5,17 +5,17 @@
 }:
 let
   # Upstream Authentik takes the first X-Forwarded-For entry.
-  proxyHeaders = (import ../lib/nginx-proxy.nix).clientAddressHeaders;
+  proxyHeaders = (import ../../../lib/nginx-proxy.nix).clientAddressHeaders;
 
   # Real copies: Authentik rejects blueprints that resolve to a path outside
   # this directory, which rules out symlinks into other store paths.
   blueprints = pkgs.runCommand "authentik-blueprints" { } ''
     cp -rL --no-preserve=mode ${config.services.authentik.authentikComponents.staticWorkdirDeps}/blueprints $out
-    install -D -m 0444 ${./authentik-applications.yaml} $out/apollo/applications.yaml
+    install -D -m 0444 ${./applications.yaml} $out/apollo/applications.yaml
   '';
 in
 {
-  imports = [ ./authentik-sandbox.nix ];
+  imports = [ ./sandbox.nix ];
 
   sops = {
     secrets = {

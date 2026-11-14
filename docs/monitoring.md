@@ -2,7 +2,7 @@
 
 [Repository overview](../README.md) · [Backups](backups.md) · [Secrets](secrets.md)
 
-The [monitoring module](../modules/monitoring.nix) reports problems by mail to `admin@ncrypt.at`. Mail goes through msmtp with `reporting@ncrypt.at` at `smtp.webspace.bz:465`; the password is the sops secret `reporting_smtp_password`.
+The [monitoring module](../modules/system/monitoring.nix) reports problems by mail to `admin@ncrypt.at`. Mail goes through msmtp with `reporting@ncrypt.at` at `smtp.webspace.bz:465`; the password is the sops secret `reporting_smtp_password`.
 
 | Source | Reports |
 | --- | --- |

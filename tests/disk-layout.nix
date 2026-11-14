@@ -3,7 +3,7 @@ let
   system = inputs.nixpkgs.lib.nixosSystem {
     specialArgs = { inherit inputs; };
     modules = [
-      ../modules/storage.nix
+      ../modules/system/storage.nix
       {
         nixpkgs.hostPlatform = pkgs.stdenv.hostPlatform.system;
         boot.loader.systemd-boot.enable = true;

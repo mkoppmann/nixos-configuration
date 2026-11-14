@@ -11,7 +11,7 @@ pkgs.testers.runNixOSTest {
   nodes.machine = {
     imports = [
       inputs.authentik-nix.nixosModules.default
-      ../modules/authentik-sandbox.nix
+      ../modules/services/authentik/sandbox.nix
     ];
 
     virtualisation = {

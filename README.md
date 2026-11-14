@@ -10,7 +10,7 @@ Tools like Ansible describe steps that change a server’s existing state. Whate
 - **Safe updates.** Every change builds a complete new system next to the running one; a failed build changes nothing. Earlier systems stay bootable, so one command or the boot menu undoes a bad update.
 - **Pinned inputs.** [flake.lock](flake.lock) pins every input, so a checkout evaluates to the same system on any machine. This goes beyond nixpkgs: the websites are flakes in their own repositories, pinned and built like any other package.
 - **Tested in VMs.** The [tests](tests/) boot the real modules in throwaway virtual machines and check the security measures, backup and restore, and installation onto the declared disk layout. CI runs them and builds the system on every push.
-- **Self-contained services.** Each [module](modules/) owns everything of its service: package, sandbox, virtual host, database, persisted directories and secrets. Removing its import removes the service; only its data stays.
+- **Self-contained services.** Each [service module](modules/services/) owns everything of its service: package, sandbox, virtual host, database, persisted directories and secrets. Removing its import removes the service; only its data stays.
 - **Security as code.** The hardening is part of the configuration, not a checklist applied once:
   - Services run in systemd sandboxes with system call filters, minimal privileges and a read-only system. They can’t reach the WireGuard network unless allowed, and the databases have no network at all.
   - The kernel runs with hardened settings, and interfaces nothing here uses, such as io_uring, are switched off.
@@ -26,7 +26,8 @@ Nix takes more learning than a playbook. In exchange, many mistakes show up as e
 | [flake.nix](flake.nix), [flake.lock](flake.lock) | System output and pinned inputs |
 | [configuration.nix](configuration.nix) | Module imports, time zone and `stateVersion` |
 | [hardware-configuration.nix](hardware-configuration.nix) | Generated hardware settings |
-| [modules/](modules/) | One module per service, owning its virtual host, database and persisted state; host modules for boot, disk layout, networking, persistence, users and Nix; backups, monitoring and automatic updates |
+| [modules/system/](modules/system/) | Apollo itself: boot, disk layout, persistence, kernel, network and access, users, Nix, secrets, backups, monitoring and automatic updates |
+| [modules/services/](modules/services/) | One module, or a directory for several files, per service, owning its virtual host, database, persisted state, secrets and sandbox; Nginx and PostgreSQL, which the services share |
 | [lib/](lib/) | Shared Nginx header snippets |
 | [nixos-modules/](nixos-modules/) | Local Matrix Authentication Service module |
 | [tests/](tests/) | NixOS VM tests: hardening, post-quantum secrets, backup and restore, installing on the disk layout, the Authentik and Nextcloud sandboxes |

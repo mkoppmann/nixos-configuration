@@ -4,7 +4,7 @@
   ...
 }:
 {
-  imports = [ ./nextcloud-sandbox.nix ];
+  imports = [ ./sandbox.nix ];
 
   sops = {
     secrets = {

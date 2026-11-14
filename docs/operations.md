@@ -34,7 +34,7 @@ To publish the server’s lockfile, copy `/etc/nixos/flake.lock` into the reposi
 
 ## Automatic updates
 
-[Automatic upgrade configuration](../modules/auto-upgrade.nix) schedules `nixos-upgrade` at 00:00, 06:00, 12:00 and 18:00 Europe/Vienna with up to 30 minutes of random delay. Its pre-start runs `nix flake update` for all inputs in `/etc/nixos` as `deploy`, then the service rebuilds and switches without writing to the checkout. The timer is persistent, so a missed run can trigger after boot. `pleroma-prune.service` stops the timer while it runs and starts it again afterwards, which catches up a missed run. Automatic reboot is disabled.
+[Automatic upgrade configuration](../modules/system/auto-upgrade.nix) schedules `nixos-upgrade` at 00:00, 06:00, 12:00 and 18:00 Europe/Vienna with up to 30 minutes of random delay. Its pre-start runs `nix flake update` for all inputs in `/etc/nixos` as `deploy`, then the service rebuilds and switches without writing to the checkout. The timer is persistent, so a missed run can trigger after boot. `pleroma-prune.service` stops the timer while it runs and starts it again afterwards, which catches up a missed run. Automatic reboot is disabled.
 
 Each run leaves an audit trail in `journalctl -u nixos-upgrade.service`: `nix flake update` lists every changed input revision, and the post-start step prints `nix store diff-closures` between the previous and new system. Major application/database migrations arrive unreviewed this way; there is no automatic data-migration rollback.
 
@@ -54,7 +54,7 @@ After a reboot, also check the retained service paths, Fish history and applicat
 
 ## WireGuard peers
 
-Peers are declared in the [WireGuard module](../modules/wireguard.nix) as `peerN`, where `N` is the last octet of their tunnel address. Each has a preshared key in sops (`wireguard_psk_peerN`) in addition to its key pair.
+Peers are declared in the [WireGuard module](../modules/system/wireguard.nix) as `peerN`, where `N` is the last octet of their tunnel address. Each has a preshared key in sops (`wireguard_psk_peerN`) in addition to its key pair.
 
 To add a peer, create its key pair on the device or with `wg genkey | tee private.key | wg pubkey`, add its public key under the next free name, and store a new preshared key in sops on Apollo, using the host key, outside the checkout:
 
