@@ -31,7 +31,53 @@
     "net.ipv4.conf.default.accept_source_route" = 0;
     "net.ipv6.conf.all.accept_source_route" = 0;
     "net.ipv6.conf.default.accept_source_route" = 0;
+
+    # Operations submitted through io_uring bypass the services’ system call
+    # filters, and it has been a frequent source of kernel exploits.
+    "kernel.io_uring_disabled" = 2;
+
+    # Only root may load line disciplines; opening a terminal could otherwise
+    # load rarely used ones.
+    "dev.tty.ldisc_autoload" = 0;
   };
+
+  boot.kernelParams = [
+    # 32-bit x86 programs and their separate system call entry are disabled.
+    "ia32_emulation=0"
+    # Objects of different types never share a slab cache, and free pages are
+    # handed out in random order; both make heap corruption harder to exploit.
+    "slab_nomerge"
+    "page_alloc.shuffle=1"
+    # Writes through /proc/PID/mem respect page protections unless the writer
+    # traces the process, so they can’t bypass MemoryDenyWriteExecute.
+    "proc_mem.force_override=ptrace"
+    "debugfs=off"
+  ];
+
+  # Network protocols nothing here uses. Opening a socket of one of them
+  # would otherwise load its module, even for unprivileged users.
+  boot.blacklistedKernelModules = [
+    "appletalk"
+    "atm"
+    "ax25"
+    "bluetooth"
+    "caif_socket"
+    "can"
+    "ieee802154_socket"
+    "kcm"
+    "llc2"
+    "netrom"
+    "nfc"
+    "phonet"
+    "qrtr"
+    "rds"
+    "rose"
+    "rxrpc"
+    "sctp"
+    "smc"
+    "tipc"
+    "x25"
+  ];
 
   # Disables kexec and hibernation, which could replace the running kernel.
   security.protectKernelImage = true;
