@@ -10,7 +10,7 @@
 | [modules/](modules/) | One module per service, owning its virtual host, database and persisted state; host modules for boot, disk layout, networking, persistence, users and Nix; backups, monitoring and automatic updates |
 | [lib/](lib/) | Shared Nginx header snippets |
 | [nixos-modules/](nixos-modules/) | Local Matrix Authentication Service module |
-| [tests/](tests/) | NixOS VM tests: hardening, post-quantum secrets, backup and restore |
+| [tests/](tests/) | NixOS VM tests: hardening, post-quantum secrets, backup and restore, installing on the disk layout |
 | [.github/workflows/](.github/workflows/) | CI: secret scan, tests and system build on every push |
 
 ## Documentation
