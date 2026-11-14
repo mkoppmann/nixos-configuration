@@ -105,6 +105,10 @@
                 pkgs = nixpkgs.legacyPackages.x86_64-linux;
                 inherit inputs;
               };
+              authentik = import ./tests/authentik.nix {
+                pkgs = nixpkgs.legacyPackages.x86_64-linux;
+                inherit inputs;
+              };
               nextcloud = import ./tests/nextcloud.nix {
                 pkgs = nixpkgs.legacyPackages.x86_64-linux;
                 inherit (self.nixosConfigurations.apollo.config.services.nextcloud) package;
