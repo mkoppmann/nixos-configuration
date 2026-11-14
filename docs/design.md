@@ -22,9 +22,11 @@ Goals, decisions and rejected alternatives that the configuration itself doesn�
 
 ## Updates and deployment
 
-- **Automatic input updates.** Apollo updates all inputs every six hours and switches without review, so security fixes arrive within hours. The accepted risk is that any upstream, including the third-party `authentik-nix` main branch, can change the server unreviewed. The upgrade journal records every changed revision and package.
-- **Manual deploys.** The operator deploys reviewed commits from `main` after CI passed. Apollo’s lockfile is therefore newer than Git’s and untested by CI.
-- **No CI that writes.** A scheduled workflow could update the lockfile and test it, but it would need write access, and whoever controls it could then change Apollo. Deferred.
+- **Automatic updates of nixpkgs and the websites.** Apollo updates these inputs every six hours and switches without review, so security fixes arrive within hours. nixpkgs’ release branches are built and tested before they advance, and the websites are packages built in the sandbox. The upgrade journal records every changed revision and package.
+- **Pinned module inputs.** `authentik-nix`, `sops-nix`, `impermanence` and `disko` provide NixOS modules, which run as root, from branches that nobody reviews for Apollo. They only change with a reviewed commit to the lock file. The cost is that an Authentik fix waits for the operator; a daily check mails when authentik-nix offers a newer release.
+- **A third-party binary cache for Authentik.** Building Authentik takes Apollo a long time, so Nix may fetch it from the nix-community cache. Nix asks cache.nixos.org first; the accepted risk is that the second cache can supply any path the first one lacks.
+- **Manual deploys.** The operator deploys reviewed commits from `main` after CI passed. Apollo’s lockfile is newer than Git’s in the automatically updated inputs, a combination CI hasn’t tested.
+- **No CI that writes.** A scheduled workflow that updates and tests the lockfile needs write access, and whoever controls it could then change Apollo.
 - **`stateVersion` stays `23.11`.** It pins defaults that depend on when data was created, such as Vaultwarden’s data directory, not the release in use. Changing it would silently move data paths.
 - **Own nixpkgs for the websites.** The website inputs build with their own locked nixpkgs, so Apollo’s updates can’t break them.
 - **Actual from unstable.** Actual’s desktop app refuses servers older than itself, and stable releases lag behind Actual’s monthly releases. The unstable input can go if the web app replaces the desktop app.
@@ -54,8 +56,8 @@ Considered and rejected:
 | Extra compiler hardening | Every package would lose the binary cache and build on Apollo |
 | System-wide hardened allocator | The exposed runtimes use their own allocators; risk of slowdowns and breakage |
 | fail2ban | Login endpoints are rate-limited by Nginx, and the applications throttle logins themselves |
-| nix-mineral as an input | Desktop-oriented defaults, written for unstable, and it would change system-wide settings with every automatic update; useful settings were adopted individually |
-| Vulnerability scanners on the closure | Name and version matching is noisy, and fixes reach Apollo within hours anyway; the advisories of the exposed services are the better signal |
+| nix-mineral as an input | Desktop-oriented defaults, written for unstable; another module input to review. The kernel settings here are set individually |
+| Vulnerability scanners on the closure | Name and version matching is noisy, and nixpkgs’ fixes reach Apollo within hours anyway. The one pinned application, Authentik, has its own release check |
 | Hiding addresses and host names | No security gain |
 
 ZFS encryption protects disks at rest, not against a provider with access to the running machine.

@@ -19,11 +19,13 @@ To deploy exactly the lockfile from Git instead, run `sudo nixos-rebuild switch 
 
 Apply changes to the network, the firewall or SSH with `sudo nixos-rebuild test --flake .#apollo` first, with a second session open. After activation, check `systemctl --failed` and application logins. A switch may restart Nginx and briefly interrupt every site. A system-generation rollback does not undo application data migrations.
 
-To publish the server’s lockfile, copy `/etc/nixos/flake.lock` into the repository and commit it.
+To publish the server’s lockfile, copy `/etc/nixos/flake.lock` into the repository and commit it. It differs from Git’s only in the automatically updated inputs.
 
 ## Automatic updates
 
-[Automatic upgrade configuration](../modules/system/auto-upgrade.nix) schedules `nixos-upgrade` at 00:00, 06:00, 12:00 and 18:00 Europe/Vienna with up to 30 minutes of random delay. Its pre-start runs `nix flake update` for all inputs in `/etc/nixos` as `deploy`, then the service rebuilds and switches without writing to the checkout. The timer is persistent, so a missed run can trigger after boot. `pleroma-prune.service` stops the timer while it runs and starts it again afterwards, which catches up a missed run. Automatic reboot is disabled.
+[Automatic upgrade configuration](../modules/system/auto-upgrade.nix) schedules `nixos-upgrade` at 00:00, 06:00, 12:00 and 18:00 Europe/Vienna with up to 30 minutes of random delay. Its pre-start runs `nix flake update nixpkgs nixpkgs-unstable website wtcvss` in `/etc/nixos` as `deploy`, then the service rebuilds and switches without writing to the checkout. The other inputs (`authentik-nix`, `sops-nix`, `impermanence` and `disko`) provide NixOS modules, which run as root; they stay at the revisions of Git’s lock file. The timer is persistent, so a missed run can trigger after boot. `pleroma-prune.service` stops the timer while it runs and starts it again afterwards, which catches up a missed run. Automatic reboot is disabled.
+
+To update the pinned inputs, run `nix flake update authentik-nix sops-nix impermanence disko` in the repository, read what changed upstream, commit the lock file and deploy it after CI passed. `authentik-update-check.service` mails while authentik-nix offers another Authentik release than the pinned one.
 
 Each run leaves an audit trail in `journalctl -u nixos-upgrade.service`: `nix flake update` lists every changed input revision, and the post-start step prints `nix store diff-closures` between the previous and new system. Major application/database migrations arrive unreviewed this way; there is no automatic data-migration rollback.
 

@@ -1,9 +1,14 @@
 {
   config,
+  lib,
   pkgs,
   ...
 }:
 let
+  # authentik-nix names Authentik’s release in its lock file, which this
+  # flake’s lock file repeats for the pinned revision.
+  pinnedRelease = (lib.importJSON ../../../flake.lock).nodes.authentik-src.original.ref;
+
   # Upstream Authentik takes the first X-Forwarded-For entry.
   proxyHeaders = (import ../../../lib/nginx-proxy.nix).clientAddressHeaders;
 
@@ -77,6 +82,48 @@ in
   services.authentik-ldap.enable = false;
 
   services.authentik-radius.enable = false;
+
+  # The automatic upgrades leave authentik-nix at its pinned revision. This
+  # unit fails, and so mails, while authentik-nix offers another Authentik
+  # release than the pinned one.
+  systemd.services.authentik-update-check = {
+    description = "Fail when authentik-nix offers a newer Authentik";
+    startAt = "daily";
+    wants = [ "network-online.target" ];
+    after = [ "network-online.target" ];
+    path = [
+      pkgs.curl
+      pkgs.jq
+    ];
+    script = ''
+      offered=$(
+        curl -fsS -m 30 --retry 3 \
+          https://raw.githubusercontent.com/nix-community/authentik-nix/main/flake.lock |
+          jq -er '.nodes."authentik-src".original.ref'
+      )
+      echo "Pinned: ${pinnedRelease}, offered: $offered"
+      [ "$offered" = ${lib.escapeShellArg pinnedRelease} ]
+    '';
+    serviceConfig = {
+      Type = "oneshot";
+      DynamicUser = true;
+      CapabilityBoundingSet = "";
+      PrivateDevices = true;
+      ProtectHome = true;
+      ProtectKernelTunables = true;
+      ProtectKernelModules = true;
+      ProtectControlGroups = true;
+      RestrictAddressFamilies = [
+        "AF_INET"
+        "AF_INET6"
+      ];
+      SystemCallArchitectures = "native";
+      SystemCallFilter = [
+        "@system-service"
+        "~@privileged"
+      ];
+    };
+  };
 
   systemd.services = {
     authentik-migrate = {

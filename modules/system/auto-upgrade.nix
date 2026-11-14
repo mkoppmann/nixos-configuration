@@ -1,6 +1,17 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 let
   checkout = "/etc/nixos";
+
+  # Only inputs that can’t change how Apollo is configured: nixpkgs’ release
+  # branches and the websites, which are packages built in the sandbox. The
+  # other inputs provide NixOS modules, which run as root; they stay at the
+  # revisions of Git’s lock file until a reviewed commit changes them.
+  updatedInputs = [
+    "nixpkgs"
+    "nixpkgs-unstable"
+    "website"
+    "wtcvss"
+  ];
 in
 {
   # The deployment checkout belongs to a user without login, so Git never runs
@@ -31,13 +42,13 @@ in
   system.autoUpgrade = {
     enable = true;
     flake = "${checkout}#apollo";
-    upgrade = false; # Update inputs explicitly below.
+    upgrade = false; # preStart updates the inputs.
     dates = "*-*-* 00/6:00:00 Europe/Vienna";
     randomizedDelaySec = "30min";
     allowReboot = false;
     flags = [
       "--print-build-logs"
-      # The lock file is updated by mcp in preStart.
+      # preStart updates the lock file as deploy.
       "--no-write-lock-file"
     ];
   };
@@ -48,7 +59,8 @@ in
     serviceConfig.RuntimeDirectory = "nixos-upgrade";
     preStart = ''
       readlink -f /run/current-system > "$RUNTIME_DIRECTORY/previous-system"
-      ${pkgs.util-linux}/bin/runuser -u deploy -- nix flake update --flake ${checkout}
+      ${pkgs.util-linux}/bin/runuser -u deploy -- \
+        nix flake update ${lib.escapeShellArgs updatedInputs} --flake ${checkout}
     '';
     # Logging must never fail an upgrade. The record is missing when a switch
     # changes this unit mid-run, because systemd then runs the new postStart.
