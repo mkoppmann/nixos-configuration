@@ -20,7 +20,7 @@ in
     package = pkgs.postgresql_16;
     enableTCPIP = false;
 
-    # Memory budget for 15 GiB of RAM: 4 GiB for the ZFS cache (see boot.nix),
+    # Memory budget for 15 GiB of RAM: 4 GiB for the ZFS cache (see storage.nix),
     # 2 GiB of shared buffers here, the rest for the applications.
     settings = {
       # Without TCP, PostgreSQL still listens on localhost.

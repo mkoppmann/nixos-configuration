@@ -1,7 +1,6 @@
 { ... }:
 {
   networking = {
-    hostId = "e538f1c9";
     hostName = "apollo";
     networkmanager.enable = false;
     useDHCP = false;
