@@ -41,6 +41,8 @@
 
     maxUploadSize = "16G";
     https = true;
+    # A year, like the other hosts; the module’s default is half of that.
+    nginx.hstsMaxAge = 31536000;
 
     autoUpdateApps.enable = false;
     extraAppsEnable = true;
