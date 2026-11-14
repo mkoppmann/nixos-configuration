@@ -9,6 +9,8 @@ let
   # flake’s lock file repeats for the pinned revision.
   pinnedRelease = (lib.importJSON ../../../flake.lock).nodes.authentik-src.original.ref;
 
+  inherit (import ../../../lib/nginx-headers.nix) hsts proxy-hsts;
+
   # Upstream Authentik takes the first X-Forwarded-For entry.
   proxyHeaders = (import ../../../lib/nginx-proxy.nix).clientAddressHeaders;
 
@@ -184,7 +186,7 @@ in
     virtualHosts."idp.ncrypt.at" = {
       enableACME = true;
       forceSSL = true;
-      extraConfig = ''
+      extraConfig = proxy-hsts + ''
         if ($authentik_token_outside_wireguard) {
           return 403;
         }
@@ -207,16 +209,23 @@ in
       locations."/static/" = {
         proxyPass = "https://localhost:9443";
         recommendedProxySettings = false;
-        extraConfig = proxyHeaders + "proxy_hide_header Last-Modified;";
+        extraConfig = proxyHeaders + ''
+          proxy_hide_header Last-Modified;
+          proxy_hide_header Strict-Transport-Security;
+        '';
       };
       locations."~ ^/static/dist/(.+/)?(chunks|assets)/" = {
         proxyPass = "https://localhost:9443";
         recommendedProxySettings = false;
-        extraConfig = proxyHeaders + ''
-          proxy_hide_header Last-Modified;
-          proxy_hide_header Cache-Control;
-          add_header Cache-Control "public, max-age=31536000, immutable";
-        '';
+        extraConfig =
+          proxyHeaders
+          + hsts
+          + ''
+            proxy_hide_header Last-Modified;
+            proxy_hide_header Cache-Control;
+            proxy_hide_header Strict-Transport-Security;
+            add_header Cache-Control "public, max-age=31536000, immutable";
+          '';
       };
     };
   };

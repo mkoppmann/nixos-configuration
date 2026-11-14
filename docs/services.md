@@ -25,6 +25,7 @@ Nextcloud’s packaged apps are Calendar, Contacts, Notes, Tasks, User OIDC and 
 [Nginx configuration](../modules/services/nginx.nix) terminates HTTPS using ACME certificates. Each service module declares its own virtual host; [websites](../modules/services/websites.nix) holds the static sites and redirects. Nginx enables the recommended proxy, TLS, gzip and optimisation settings and uses the stable Nginx package.
 
 - Requests for unknown host names, including bare IP addresses, are closed without a response; TLS handshakes for them are rejected, so no certificate is revealed.
+- Every host sends HSTS. On proxied hosts Nginx adds the header to all responses, including its own redirects and errors, and drops the backend’s copy.
 - Login form submissions are rate-limited per client address to 10 per minute with a burst of 20: Authentik’s flow executor, Vaultwarden’s token endpoint and Nextcloud’s `/login`. Only POST requests count; exceeding the limit returns 429. The applications’ own login throttling applies as well.
 
 - Matrix discovery is served on `ncrypt.at`. Login/logout/refresh compatibility routes go to MAS; other `/_matrix` and `/_synapse/client` routes go to Synapse; `/_synapse/mas` is not exposed. Other requests to the Matrix host return 404.

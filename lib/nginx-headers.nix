@@ -5,6 +5,13 @@ rec {
     # Add HSTS header with preloading to HTTPS requests.
     add_header Strict-Transport-Security "max-age=31536000; includeSubdomains; preload" always;
   '';
+  # For proxied hosts: Nginx also answers by itself, with redirects, errors
+  # and rate limits, and a backend’s own header would arrive twice. A location
+  # with its own proxy_hide_header must repeat that line.
+  proxy-hsts = hsts + ''
+    proxy_hide_header Strict-Transport-Security;
+  '';
+
 
   csp = ''
     # Enable CSP for your services.
