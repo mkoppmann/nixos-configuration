@@ -54,9 +54,15 @@
     "debugfs=off"
   ];
 
-  # Network protocols nothing here uses. Opening a socket of one of them
+  # Socket families nothing here uses: network protocols, and AF_ALG, which
+  # hands the kernel’s crypto code to programs. Opening a socket of one of them
   # would otherwise load its module, even for unprivileged users.
   boot.blacklistedKernelModules = [
+    "af_alg"
+    "algif_aead"
+    "algif_hash"
+    "algif_rng"
+    "algif_skcipher"
     "appletalk"
     "atm"
     "ax25"

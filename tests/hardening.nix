@@ -196,10 +196,13 @@ pkgs.testers.runNixOSTest {
             actual = server.succeed(f"sysctl -n {key}").strip()
             assert actual == value, f"{key}: {actual}"
 
-    with subtest("Unused network protocols stay unloaded"):
+    with subtest("Unused socket families stay unloaded"):
         sctp = "import socket; socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_SCTP)"
         error = server.fail(f"${pkgs.python3.interpreter} -c '{sctp}' 2>&1")
         assert "Protocol not supported" in error, error
-        server.fail("lsmod | grep -qw sctp")
+        alg = "import socket; socket.socket(socket.AF_ALG, socket.SOCK_SEQPACKET, 0)"
+        error = server.fail(f"${pkgs.python3.interpreter} -c '{alg}' 2>&1")
+        assert "Address family not supported" in error, error
+        server.fail("lsmod | grep -qw -e sctp -e af_alg")
   '';
 }
