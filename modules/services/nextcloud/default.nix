@@ -28,6 +28,8 @@
     package = pkgs.nextcloud35;
 
     configureRedis = true;
+    # Previews come from PHP’s GD instead, for fewer image formats.
+    enableImagemagick = false;
     database.createLocally = false;
     notify_push.enable = true;
     secretFile = config.sops.templates."nextcloud-secrets.json".path;
