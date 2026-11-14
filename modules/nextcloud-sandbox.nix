@@ -1,5 +1,6 @@
 # Sandboxes the units that run Nextcloud’s code: web requests, background jobs
-# and the push daemon. Separate from nextcloud.nix so its test can use it.
+# and the push daemon; also takes the network from its Redis. Separate from
+# nextcloud.nix so its test can use it.
 { config, lib, ... }:
 let
   cfg = config.services.nextcloud;
@@ -67,6 +68,12 @@ in
       nextcloud-notify_push.serviceConfig = lib.mkIf cfg.notify_push.enable (
         sandbox // { ProcSubset = "pid"; }
       );
+
+      # Listens on its socket only.
+      redis-nextcloud.serviceConfig = lib.mkIf cfg.configureRedis {
+        PrivateNetwork = true;
+        ProtectProc = "invisible";
+      };
     };
   };
 }
