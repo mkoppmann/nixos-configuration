@@ -18,6 +18,7 @@ jobs:
     # only need their own run when they come from a fork.
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - name: Enable KVM for NixOS VM tests
         run: |
