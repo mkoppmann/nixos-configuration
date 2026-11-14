@@ -50,6 +50,14 @@ sudo wg show wg0
 
 After a reboot, also check the retained service paths, Fish history and application logins. For Vaultwarden notifications, confirm `/notifications/hub` has a WebSocket 101 handshake in a signed-in client and that a harmless edit reaches another client without manual sync; do not share URLs containing access tokens. WireGuard Internet routing is checked with fresh IPv4 connections from a peer; the photo proxy also depends on peer `10.100.0.2` being reachable.
 
+## Pleroma administration
+
+`pleroma_ctl` talks to the running node and needs its cookie, which only the `pleroma` user can read:
+
+```bash
+sudo -u pleroma sh -c 'RELEASE_COOKIE=$(cat ~/.cookie) pleroma_ctl user list'
+```
+
 ## WireGuard peers
 
 Peers are declared in the [WireGuard module](../modules/system/wireguard.nix) as `peerN`, where `N` is the last octet of their tunnel address. Each has a preshared key in sops (`wireguard_psk_peerN`) in addition to its key pair.

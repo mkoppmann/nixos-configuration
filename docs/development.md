@@ -60,4 +60,5 @@ The [VM tests](../tests/) boot the real modules and check behavior, not that the
 - Authentik blueprints: policy bindings that target a flow stage binding need `!KeyOf`, not `!Find`. Blueprints must be real files inside the blueprint directory; symlinks into other store paths are rejected.
 - `ak shell` output passes through a terminal and can carry invisible prefixes; extract values with `grep -o`.
 - `pleroma_ctl` exits successfully when a database query fails; check its output for `QUERY ERROR`.
+- Elixir releases take `RELEASE_COOKIE` as the cookie itself, not as the path of a file.
 - Nginx sends files from the Nix store with a `Last-Modified` of 1970. Sites served from the store need the `revalidate` snippet of [lib/nginx-headers.nix](../lib/nginx-headers.nix), or browsers keep their files for years.

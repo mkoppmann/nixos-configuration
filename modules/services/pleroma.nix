@@ -14,6 +14,18 @@ let
     ERL_FLAGS = "-kernel inet_dist_use_interface {127,0,0,1}";
   };
 
+  # Elixir releases take RELEASE_COOKIE as the cookie itself, not as the path
+  # of a file. The units pass the content of this file, which the migration
+  # unit below fills.
+  cookieFile = "/var/lib/pleroma/.cookie";
+  withCookie =
+    name: command:
+    pkgs.writeShellScript name ''
+      RELEASE_COOKIE=$(cat ${cookieFile})
+      export RELEASE_COOKIE
+      exec ${config.services.pleroma.package}/bin/${command}
+    '';
+
   # A location with its own proxy_set_header does not inherit the parent's, so
   # the media location repeats them.
   pleroma-proxy-headers = ''
@@ -168,9 +180,7 @@ in
   systemd.services.pleroma-prune = {
     description = "Delete old remote Pleroma posts";
     startAt = "*-*-02 04:00:00 Europe/Vienna";
-    environment = distribution // {
-      RELEASE_COOKIE = "/var/lib/pleroma/.cookie";
-    };
+    environment = distribution;
     path = [
       pkgs.bash
       pkgs.gawk
@@ -179,7 +189,7 @@ in
     # QUERY ERROR.
     script = ''
       set -o pipefail
-      ${config.services.pleroma.package}/bin/pleroma_ctl database prune_objects \
+      ${withCookie "pleroma-ctl" "pleroma_ctl \"$@\""} database prune_objects \
         --keep-threads --keep-non-public --prune-orphaned-activities 2>&1 \
         | awk '{ print; fflush() } /QUERY ERROR/ { failed = 1 } END { exit failed }'
     '';
@@ -194,7 +204,18 @@ in
     };
   };
 
-  systemd.services.pleroma-migrations.environment = distribution;
+  systemd.services.pleroma-migrations = {
+    environment = distribution;
+    # The module’s own step leaves the file empty: it needs hexdump, which
+    # isn’t on the unit’s path.
+    preStart = ''
+      if [ ! -s ${cookieFile} ]; then
+        od -An -tx1 -N16 /dev/urandom | tr -d ' \n' > ${cookieFile}.new
+        mv -f ${cookieFile}.new ${cookieFile}
+      fi
+    '';
+    serviceConfig.UMask = "0077";
+  };
 
   systemd.services.pleroma = {
     environment = distribution;
@@ -207,6 +228,8 @@ in
     # which the Erlang VM’s JIT can’t run under.
     serviceConfig = {
       ProtectSystem = lib.mkForce "strict";
+      ExecStart = lib.mkForce (withCookie "pleroma-start" "pleroma start");
+      ExecStop = lib.mkForce (withCookie "pleroma-stop" "pleroma stop");
       PrivateDevices = lib.mkForce true;
       CapabilityBoundingSet = lib.mkForce "";
       DevicePolicy = "closed";
