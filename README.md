@@ -30,7 +30,7 @@ Nix takes more learning than a playbook. In exchange, many mistakes show up as e
 | [lib/](lib/) | Shared Nginx header snippets |
 | [nixos-modules/](nixos-modules/) | Local Matrix Authentication Service module |
 | [tests/](tests/) | NixOS VM tests: hardening, post-quantum secrets, backup and restore, installing on the disk layout, the Authentik and Nextcloud sandboxes |
-| [.github/workflows/](.github/workflows/) | CI: secret scan, tests and system build on every push |
+| [.github/workflows/](.github/workflows/) | CI: secret scan, tests, link check and system build on every push |
 
 ## Documentation
 
