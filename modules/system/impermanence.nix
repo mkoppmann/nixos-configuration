@@ -1,12 +1,4 @@
-{
-  lib,
-  pkgs,
-  utils,
-  ...
-}:
-let
-  randomSeedPersistenceUnit = "persist-${utils.escapeSystemdPath "/persist/var/lib/systemd/random-seed"}.service";
-in
+{ pkgs, ... }:
 {
   environment.etc = {
     "machine-id".source = "/persist/etc/machine-id";
@@ -32,7 +24,6 @@ in
         mode = "0755";
       }
     ];
-    files = [ "/var/lib/systemd/random-seed" ];
     users.mcp = {
       directories = [ ".local/share/fish" ];
     };
@@ -46,18 +37,6 @@ in
       ${pkgs.coreutils}/bin/install -d -o root -g root -m 0700 \
         /persist/var/lib/private /var/lib/private
     '';
-  };
-
-  systemd.services = {
-    # Impermanence represents file persistence with a service, not a .mount
-    # unit. RequiresMountsFor on random-seed alone cannot order that service.
-    systemd-random-seed = {
-      requires = [ randomSeedPersistenceUnit ];
-      after = [ randomSeedPersistenceUnit ];
-    };
-    "${lib.removeSuffix ".service" randomSeedPersistenceUnit}".unitConfig.RequiresMountsFor = [
-      "/persist/var/lib/systemd"
-    ];
   };
 
   # Logrotate atomically replaces its state file; persist its directory.

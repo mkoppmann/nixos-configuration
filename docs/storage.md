@@ -42,8 +42,6 @@ Impermanence binds the following directory trees to corresponding paths under `/
 | `/var/lib/systemd/timesync` | Saved clock state; `systemd-timesync:systemd-timesync 0755` |
 | `/home/mcp/.local/share/fish` | Fish history and other Fish data; directory persisted to permit atomic file replacement |
 
-The OS random seed at `/var/lib/systemd/random-seed` is retained as a file. It is excluded from Borg and must not be restored from a historical archive or cloned to another host.
-
 These paths live directly on the persistent dataset and need no additional bind mapping:
 
 | Path | Purpose |
@@ -59,10 +57,10 @@ Static service data must retain its service owner and file-specific permissions.
 
 Actual, Authentik and MAS use `DynamicUser` and `StateDirectory`. Their ordinary service paths resolve through the host’s `/var/lib/private` tree. Both `/var/lib/private` and `/persist/var/lib/private` are restricted to `root:root 0700` by activation, without recursively changing their children. Dynamic account IDs and ID-mapped ownership can differ across boots or hosts; inspect service-namespace access rather than assigning old numeric UIDs. See [secret access](secrets.md#provisioning-and-access).
 
-The random-seed service explicitly requires and follows Impermanence’s generated file-persistence service. On a replacement, leave the backing seed absent so systemd can initialise a new one. Persist the Fish and logrotate directories rather than individual files because both replace state files atomically.
+The Fish and logrotate directories are persisted rather than individual files, because both replace their state files atomically. The random seed in `/var/lib/systemd` is not persisted: the kernel gets its entropy from the CPU and the hypervisor.
 
 ## Disposable state and backup boundaries
 
 Unlisted root/home files, `/run`, temporary files, caches and generated runtime configurations are disposable unless contained in a listed persistent tree. Nginx cache and Redis state are not separately persisted here. A runtime secret file can reference additional paths; those references require their own persistence assessment.
 
-Persistence retains data across root rollback. Backup coverage is narrower: the live database (covered by dumps), Borg cache, random seed and the Nginx access log are excluded. ZFS snapshots are local recovery points, not independent copies. Timer timestamp persistence lets timers with `Persistent=`, such as the backup, catch up after downtime.
+Persistence retains data across root rollback. Backup coverage is narrower: the live database (covered by dumps), Borg cache and the Nginx access log are excluded. ZFS snapshots are local recovery points, not independent copies. Timer timestamp persistence lets timers with `Persistent=`, such as the backup, catch up after downtime.

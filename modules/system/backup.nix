@@ -65,7 +65,6 @@ in
     exclude = [
       "persist/var/lib/postgresql"
       "persist/root/.cache/borg"
-      "persist/var/lib/systemd/random-seed"
       "var/log/nginx/access.log"
     ];
 

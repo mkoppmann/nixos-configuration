@@ -53,9 +53,8 @@ pkgs.testers.runNixOSTest {
         # On Apollo, impermanence bind-mounts /var/backup from /persist.
         "mkdir -p /persist/var/backup && mount --bind /persist/var/backup /var/backup",
         "systemd-tmpfiles --create",
-        "mkdir -p /persist/data /persist/var/lib/systemd /mnt/log/nginx",
+        "mkdir -p /persist/data /mnt/log/nginx",
         "echo original > /persist/data/file",
-        "echo seed > /persist/var/lib/systemd/random-seed",
         "echo request > /mnt/log/nginx/access.log",
         "echo problem > /mnt/log/nginx/error.log",
         "runuser -u postgres -- psql -d app -c 'CREATE TABLE t (v int); INSERT INTO t VALUES (42)'",
@@ -79,8 +78,7 @@ pkgs.testers.runNixOSTest {
             "var/log/nginx/error.log",
         ]:
             assert path in paths, path
-        for path in ["persist/var/lib/systemd/random-seed", "var/log/nginx/access.log"]:
-            assert path not in paths, path
+        assert "var/log/nginx/access.log" not in paths
 
     with subtest("Restore"):
         machine.succeed(
