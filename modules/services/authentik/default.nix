@@ -147,9 +147,33 @@ in
   };
 
   services.nginx = {
+    # API tokens and app passwords skip the login flow and with it the admin
+    # gate of the applications blueprint, so the API accepts them only from
+    # WireGuard. Browsers use the session cookie, and the applications’ OAuth2
+    # endpoints are outside /api/.
+    commonHttpConfig = ''
+      geo $authentik_outside_wireguard {
+        default 1;
+        10.100.0.0/24 0;
+      }
+      map $http_authorization $authentik_has_authorization {
+        default 1;
+        "" 0;
+      }
+      map $authentik_outside_wireguard$authentik_has_authorization$uri $authentik_token_outside_wireguard {
+        default 0;
+        ~^11/api/ 1;
+      }
+    '';
+
     virtualHosts."idp.ncrypt.at" = {
       enableACME = true;
       forceSSL = true;
+      extraConfig = ''
+        if ($authentik_token_outside_wireguard) {
+          return 403;
+        }
+      '';
       locations."/" = {
         proxyWebsockets = true;
         proxyPass = "https://localhost:9443";
