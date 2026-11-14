@@ -16,7 +16,7 @@ Storage is declared in [storage configuration](../modules/system/storage.nix), [
 
 The ZFS mounts use `noatime`. The ZFS host ID is `e538f1c9`; forced root-pool import is disabled and encryption credentials are requested during boot. There is no disk swap declaration; zram swap is enabled.
 
-`zfs-rollback.service` runs `zfs rollback -r "rpool/local/root@blank"` after pool import and before `sysroot.mount`. disko takes the snapshot right after creating the dataset. The unit has no explicit failure-reporting or recovery hook. The repository does not establish the behavior of a failed rollback on the running host.
+`zfs-rollback.service` runs `zfs rollback -r "rpool/local/root@blank"` after pool import and before `sysroot.mount`. disko takes the snapshot right after creating the dataset. If the rollback fails, Apollo boots with the previous root, and `zfs-rollback-check.service` fails in the booted system, which sends a [failure mail](monitoring.md).
 
 ## Retained paths
 
