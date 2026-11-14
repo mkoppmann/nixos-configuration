@@ -75,6 +75,7 @@ ZFS encryption protects disks at rest, not against a provider with access to the
 - **Upstream modules instead of custom code.** Backups use the `borgbackup` module with one atomic ZFS snapshot; alerts are a failure mail for every unit, ZFS events, a disk space check and healthchecks.io for missing pings.
 - **Database dumps instead of the live cluster** in backups; restores need no PostgreSQL of the same version. The dumps only exist while the backup runs, so the local snapshots don’t keep a week of them.
 - **Off-site copies.** The Storage Box keeps snapshots that Apollo can’t delete. Local snapshots are for mistakes, not a backup.
+- **No access logs.** Nobody reads them, and they would hold the addresses of every visitor. The personal website counts page views without address or user agent, which is enough for trends.
 - **Logs stay in the journal.** They reach the Storage Box every night with the backup; central logging would add little for one host.
 - **PostgreSQL** listens on its socket only, with a fixed memory budget next to the ZFS cache. Major upgrades go through dump and restore, which also reclaims space.
 - **Pleroma, not Akkoma.** Akkoma integrates better with NixOS, but moving there is large and one-way. Old remote posts are pruned monthly with Pleroma’s own task.

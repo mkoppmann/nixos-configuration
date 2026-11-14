@@ -66,7 +66,6 @@ in
     exclude = [
       "persist/var/lib/postgresql"
       "persist/root/.cache/borg"
-      "var/log/nginx/access.log"
     ];
 
     # PostgreSQL is backed up through the dumps, which land in the snapshot.
