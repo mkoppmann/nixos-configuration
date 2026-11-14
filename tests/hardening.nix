@@ -131,6 +131,14 @@ pkgs.testers.runNixOSTest {
         assert client.succeed(f"{dig} @10.100.0.1 idp.ncrypt.at AAAA").strip() == ""
         client.fail(f"{dig} @server idp.ncrypt.at A")
 
+    with subtest("Only services that allow it reach the tunnel"):
+        client.succeed("curl -sf -H 'Host: known.test' http://10.100.0.1/ | grep -q known")
+        # The test driver’s commands run as a system service too.
+        server.fail("ping -c 1 -W 2 10.100.0.2")
+        server.succeed(
+            "systemd-run --wait --pipe -p IPAddressAllow=10.100.0.0/24 $(command -v ping) -c 1 -W 2 10.100.0.2"
+        )
+
     with subtest("SSH answers only through WireGuard"):
         client.succeed("${ssh} -i /root/declared mcp@10.100.0.1 true")
         client.fail("${ssh} -i /root/declared mcp@server true")

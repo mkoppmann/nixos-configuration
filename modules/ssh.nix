@@ -3,6 +3,7 @@
   # Reachable only through WireGuard. The initrd's unlock SSH on port 2222 has
   # no firewall and stays public.
   networking.firewall.interfaces.wg0.allowedTCPPorts = [ 22 ];
+  systemd.services.sshd.serviceConfig.IPAddressAllow = "10.100.0.0/24";
 
   services.openssh = {
     enable = true;

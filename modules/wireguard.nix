@@ -32,6 +32,13 @@ in
     '';
   };
 
+  # Services exchange packets with the tunnel network only where their own
+  # IPAddressAllow permits it.
+  systemd.slices.system = {
+    overrideStrategy = "asDropin";
+    sliceConfig.IPAddressDeny = "10.100.0.0/24";
+  };
+
   networking.wireguard = {
     enable = true;
     interfaces.wg0 = {
