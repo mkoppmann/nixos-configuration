@@ -23,6 +23,7 @@ Nix takes more learning than a playbook. In exchange, many mistakes show up as e
 
 | Path | Purpose |
 | --- | --- |
+| [AGENTS.md](AGENTS.md) | Rules for contributors and coding agents |
 | [flake.nix](flake.nix), [flake.lock](flake.lock) | System output and pinned inputs |
 | [configuration.nix](configuration.nix) | Module imports, time zone and `stateVersion` |
 | [hardware-configuration.nix](hardware-configuration.nix) | Generated hardware settings |
@@ -35,11 +36,13 @@ Nix takes more learning than a playbook. In exchange, many mistakes show up as e
 
 ## Documentation
 
+- [Design decisions](docs/design.md)
+- [Development and testing](docs/development.md)
 - [Services and host settings](docs/services.md)
 - [Storage and persistent state](docs/storage.md)
 - [Secrets and identities](docs/secrets.md)
 - [Backup operation](docs/backups.md)
 - [Monitoring](docs/monitoring.md)
-- [Validation, deployment and routine operations](docs/operations.md)
+- [Deployment and routine operations](docs/operations.md)
 - [File and server recovery](docs/recovery.md)
 - [PostgreSQL restoration](docs/postgresql-restore.md)

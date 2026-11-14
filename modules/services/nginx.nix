@@ -12,7 +12,7 @@
   };
 
   # WireGuard clients reach the websites through the tunnel, and photos.nix
-  # proxies to the NAS in it.
+  # proxies to the photo server in it.
   systemd.services.nginx.serviceConfig.IPAddressAllow = "10.100.0.0/24";
 
   services.nginx = {

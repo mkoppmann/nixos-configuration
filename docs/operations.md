@@ -1,19 +1,8 @@
-# Validation and operations
+# Operations
 
-[Repository overview](../README.md) · [Services](services.md) · [Backups](backups.md) · [Recovery](recovery.md)
+[Repository overview](../README.md) · [Development](development.md) · [Services](services.md) · [Backups](backups.md) · [Recovery](recovery.md)
 
-Commands below run from the checkout in Bash. On Apollo, enter `bash` from the administrator’s Fish shell. Use the pinned lockfile when validating an existing checkout; changing it changes the system being evaluated.
-
-## Local validation
-
-On a machine with Nix and flakes enabled:
-
-```bash
-nix fmt
-nix flake check --no-build --all-systems
-```
-
-`--no-build` evaluates the complete `x86_64-linux` system without building it. [CI](../.github/workflows/check.yml) runs on every push: it scans the Git history for secrets and builds every flake check (the system closure, NixOS VM tests, formatting and lints, encrypted secrets and the targets of Markdown links). Its own build results go to the public Cachix cache `mkoppmann-apollo`, so later runs rebuild only what changed. Apollo does not use that cache. Do not deploy a commit whose CI run failed.
+Commands below run from the checkout in Bash. On Apollo, enter `bash` from the administrator’s Fish shell. Changes are validated as described in [development](development.md#validation); do not deploy a commit whose CI run failed.
 
 ## Deployment
 
