@@ -1,6 +1,11 @@
 { pkgs, ... }:
 let
-  inherit (import ../../../lib/nginx-headers.nix) hsts referrer-policy x-content-type-options;
+  inherit (import ../../../lib/nginx-headers.nix)
+    hsts
+    referrer-policy
+    revalidate
+    x-content-type-options
+    ;
 in
 {
   services.nginx = {
@@ -12,6 +17,7 @@ in
         hsts
         + referrer-policy
         + x-content-type-options
+        + revalidate
         + ''
           add_header X-Frame-Options SAMEORIGIN always;
           add_header Content-Security-Policy "frame-ancestors 'self';" always;

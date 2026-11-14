@@ -28,6 +28,13 @@ rec {
     add_header X-Frame-Options DENY always;
   '';
 
+  # Files in the Nix store all date from 1970. Without this header, browsers
+  # derive from that date that a file stays fresh for years. With it they ask
+  # every time, and Nginx answers 304 while the file’s store path is unchanged.
+  revalidate = ''
+    add_header Cache-Control "no-cache" always;
+  '';
+
   x-content-type-options = ''
     # Prevent injection of code in other mime types (XSS Attacks)
     add_header X-Content-Type-Options nosniff always;
