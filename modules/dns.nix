@@ -54,6 +54,8 @@ in
     };
   };
 
+  systemd.services.unbound.serviceConfig.IPAddressAllow = wireguardNet;
+
   networking.firewall.interfaces.wg0 = {
     allowedUDPPorts = [ 53 ];
     allowedTCPPorts = [ 53 ];

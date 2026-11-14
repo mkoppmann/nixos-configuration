@@ -11,6 +11,10 @@
     defaults.email = "acme@ncrypt.at";
   };
 
+  # WireGuard clients reach the websites through the tunnel, and photos.nix
+  # proxies to the NAS in it.
+  systemd.services.nginx.serviceConfig.IPAddressAllow = "10.100.0.0/24";
+
   services.nginx = {
     enable = true;
 
