@@ -1,4 +1,4 @@
-{ inputs, ... }:
+{ inputs, pkgs, ... }:
 let
   legacy = mountpoint: {
     type = "zfs_fs";
@@ -95,5 +95,39 @@ in
   fileSystems = {
     "/persist".neededForBoot = true;
     "/var/log".neededForBoot = true;
+  };
+
+  networking.hostId = "e538f1c9";
+
+  boot = {
+    supportedFilesystems = [ "zfs" ];
+
+    # ZFS would otherwise cache with nearly all RAM and push PostgreSQL and
+    # the applications into swap; see the budget in postgresql.nix.
+    kernelParams = [ "zfs.zfs_arc_max=${toString (4 * 1024 * 1024 * 1024)}" ];
+
+    zfs = {
+      devNodes = "/dev/disk/by-partuuid";
+      forceImportRoot = false;
+      requestEncryptionCredentials = true;
+    };
+
+    initrd.systemd.services.zfs-rollback = {
+      description = "Rollback root ZFS dataset to blank snapshot";
+      wantedBy = [ "initrd.target" ];
+      after = [ "zfs-import-rpool.service" ];
+      before = [ "sysroot.mount" ];
+      unitConfig.DefaultDependencies = false;
+      serviceConfig.Type = "oneshot";
+      path = [ pkgs.zfs ];
+      script = ''
+        zfs rollback -r "rpool/local/root@blank"
+      '';
+    };
+  };
+
+  services.zfs = {
+    autoScrub.enable = true;
+    trim.enable = true;
   };
 }
