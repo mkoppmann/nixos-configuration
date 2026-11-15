@@ -36,6 +36,8 @@ To update the pinned inputs, run `nix flake update authentik-nix sops-nix imperm
 
 Each run leaves an audit trail in `journalctl -u nixos-upgrade.service`: `nix flake update` lists every changed input revision, and the post-start step prints `nix store diff-closures` between the previous and new system. Major application/database migrations arrive unreviewed this way; there is no automatic data-migration rollback.
 
+CI [checks `main` with the same inputs updated](development.md#validation) about two hours before each run. A mail about a failed scheduled run means that Apollo is about to take, or already runs, a combination that fails a check: read the run’s log, then `journalctl -u nixos-upgrade.service` and `systemctl --failed` on Apollo.
+
 ## DNS
 
 The zones `ncrypt.at`, `mkoppmann.at` and `cypherpunk.observer` are registered and hosted at INWX. [dns/dnsconfig.js](../dns/dnsconfig.js) defines all their records for [DNSControl](https://docs.dnscontrol.org/), which deletes records it doesn’t find there. INWX signs the zones with DNSSEC. Each zone has Apollo’s addresses, and its web hosts are aliases of the zone. The web hosts and addresses come from [dns/hosts.json](../dns/hosts.json); the flake check `dns-hosts` fails while that file differs from the Nginx virtual hosts or Apollo’s addresses.

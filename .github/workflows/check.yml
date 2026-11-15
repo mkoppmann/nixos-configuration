@@ -3,20 +3,27 @@ name: check
 on:
   push:
   pull_request:
+  # Apollo updates some inputs by itself, so it runs a lock file that no push
+  # was checked with. These runs check main with the inputs updated in the
+  # same way, about two hours before each of Apollo’s upgrades. Nothing is
+  # written back: a failure only mails.
+  schedule:
+    - cron: "17 2,8,14,20 * * *"
 
 permissions:
   contents: read
 
-# A newer push to the same branch supersedes a running check.
+# A newer push to the same branch supersedes a running check, and a newer
+# scheduled run an older one.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   flake-check:
     # Branches of this repository are already checked on push; pull requests
     # only need their own run when they come from a fork.
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -45,6 +52,10 @@ jobs:
           name: mkoppmann-apollo
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
 
+      - name: Update the inputs that Apollo updates
+        if: github.event_name == 'schedule'
+        run: nix flake update $(jq -r '.[]' modules/system/updated-inputs.json)
+
       - name: Scan history for secrets
         run: nix run --inputs-from . nixpkgs#gitleaks -- git --redact --verbose .
 
@@ -59,7 +70,7 @@ jobs:
           nix build --print-build-logs --no-link --no-update-lock-file $checks
 
   full-system:
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -85,6 +96,10 @@ jobs:
         with:
           name: mkoppmann-apollo
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+
+      - name: Update the inputs that Apollo updates
+        if: github.event_name == 'schedule'
+        run: nix flake update $(jq -r '.[]' modules/system/updated-inputs.json)
 
       - name: Boot the complete configuration
         run: nix build --print-build-logs --no-link --no-update-lock-file .#checks.x86_64-linux.apollo
