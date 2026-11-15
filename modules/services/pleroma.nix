@@ -107,6 +107,9 @@ in
 
         config :pleroma, :shout, enabled: false
 
+        # Nothing here collects the metrics, which have their own server.
+        config :pleroma, Pleroma.PromEx, disabled: true
+
         config :pleroma, :markup,
           allow_headings: true,
           allow_tables: true,
