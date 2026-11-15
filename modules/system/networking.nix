@@ -1,4 +1,7 @@
 { ... }:
+let
+  host = import ../../host.nix;
+in
 {
   networking = {
     hostName = "apollo";
@@ -15,28 +18,22 @@
       allowedUDPPorts = [ 51820 ];
     };
 
-    interfaces.ens3 = {
+    interfaces.${host.interface} = {
       useDHCP = false;
 
       ipv4.addresses = [
-        {
-          address = "152.53.35.165";
-          prefixLength = 22;
-        }
+        { inherit (host.ipv4) address prefixLength; }
       ];
 
       ipv6.addresses = [
-        {
-          address = "2a0a:4cc0:100:23::bad:c0de";
-          prefixLength = 64;
-        }
+        { inherit (host.ipv6) address prefixLength; }
       ];
     };
 
-    defaultGateway = "152.53.32.1";
+    defaultGateway = host.ipv4.gateway;
     defaultGateway6 = {
-      address = "fe80::1";
-      interface = "ens3";
+      address = host.ipv6.gateway;
+      inherit (host) interface;
     };
   };
 }

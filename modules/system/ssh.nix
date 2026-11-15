@@ -1,9 +1,12 @@
 { ... }:
+let
+  host = import ../../host.nix;
+in
 {
   # Reachable only through WireGuard. The initrd's unlock SSH on port 2222 has
   # no firewall and stays public.
   networking.firewall.interfaces.wg0.allowedTCPPorts = [ 22 ];
-  systemd.services.sshd.serviceConfig.IPAddressAllow = "10.100.0.0/24";
+  systemd.services.sshd.serviceConfig.IPAddressAllow = host.wireguard.network;
 
   services.openssh = {
     enable = true;
@@ -18,7 +21,7 @@
     ];
 
     settings = {
-      AllowUsers = [ "mcp@10.100.0.0/24" ];
+      AllowUsers = [ "mcp@${host.wireguard.network}" ];
       PermitRootLogin = "no";
       AuthenticationMethods = "publickey";
       PasswordAuthentication = false;

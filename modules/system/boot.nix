@@ -3,6 +3,9 @@
   lib,
   ...
 }:
+let
+  host = import ../../host.nix;
+in
 {
   boot = {
     loader.systemd-boot = {
@@ -39,16 +42,16 @@
         network = {
           enable = true;
 
-          networks."10-ens3" = {
-            matchConfig.Name = "ens3";
+          networks."10-${host.interface}" = {
+            matchConfig.Name = host.interface;
 
             address = [
-              "152.53.35.165/22"
+              "${host.ipv4.address}/${toString host.ipv4.prefixLength}"
             ];
 
             routes = [
               {
-                Gateway = "152.53.32.1";
+                Gateway = host.ipv4.gateway;
               }
             ];
 

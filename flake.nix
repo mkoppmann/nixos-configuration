@@ -72,10 +72,10 @@
             dns-hosts =
               let
                 inherit (self.nixosConfigurations.apollo) config;
-                inherit (config.networking.interfaces) ens3;
+                host = import ./host.nix;
                 expected = {
-                  ipv4 = (builtins.head ens3.ipv4.addresses).address;
-                  ipv6 = (builtins.head ens3.ipv6.addresses).address;
+                  ipv4 = host.ipv4.address;
+                  ipv6 = host.ipv6.address;
                   hosts = builtins.filter (host: host != "_") (builtins.attrNames config.services.nginx.virtualHosts);
                 };
               in

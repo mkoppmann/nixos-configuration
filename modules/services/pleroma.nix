@@ -5,6 +5,7 @@
   ...
 }:
 let
+  host = import ../../host.nix;
   inherit (import ../../lib/nginx-headers.nix) proxy-hsts;
 
   # Erlang’s node-to-node protocol, which pleroma_ctl uses, would listen on
@@ -329,7 +330,7 @@ in
         recommendedProxySettings = false;
         proxyPass = "http://phoenix";
         extraConfig = ''
-          allow 10.100.0.0/24;
+          allow ${host.wireguard.network};
           deny all;
         '';
       };

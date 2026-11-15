@@ -1,5 +1,6 @@
 { ... }:
 let
+  host = import ../../host.nix;
   inherit (import ../../lib/nginx-headers.nix)
     hsts
     referrer-policy
@@ -24,7 +25,7 @@ in
         '';
 
       locations."/" = {
-        proxyPass = "http://10.100.0.2:2283";
+        proxyPass = "http://${host.wireguard.peer 2}:2283";
         proxyWebsockets = true;
 
         extraConfig = ''

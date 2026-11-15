@@ -9,6 +9,7 @@ let
   # flake’s lock file repeats for the pinned revision.
   pinnedRelease = (lib.importJSON ../../../flake.lock).nodes.authentik-src.original.ref;
 
+  host = import ../../../host.nix;
   inherit (import ../../../lib/nginx-headers.nix) hsts proxy-hsts;
 
   # Upstream Authentik takes the first X-Forwarded-For entry.
@@ -171,7 +172,7 @@ in
     commonHttpConfig = ''
       geo $authentik_outside_wireguard {
         default 1;
-        10.100.0.0/24 0;
+        ${host.wireguard.network} 0;
       }
       map $http_authorization $authentik_has_authorization {
         default 1;

@@ -14,7 +14,8 @@ The reasons behind the configuration, and what is deliberately left out. The oth
 
 ## Repository
 
-- **One host, no framework.** Option APIs (`options.apollo.*`), flake-parts and deployment tools such as colmena or deploy-rs pay off with several hosts or remote builds. Apollo builds its own system, and the flake has few outputs. Shared values such as addresses belong in a plain imported file.
+- **One host, no framework.** Option APIs (`options.apollo.*`), flake-parts and deployment tools such as colmena or deploy-rs pay off with several hosts or remote builds. Apollo builds its own system, and the flake has few outputs. Shared values belong in a plain imported file: [host.nix](../host.nix) holds Apollo’s addresses and the WireGuard network, and modules and tests import it.
+- **Two network definitions.** The initrd configures its address with systemd-networkd, the running system with NixOS’ scripted networking. Both read the same values, so what repeats is a few lines of structure. One networkd definition for both would replace the running system’s network stack on a server that is only reachable through it, and the two differ on purpose: the initrd has no IPv6.
 - **Service-owned modules.** A service module declares everything of its service: package, sandbox, virtual host, database, persisted paths and secrets. Removing its import removes the service.
 - **Explicit imports.** `configuration.nix` lists every module, system modules first. Importing directories automatically would hide what is enabled.
 - **No hardening directory.** Hardening belongs to what it protects: a sandbox to its service, SSH limits to SSH. Only the kernel settings stand alone.
