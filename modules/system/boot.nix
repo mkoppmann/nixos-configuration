@@ -27,10 +27,7 @@
           enable = true;
           port = 2222;
           hostKeys = [ "/persist/credentials/initrd_host_ed25519_key" ];
-          # The keys only answer the passphrase prompt: no shell, no forwarding.
-          authorizedKeys = map (
-            key: ''command="systemd-tty-ask-password-agent --watch",restrict,pty ${key}''
-          ) config.users.users.mcp.openssh.authorizedKeys.keys;
+          authorizedKeys = config.users.users.mcp.openssh.authorizedKeys.keys;
           extraConfig = "KexAlgorithms ${lib.concatStringsSep "," config.services.openssh.settings.KexAlgorithms}";
         };
       };
@@ -67,14 +64,16 @@
               "initrd-nixos-copy-secrets.service"
             ];
           };
-          # sshd doesn’t start without its privilege separation directory.
-          sshd-privsep-directory = {
-            description = "Create sshd’s privilege separation directory";
+          zfs-unlock-profile = {
+            description = "Prepare root profile for ZFS remote unlock";
             wantedBy = [ "initrd.target" ];
-            before = [ "sshd.service" ];
+            before = [ "initrd-root-fs.target" ];
             unitConfig.DefaultDependencies = false;
             serviceConfig.Type = "oneshot";
-            script = "mkdir -p /var/empty";
+            script = ''
+              mkdir -p /var/empty
+              echo "systemd-tty-ask-password-agent --watch" > /var/empty/.profile
+            '';
           };
         };
       };
