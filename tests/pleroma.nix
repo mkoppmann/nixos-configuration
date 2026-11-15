@@ -1,6 +1,7 @@
 { pkgs, inputs }:
 let
   # Runs a command as pleroma with the node’s cookie, like the units do.
+  instance = "curl -fs --unix-socket /run/pleroma/http.sock http://localhost/api/v1/instance";
   withCookie = "runuser -u pleroma -- sh -c 'export RELEASE_COOKIE=$(cat ~/.cookie); exec \\\"$@\\\"' sh";
 in
 # Apollo’s Pleroma module with its sandbox, on Apollo’s PostgreSQL.
@@ -38,8 +39,7 @@ pkgs.testers.runNixOSTest {
 
   testScript = ''
     machine.wait_for_unit("pleroma.service")
-    machine.wait_for_open_port(4000)
-    machine.wait_until_succeeds("curl -fs http://127.0.0.1:4000/api/v1/instance | grep -q cypherpunk")
+    machine.wait_until_succeeds("${instance} | grep -q cypherpunk")
 
     with subtest("The unit runs sandboxed"):
         machine.succeed("systemctl show -P ProtectSystem pleroma.service | grep -Fx strict")
@@ -50,11 +50,17 @@ pkgs.testers.runNixOSTest {
         machine.fail("runuser -u pleroma -- env RELEASE_COOKIE=/var/lib/pleroma/.cookie pleroma pid")
         machine.succeed("stat -c '%U %a' /var/lib/pleroma/.cookie | grep -Fx 'pleroma 600'")
 
-    with subtest("Erlang listens on loopback only"):
+    with subtest("Only Pleroma’s group opens its socket"):
+        machine.succeed("stat -c '%U %G %a' /run/pleroma/http.sock | grep -Fx 'pleroma pleroma 660'")
+        machine.succeed("stat -c '%U %G %a' /run/pleroma | grep -Fx 'pleroma pleroma 750'")
+        machine.fail("runuser -u nobody -- ${instance}")
+
+    with subtest("Erlang listens on loopback only, and not for HTTP"):
         listeners = machine.succeed("ss -Htlnp | grep -E 'beam|epmd'").splitlines()
         assert listeners, "no listeners found"
         for listener in listeners:
             assert " 127.0.0.1:" in listener or " [::1]:" in listener, listener
+            assert ":4000 " not in listener, listener
 
     with subtest("The monthly prune runs and resumes the upgrade timer"):
         machine.succeed("systemctl start pleroma-prune.service")
@@ -62,7 +68,7 @@ pkgs.testers.runNixOSTest {
 
     with subtest("Pleroma stops and starts"):
         machine.succeed("systemctl restart pleroma.service")
-        machine.wait_for_open_port(4000)
+        machine.wait_until_succeeds("${instance} | grep -q cypherpunk")
         machine.wait_until_succeeds("${withCookie} pleroma pid")
 
     with subtest("Nothing ran into the sandbox"):

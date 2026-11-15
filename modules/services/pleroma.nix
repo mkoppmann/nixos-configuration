@@ -15,6 +15,8 @@ let
     ERL_FLAGS = "-kernel inet_dist_use_interface {127,0,0,1}";
   };
 
+  socket = "/run/pleroma/http.sock";
+
   # Elixir releases take RELEASE_COOKIE as the cookie itself, not as the path
   # of a file. The units pass the content of this file, which the migration
   # unit below fills.
@@ -64,7 +66,7 @@ in
 
         config :pleroma, Pleroma.Web.Endpoint,
           url: [host: "communicating.cypherpunk.observer", scheme: "https", port: 443],
-          http: [ip: {127, 0, 0, 1}, port: 4000]
+          http: [ip: {:local, "${socket}"}, port: 0]
 
         config :pleroma, :instance,
           name: "pleroma/cypherpunk.observer",
@@ -233,7 +235,17 @@ in
     serviceConfig = {
       ProtectSystem = lib.mkForce "strict";
       ExecStart = lib.mkForce (withCookie "pleroma-start" "pleroma start");
+      # Pleroma creates its socket with the unit’s UMask and can’t set another
+      # mode. Nginx is the only other member of its group.
+      ExecStartPost = pkgs.writeShellScript "pleroma-socket" ''
+        until [ -S ${socket} ]; do
+          sleep 1
+        done
+        chmod 660 ${socket}
+      '';
       ExecStop = lib.mkForce (withCookie "pleroma-stop" "pleroma stop");
+      RuntimeDirectory = "pleroma";
+      RuntimeDirectoryMode = "0750";
       PrivateDevices = lib.mkForce true;
       CapabilityBoundingSet = lib.mkForce "";
       DevicePolicy = "closed";
@@ -266,6 +278,8 @@ in
     };
   };
 
+  users.groups.${config.services.pleroma.group}.members = [ config.services.nginx.user ];
+
   environment.persistence."/persist".directories = [
     "/var/lib/pleroma"
   ];
@@ -293,7 +307,7 @@ in
 
     upstreams."phoenix" = {
       servers = {
-        "127.0.0.1:4000" = {
+        "unix:${socket}" = {
           max_fails = 5;
           fail_timeout = "60s";
         };
