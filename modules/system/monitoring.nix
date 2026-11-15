@@ -79,10 +79,31 @@ in
     startAt = "*:0/5";
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
+    # curl reads the URL from standard input, so it never shows up in the
+    # process list.
     script = ''
-      ${pkgs.curl}/bin/curl -fsS -m 10 --retry 3 -o /dev/null \
-        "$(cat ${config.sops.secrets.healthchecks_heartbeat_url.path})" || true
+      printf 'url = "%s"\n' "$(cat "$CREDENTIALS_DIRECTORY/url")" |
+        ${pkgs.curl}/bin/curl -fsS -m 10 --retry 3 -o /dev/null -K - || true
     '';
-    serviceConfig.Type = "oneshot";
+    serviceConfig = {
+      Type = "oneshot";
+      DynamicUser = true;
+      LoadCredential = "url:${config.sops.secrets.healthchecks_heartbeat_url.path}";
+      CapabilityBoundingSet = "";
+      PrivateDevices = true;
+      ProtectHome = true;
+      ProtectKernelTunables = true;
+      ProtectKernelModules = true;
+      ProtectControlGroups = true;
+      RestrictAddressFamilies = [
+        "AF_INET"
+        "AF_INET6"
+      ];
+      SystemCallArchitectures = "native";
+      SystemCallFilter = [
+        "@system-service"
+        "~@privileged"
+      ];
+    };
   };
 }
