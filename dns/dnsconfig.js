@@ -35,7 +35,7 @@ D(
   MX("@", 20, "smtp-in1.prod0.webspace.bz.", TTL(3600)),
   TXT("@", "v=spf1 redirect=_spf.web-server.biz", TTL(10800)),
   TXT("prod0.webspacebz._domainkey", "v=DKIM1;k=rsa;p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3vRezTQz50A0afbcwxW0j+NnEIYi2lLAuZh9hFEbRfPnOyONqc9qh7qW9E/F2mTAeTwnil0mfGTGcZMnSWjCg7ljo6AXpHXWv/BqACxKmIe0fuYuP3uS3Q3CmLV0xAFvBlOxXhbIIG0nxkaYMSTSo9MuH94O75zLC6dWFRoHegJVcKEA1GwG6zJKkKzNjGxwllLU7bh/nI6hMHkiksMFCz3GaNbmZk6KVfbyupkajtpPcsWMRDLxmzsAR6S2qAJJKz6x5f5rDvLX4jcNsBdKCsm/N9Wdq7nMtJZ+8I1/+8P2fcljzffg6Z5Tr4abgWlDjWh7cUzZxqFZyDYofUEDSwIDAQAB", TTL(3600)),
-  TXT("_dmarc", "v=DMARC1; p=none;", TTL(3600)),
+  TXT("_dmarc", "v=DMARC1; p=quarantine;", TTL(3600)),
 );
 
 D(
