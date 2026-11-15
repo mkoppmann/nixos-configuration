@@ -87,4 +87,8 @@
 
   # Disables kexec and hibernation, which could replace the running kernel.
   security.protectKernelImage = true;
+
+  # A crash is logged with its metadata, but the memory of the process, which
+  # can hold keys and user data, is not written to disk.
+  systemd.coredump.settings.Coredump.Storage = "none";
 }

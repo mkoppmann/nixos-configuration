@@ -210,6 +210,11 @@ pkgs.testers.runNixOSTest {
             actual = server.succeed(f"sysctl -n {key}").strip()
             assert actual == value, f"{key}: {actual}"
 
+    with subtest("Crashes leave no memory dump"):
+      server.succeed("systemd-run --unit=crash --wait sh -c 'sleep 60 & kill -SEGV $!; wait' || true")
+      server.wait_until_succeeds("journalctl -t systemd-coredump | grep -q 'dumped core'", timeout=60)
+      server.fail("ls /var/lib/systemd/coredump | grep .")
+
       with subtest("Unused socket families stay unloaded"):
             sctp = "import socket; socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_SCTP)"
             error = server.fail(f"${pkgs.python3.interpreter} -c '{sctp}' 2>&1")
