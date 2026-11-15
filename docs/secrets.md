@@ -51,7 +51,7 @@ Paths below are configured readers or boot inputs. Files beneath persisted servi
 | `/persist/credentials/initrd_host_ed25519_key` | Dedicated unencrypted Ed25519 SSH host key for initrd | `root:root 0600`; required when boot secrets are installed |
 | `/run/secrets/borg_passphrase` | sops secret `borg_passphrase` for the Borg repository | `root:root 0400`; a new value cannot unlock existing archives; copy in KeePass |
 | `/run/secrets/borg_ssh_key` | sops secret `borg_ssh_key`: SSH client key authorised on the Storage Box, with trailing newline | `root:root 0400`; copy in KeePass |
-| `/run/secrets/healthchecks_backup_url`, `/run/secrets/healthchecks_heartbeat_url` | sops secrets: healthchecks.io ping URLs; anyone holding one can fake a ping | `root:root 0400` |
+| `/run/secrets/healthchecks_backup_url`, `/run/secrets/healthchecks_heartbeat_url` | sops secrets: healthchecks.io ping URLs; anyone holding one can fake a ping | `root:root 0400`; the heartbeat unit gets its URL with `LoadCredential`, and curl reads both from standard input |
 | `/run/secrets/reporting_smtp_password` | sops secret `reporting_smtp_password`: password for `reporting@ncrypt.at` | `root:root 0400`; read by msmtp, so only root can send reports |
 | `/run/secrets/wireguard_private_key` | sops secret `wireguard_private_key` | `root:root 0400`; changing it requires peer coordination |
 | `/run/secrets/wireguard_psk_peer2` … `wireguard_psk_peer6` | sops secrets with the preshared key of each WireGuard peer, named after the last octet of its address | `root:root 0400`; each must match the peer’s client configuration |

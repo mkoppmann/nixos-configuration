@@ -17,9 +17,11 @@ let
   dumps = map (db: "postgresqlBackup-${db}.service") config.services.postgresqlBackup.databases ++ [
     "postgresql-globals-backup.service"
   ];
+  # curl reads the URL from standard input, so it never shows up in the
+  # process list.
   ping = suffix: ''
-    ${pkgs.curl}/bin/curl -fsS -m 10 --retry 5 -o /dev/null \
-      "$(cat ${config.sops.secrets.healthchecks_backup_url.path})${suffix}"
+    printf 'url = "%s%s"\n' "$(cat ${config.sops.secrets.healthchecks_backup_url.path})" ${lib.escapeShellArg suffix} |
+      ${pkgs.curl}/bin/curl -fsS -m 10 --retry 5 -o /dev/null -K -
   '';
 in
 {
