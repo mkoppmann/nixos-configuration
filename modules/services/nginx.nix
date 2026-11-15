@@ -29,8 +29,14 @@
       # Requests are not logged; a host that wants a log declares its own.
       access_log off;
 
+      # IPv6 clients count by their /64: a client chooses its addresses
+      # within that network freely.
+      map $remote_addr $login_limit_client {
+        default $binary_remote_addr;
+        "~^(?<login_limit_network>([0-9a-f]*:){4})" $login_limit_network;
+      }
       map $request_method $login_limit_key {
-        POST $binary_remote_addr;
+        POST $login_limit_client;
         default "";
       }
       limit_req_zone $login_limit_key zone=login:10m rate=10r/m;
