@@ -41,7 +41,7 @@ pkgs.testers.runNixOSTest {
     machine.wait_until_succeeds("curl -fs http://localhost:9000/-/health/ready/")
 
     with subtest("The units run sandboxed"):
-        for unit in ("authentik", "authentik-worker"):
+        for unit in ("authentik", "authentik-migrate", "authentik-worker"):
             machine.succeed(f"systemctl show -P ProtectKernelTunables {unit}.service | grep -Fx yes")
 
     with subtest("The worker applies blueprints"):
@@ -74,7 +74,7 @@ pkgs.testers.runNixOSTest {
 
     with subtest("Nothing ran into the sandbox"):
         machine.fail(
-            "journalctl -u authentik -u authentik-worker"
+            "journalctl -u authentik -u authentik-migrate -u authentik-worker"
             " | grep -i -E 'operation not permitted|read-only file system|status=31/SYS'"
         )
   '';
