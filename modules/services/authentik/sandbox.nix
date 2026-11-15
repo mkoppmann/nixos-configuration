@@ -1,5 +1,5 @@
-# Sandboxes Authentik’s server and worker; `ak` runs with the server’s
-# settings. Separate from default.nix so its test can use it.
+# Sandboxes Authentik’s server, worker and migrations; `ak` runs with the
+# server’s settings. Separate from default.nix so its test can use it.
 { config, lib, ... }:
 let
   # DynamicUser already makes the system read-only and /tmp private, and rules
@@ -36,6 +36,7 @@ in
   config = lib.mkIf config.services.authentik.enable {
     systemd.services = {
       authentik.serviceConfig = sandbox;
+      authentik-migrate.serviceConfig = sandbox;
       authentik-worker.serviceConfig = sandbox;
     };
   };
