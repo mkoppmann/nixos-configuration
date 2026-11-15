@@ -8,6 +8,14 @@ var apollo = require("./hosts.json");
 // Hosts that have address records instead of an alias of their zone.
 var noAlias = ["matrix.ncrypt.at"];
 
+// The MX hosts of the domains with mail at mailbox.org. Their MTA-STS
+// policies, which Apollo serves, read the same file.
+function mailboxOrg() {
+  return require("./mailbox-org.json").map(function (host) {
+    return MX("@", 10, host + ".", TTL(10800));
+  });
+}
+
 function webHosts(zone) {
   var records = [A("@", apollo.ipv4), AAAA("@", apollo.ipv6)];
   apollo.hosts.forEach(function (host) {
@@ -47,10 +55,7 @@ D(
   webHosts("mkoppmann.at"),
   CAA("@", "issue", "letsencrypt.org", CAA_CRITICAL, TTL(10800)),
   CNAME("autoconfig", "mailbox.org."),
-  MX("@", 10, "mxext1.mailbox.org.", TTL(10800)),
-  MX("@", 10, "mxext2.mailbox.org.", TTL(10800)),
-  MX("@", 10, "mxext3.mailbox.org.", TTL(10800)),
-  MX("@", 10, "mxext4.mailbox.org.", TTL(10800)),
+  mailboxOrg(),
   SRV("_autodiscover._tcp", 0, 0, 443, "mailbox.org."),
   TXT("mbo0001._domainkey", "v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA2K4PavXoNY8eGK2u61LIQlOHS8f5sWsCK5b+HMOfo0M+aNHwfqlVdzi/IwmYnuDKuXYuCllrgnxZ4fG4yVaux58v\" \"9grVsFHdzdjPlAQfp5rkiETYpCMZwgsmdseJ4CoZaosPHLjPumFE/Ua2WAQQljnunsM9TONM9L6KxrO9t5IISD1XtJb0bq1lVI/e72k3mnPd/q77qzhTDmwN4TSNJZN8sxzUJx9HNSMRRoEIHSDLTI\" \"JUK+Up8IeCx0B7CiOzG5w/cHyZ3AM5V8lkqBaTDK46AwTkTVGJf59QxUZArG3FEH5vy9HzDmy0tGG+053/x4RqkhqMg5/ClDm+lpZqWwIDAQAB"),
   TXT("mbo0002._domainkey", "v=DKIM1; k=rsa;\\010p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqxEKIg2c48ecfmy/+rj35sBOhdfIYGNDCMeHy0b36DX6MNtS7zA/VDR2q5ubtHzraL5uUGas8kb/33wtrWFYxier\" \"LRXy12qj8ItdYCRugu9tXTByEED05WdBtRzJmrb8YBMfeK0E0K3wwoWfhIk/wzKbjMkbqYBOTYLlIcVGQWzOfN7/n3n+VChfu6sGFK3k2qrJNnw22iFy4C8Ks7j77+tCpm0PoUwA2hOdLrRw3ldx2E\" \"9PH0GVwIMJRgekY6cS7DrbHrj/AeGlwfwwCSi9T23mYvc79nVrh2+82ZqmkpZSTD2qq+ukOkyjdRuUPck6e2b+x141Nzd81dIZVfOEiwIDAQAB"),
@@ -58,7 +63,7 @@ D(
   TXT("@", "v=spf1 include:mailbox.org ~all", TTL(10800)),
   TXT("prod0.webspacebz._domainkey", "v=DKIM1;k=rsa;p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3vRezTQz50A0afbcwxW0j+NnEIYi2lLAuZh9hFEbRfPnOyONqc9qh7qW9E/F2mTAeTwnil0mfGTGcZMnSWjCg7ljo6AXpHXWv/BqACxKmIe0fuYuP3uS3Q3CmLV0xAFvBlOxXhbIIG0nxkaYMSTSo9MuH94O75zLC6dWFRoHegJVcKEA1GwG6zJKkKzNjGxwllLU7bh/nI6hMHkiksMFCz3GaNbmZk6KVfbyupkajtpPcsWMRDLxmzsAR6S2qAJJKz6x5f5rDvLX4jcNsBdKCsm/N9Wdq7nMtJZ+8I1/+8P2fcljzffg6Z5Tr4abgWlDjWh7cUzZxqFZyDYofUEDSwIDAQAB"),
   TXT("_dmarc", "v=DMARC1; p=quarantine; rua=mailto:admin@mkoppmann.at"),
-  TXT("_mta-sts", "v=STSv1\\; id=20180727T164200Z;"),
+  TXT("_mta-sts", "v=STSv1; id=20261115T000000Z;"),
   TXT("_smtp._tls", "v=TLSRPTv1; rua=mailto:admin@mkoppmann.at"),
 );
 
@@ -71,15 +76,13 @@ D(
   webHosts("cypherpunk.observer"),
   CAA("@", "issue", "letsencrypt.org", CAA_CRITICAL, TTL(10800)),
   CNAME("autoconfig", "mailbox.org."),
-  MX("@", 10, "mxext1.mailbox.org.", TTL(10800)),
-  MX("@", 20, "mxext2.mailbox.org.", TTL(10800)),
-  MX("@", 30, "mxext3.mailbox.org.", TTL(10800)),
+  mailboxOrg(),
   SRV("_autodiscover._tcp", 0, 0, 443, "mailbox.org."),
   TXT("@", "v=spf1 include:mailbox.org ~all", TTL(10800)),
   TXT("mbo0001._domainkey", "v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA2K4PavXoNY8eGK2u61LIQlOHS8f5sWsCK5b+HMOfo0M+aNHwfqlVdzi/IwmYnuDKuXYuCllrgnxZ4fG4yVaux58v\" \"9grVsFHdzdjPlAQfp5rkiETYpCMZwgsmdseJ4CoZaosPHLjPumFE/Ua2WAQQljnunsM9TONM9L6KxrO9t5IISD1XtJb0bq1lVI/e72k3mnPd/q77qzhTDmwN4TSNJZN8sxzUJx9HNSMRRoEIHSDLTI\" \"JUK+Up8IeCx0B7CiOzG5w/cHyZ3AM5V8lkqBaTDK46AwTkTVGJf59QxUZArG3FEH5vy9HzDmy0tGG+053/x4RqkhqMg5/ClDm+lpZqWwIDAQAB"),
   TXT("mbo0002._domainkey", "v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqxEKIg2c48ecfmy/+rj35sBOhdfIYGNDCMeHy0b36DX6MNtS7zA/VDR2q5ubtHzraL5uUGas8kb/33wtrWFYxier\" \"LRXy12qj8ItdYCRugu9tXTByEED05WdBtRzJmrb8YBMfeK0E0K3wwoWfhIk/wzKbjMkbqYBOTYLlIcVGQWzOfN7/n3n+VChfu6sGFK3k2qrJNnw22iFy4C8Ks7j77+tCpm0PoUwA2hOdLrRw3ldx2E\" \"9PH0GVwIMJRgekY6cS7DrbHrj/AeGlwfwwCSi9T23mYvc79nVrh2+82ZqmkpZSTD2qq+ukOkyjdRuUPck6e2b+x141Nzd81dIZVfOEiwIDAQAB"),
   TXT("prod0.webspacebz._domainkey", "v=DKIM1;k=rsa;p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3vRezTQz50A0afbcwxW0j+NnEIYi2lLAuZh9hFEbRfPnOyONqc9qh7qW9E/F2mTAeTwnil0mfGTGcZMnSWjCg7ljo6AXpHXWv/BqACxKmIe0fuYuP3uS3Q3CmLV0xAFvBlOxXhbIIG0nxkaYMSTSo9MuH94O75zLC6dWFRoHegJVcKEA1GwG6zJKkKzNjGxwllLU7bh/nI6hMHkiksMFCz3GaNbmZk6KVfbyupkajtpPcsWMRDLxmzsAR6S2qAJJKz6x5f5rDvLX4jcNsBdKCsm/N9Wdq7nMtJZ+8I1/+8P2fcljzffg6Z5Tr4abgWlDjWh7cUzZxqFZyDYofUEDSwIDAQAB"),
   TXT("_dmarc", "v=DMARC1; p=quarantine; rua=mailto:mcp@cypherpunk.observer"),
-  TXT("_mta-sts", "v=STSv1; id=20180823T000000Z;"),
+  TXT("_mta-sts", "v=STSv1; id=20261115T000000Z;"),
   TXT("_smtp._tls", "v=TLSRPTv1; rua=mailto:mcp@cypherpunk.observer"),
 );
