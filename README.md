@@ -9,7 +9,7 @@ Tools like Ansible describe steps that change a server’s existing state. Whate
 - **No drift.** Apollo’s root file system returns to an empty snapshot on every boot, and only explicitly persisted state survives. What isn’t declared here doesn’t exist on the server.
 - **Safe updates.** Every change builds a complete new system next to the running one; a failed build changes nothing. Earlier systems stay bootable, so one command or the boot menu undoes a bad update.
 - **Pinned inputs.** [flake.lock](flake.lock) pins every input, so a checkout evaluates to the same system on any machine. This goes beyond nixpkgs: the websites are flakes in their own repositories, pinned and built like any other package.
-- **Tested in VMs.** The [tests](tests/) boot the real modules in throwaway virtual machines and check the security measures, backup and restore, and installation onto the declared disk layout. One of them boots the complete configuration and asks every web host for an answer. CI runs them and builds the system on every push.
+- **Tested in VMs.** The [tests](tests/) boot the real modules in throwaway virtual machines and check the security measures, backup and restore, installation onto the declared disk layout, and the remote unlock after a reboot. One of them boots the complete configuration and asks every web host for an answer. CI runs them and builds the system on every push.
 - **Self-contained services.** Each [service module](modules/services/) owns everything of its service: package, sandbox, virtual host, database, persisted directories and secrets. Removing its import removes the service; only its data stays.
 - **Security as code.** The hardening is part of the configuration, not a checklist applied once:
   - Services run in systemd sandboxes with system call filters, minimal privileges and a read-only system. They can’t reach the WireGuard network unless allowed, and the databases have no network at all.
@@ -33,7 +33,7 @@ Nix takes more learning than a playbook. In exchange, many mistakes show up as e
 | [dns/](dns/) | DNS records of the three zones for DNSControl, and the list of web hosts that a flake check compares with the virtual hosts |
 | [lib/](lib/) | Shared Nginx header snippets |
 | [nixos-modules/](nixos-modules/) | Local Matrix Authentication Service module |
-| [tests/](tests/) | NixOS VM tests: booting the complete configuration, hardening, post-quantum secrets, backup and restore, installing on the disk layout, the Authentik and Nextcloud sandboxes, Pleroma with its command line; a syntax test of the generated Nginx configuration |
+| [tests/](tests/) | NixOS VM tests: booting the complete configuration, hardening, post-quantum secrets, backup and restore, installing on the disk layout, unlocking the encrypted pool over SSH, the Authentik and Nextcloud sandboxes, Pleroma with its command line; a syntax test of the generated Nginx configuration |
 | [.github/workflows/](.github/workflows/) | CI: secret scan, tests, link check and system build on every push |
 
 ## Documentation

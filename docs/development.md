@@ -45,7 +45,7 @@ The [VM tests](../tests/) boot the real modules and check behavior, not that the
 
 [tests/apollo.nix](../tests/apollo.nix) boots the complete configuration instead: every module of [configuration.nix](../configuration.nix) on a fresh disk. It fails when an activation step or a unit fails during boot, when a virtual host doesn’t answer through Nginx or when a response has no or more than one HSTS header, which catches what neither the build nor the tests of single services see, such as a service that doesn’t start with its real settings. It runs beside the other tests, which check behavior that booting doesn’t exercise. The machine differs from Apollo in what a VM can’t have:
 
-- `/persist` is a directory on the VM’s disk. There is no pool, so nothing is unlocked and the root file system isn’t rolled back.
+- `/persist` is a directory on the VM’s disk. There is no pool, so nothing is unlocked and the root file system isn’t rolled back. The remote unlock has its own test, described below.
 - Every secret that the configuration declares gets a generated value. A new secret needs a line in the test only when its consumer expects a format, like WireGuard’s keys.
 - A certificate authority built for the test signs the certificates, and the machine trusts it. No ACME order runs.
 - The host names resolve to the machine itself, which has no other network. The photo server’s host therefore answers 502.
@@ -53,6 +53,8 @@ The [VM tests](../tests/) boot the real modules and check behavior, not that the
 - The test creates what Apollo has and no module creates: Matrix Authentication Service’s secret files.
 
 The state is new on every run: the test also shows whether the services come up on an empty `/persist`, but not whether they still start with Apollo’s data.
+
+[tests/remote-unlock.nix](../tests/remote-unlock.nix) covers the boot that the complete configuration skips. A server with Apollo’s initrd settings, SSH settings and disk layout creates the encrypted pool on a second disk and reboots with its root on it. A client then connects like the operator does, with the declared host key pinned: it enters the passphrase at the prompt, and the server boots and rolls its root back. The test also fails when the unlock key runs a command of its own or when the initrd accepts a classical key exchange. Two things differ from Apollo: the host key is a public test key from the Nix store, and the address sits on the test network’s interface.
 
 ## Sandboxing services
 
