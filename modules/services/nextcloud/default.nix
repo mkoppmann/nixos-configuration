@@ -3,9 +3,6 @@
   pkgs,
   ...
 }:
-let
-  host = import ../../../host.nix;
-in
 {
   imports = [ ./sandbox.nix ];
 
@@ -34,7 +31,12 @@ in
     # Previews come from PHP’s GD instead, for fewer image formats.
     enableImagemagick = false;
     database.createLocally = false;
-    notify_push.enable = true;
+    notify_push = {
+      enable = true;
+      # The push daemon reaches Nextcloud through Nginx on loopback, which is
+      # then the only proxy that Nextcloud has to trust.
+      bendDomainToLocalhost = true;
+    };
     secretFile = config.sops.templates."nextcloud-secrets.json".path;
 
     phpOptions = {
@@ -90,11 +92,6 @@ in
 
       overwriteprotocol = "https";
       "overwrite.cli.url" = "https://${config.services.nextcloud.hostName}";
-      trusted_proxies = [
-        "127.0.0.1"
-        host.ipv4.address
-        host.ipv6.address
-      ];
     };
   };
 
