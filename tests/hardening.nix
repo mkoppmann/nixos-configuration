@@ -177,6 +177,20 @@ pkgs.testers.runNixOSTest {
         posts = client.succeed(f"for i in $(seq 30); do {status} -X POST http://server/form; done").split()
         assert posts[0] == "405" and "429" in posts, posts
 
+    with subtest("IPv6 clients share the limit of their /64"):
+        # A network of its own: the requests above already used up the limit
+        # of the nodes’ addresses.
+        server.succeed("ip -6 addr add 2001:db8:aa::1/64 dev eth1 nodad")
+        for address in ("2001:db8:aa::2", "2001:db8:aa::3"):
+            client.succeed(f"ip -6 addr add {address}/64 dev eth1 nodad")
+        post = (
+            "curl -g -s -o /dev/null -w '%{http_code}\\n' -H 'Host: known.test' -X POST"
+            " http://[2001:db8:aa::1]/form --interface"
+        )
+        first = client.succeed(f"for i in $(seq 15); do {post} 2001:db8:aa::2; done").split()
+        second = client.succeed(f"for i in $(seq 15); do {post} 2001:db8:aa::3; done").split()
+        assert "429" not in first and "429" in second, (first, second)
+
     with subtest("Kernel settings"):
         for key, value in {
             "kernel.kptr_restrict": "2",
@@ -196,13 +210,13 @@ pkgs.testers.runNixOSTest {
             actual = server.succeed(f"sysctl -n {key}").strip()
             assert actual == value, f"{key}: {actual}"
 
-    with subtest("Unused socket families stay unloaded"):
-        sctp = "import socket; socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_SCTP)"
-        error = server.fail(f"${pkgs.python3.interpreter} -c '{sctp}' 2>&1")
-        assert "Protocol not supported" in error, error
-        alg = "import socket; socket.socket(socket.AF_ALG, socket.SOCK_SEQPACKET, 0)"
-        error = server.fail(f"${pkgs.python3.interpreter} -c '{alg}' 2>&1")
-        assert "Address family not supported" in error, error
-        server.fail("lsmod | grep -qw -e sctp -e af_alg")
+      with subtest("Unused socket families stay unloaded"):
+            sctp = "import socket; socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_SCTP)"
+            error = server.fail(f"${pkgs.python3.interpreter} -c '{sctp}' 2>&1")
+            assert "Protocol not supported" in error, error
+            alg = "import socket; socket.socket(socket.AF_ALG, socket.SOCK_SEQPACKET, 0)"
+            error = server.fail(f"${pkgs.python3.interpreter} -c '{alg}' 2>&1")
+            assert "Address family not supported" in error, error
+            server.fail("lsmod | grep -qw -e sctp -e af_alg")
   '';
 }
