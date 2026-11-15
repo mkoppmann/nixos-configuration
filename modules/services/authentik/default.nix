@@ -182,6 +182,10 @@ in
         default 0;
         ~^11/api/ 1;
       }
+      map $uri $authentik_static_cache_control {
+        default no-cache;
+        "~^/static/dist/(.+/)?chunks/[^/]+$" "public, max-age=31536000, immutable";
+      }
     '';
 
     virtualHosts."idp.ncrypt.at" = {
@@ -203,29 +207,17 @@ in
         recommendedProxySettings = false;
         extraConfig = proxyHeaders + "limit_req zone=login burst=20 nodelay;";
       };
-      # Authentik sends each file’s date as Last-Modified, and every file in the
-      # Nix store dates from 1970: Chromium would keep files for years, Firefox
-      # for a week. Only chunks and assets carry content hashes in their names.
+      # Authentik’s own server derives a file’s Last-Modified and ETag from its
+      # date and length, and every file in the Nix store dates from 1970: a
+      # rebuilt file of the same length would pass for unchanged. Nginx sends
+      # store files with an ETag made of their store path. Only chunks carry a
+      # content hash in every name; assets also hold files with fixed names.
+      # The header is left off errors, so that no missing chunk is kept.
       locations."/static/" = {
-        proxyPass = "https://localhost:9443";
-        recommendedProxySettings = false;
-        extraConfig = proxyHeaders + ''
-          proxy_hide_header Last-Modified;
-          proxy_hide_header Strict-Transport-Security;
+        alias = "${config.services.authentik.authentikComponents.frontend}/";
+        extraConfig = hsts + ''
+          add_header Cache-Control $authentik_static_cache_control;
         '';
-      };
-      locations."~ ^/static/dist/(.+/)?(chunks|assets)/" = {
-        proxyPass = "https://localhost:9443";
-        recommendedProxySettings = false;
-        extraConfig =
-          proxyHeaders
-          + hsts
-          + ''
-            proxy_hide_header Last-Modified;
-            proxy_hide_header Cache-Control;
-            proxy_hide_header Strict-Transport-Security;
-            add_header Cache-Control "public, max-age=31536000, immutable";
-          '';
       };
     };
   };

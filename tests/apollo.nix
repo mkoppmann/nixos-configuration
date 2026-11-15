@@ -138,6 +138,9 @@ pkgs.testers.runNixOSTest {
 
   testScript =
     { nodes, ... }:
+    let
+      frontend = nodes.apollo.services.authentik.authentikComponents.frontend;
+    in
     ''
       import json
 
@@ -176,7 +179,6 @@ pkgs.testers.runNixOSTest {
       # Locations that set response headers of their own, where Nginx doesn’t
       # inherit the host’s.
       own_headers = [
-          "https://idp.ncrypt.at/static/missing.js",
           "https://idp.ncrypt.at/static/dist/chunks/missing.js",
           "https://ncrypt.at/.well-known/matrix/server",
           "https://ncrypt.at/.well-known/security.txt",
@@ -220,6 +222,38 @@ pkgs.testers.runNixOSTest {
               headers = apollo.succeed(f"curl -sS -o /dev/null -D - {url}").lower()
               count = headers.count("\nstrict-transport-security:")
               assert count == 1, f"{url}: {count} HSTS headers"
+
+      with subtest("Nginx serves Authentik’s static files from the store"):
+          def headers_of(path):
+              response = apollo.succeed(f"curl -fsS -o /dev/null -D - https://idp.ncrypt.at{path}").lower()
+              lines = [line.split(": ", 1) for line in response.splitlines() if ": " in line]
+              return {name: value.strip() for name, value in lines}
+
+          frontend = "${frontend}"
+          chunk = apollo.succeed(f"find {frontend}/dist -path '*/chunks/*.js' -print -quit").strip()
+          assert chunk, "the frontend has no chunks"
+          chunk = "/static" + chunk.removeprefix(frontend)
+
+          revalidated = [
+              "/static/dist/assets/icons/icon.png",
+              "/static/dist/flow/FlowInterface-${frontend.version}.js",
+              "/static/dist/styles/flow-${frontend.version}.css",
+          ]
+          for path in revalidated + [chunk]:
+              headers = headers_of(path)
+              assert "last-modified" not in headers, f"{path}: {headers}"
+              # Authentik’s own server starts it with the date.
+              assert "etag" in headers and '"1.' not in headers["etag"], f"{path}: {headers}"
+              expected = "no-cache" if path in revalidated else "public, max-age=31536000, immutable"
+              assert headers["cache-control"] == expected, f"{path}: {headers}"
+              if path.endswith(".js"):
+                  assert "javascript" in headers["content-type"], f"{path}: {headers}"
+              if path.endswith(".css"):
+                  assert headers["content-type"].startswith("text/css"), f"{path}: {headers}"
+
+          missing = apollo.succeed("curl -sS -o /dev/null -D - https://idp.ncrypt.at/static/dist/chunks/missing.js").lower()
+          assert missing.startswith("http/2 404"), missing
+          assert "cache-control:" not in missing, missing
 
       with subtest("A freshly booted system needs no reboot"):
           apollo.succeed("systemctl start pending-reboot-check.service")
