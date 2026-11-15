@@ -136,6 +136,10 @@
                 pkgs = nixpkgs.legacyPackages.x86_64-linux;
                 inherit inputs;
               };
+              apollo = import ./tests/apollo.nix {
+                pkgs = nixpkgs.legacyPackages.x86_64-linux;
+                inherit inputs;
+              };
               pleroma = import ./tests/pleroma.nix {
                 pkgs = nixpkgs.legacyPackages.x86_64-linux;
                 inherit inputs;

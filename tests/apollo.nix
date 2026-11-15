@@ -1,0 +1,203 @@
+{ pkgs, inputs }:
+let
+  # Signs the hosts’ certificates. NixOS’ ACME module issues certificates from
+  # the authority in its state directory until an order succeeds, and no order
+  # runs here.
+  ca = pkgs.runCommand "test-ca" { nativeBuildInputs = [ pkgs.minica ]; } ''
+    mkdir $out
+    minica --ca-key $out/key.pem --ca-cert $out/cert.pem --domains selfsigned.local
+  '';
+
+  # Matrix Authentication Service’s keys and mail password, and the secret it
+  # shares with Synapse; none of them is in sops yet.
+  masSecrets =
+    pkgs.runCommand "mas-secrets.yaml"
+      {
+        nativeBuildInputs = [
+          pkgs.matrix-authentication-service
+          pkgs.yq-go
+        ];
+      }
+      ''
+        # mas-cli sets up its HTTP client for every command, which fails
+        # without CA certificates.
+        export SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
+        mas-cli config generate | yq '{"secrets": .secrets, "email": {"password": "testsecret"}}' > $out
+      '';
+  sharedSecret = pkgs.writeText "mas-shared-secret" "test-secret";
+
+  secretValue =
+    name:
+    if pkgs.lib.hasPrefix "wireguard_" name then
+      # 32 bytes in Base64.
+      pkgs.lib.concatStrings (pkgs.lib.replicate 10 "dGVz") + "dGU="
+    else if name == "pleroma_secret_key_base" then
+      pkgs.lib.concatStrings (pkgs.lib.replicate 8 "test-key")
+    else
+      "testsecret";
+
+  # The hosts that Nginx serves, without the catch-all for unknown names.
+  webHosts =
+    config:
+    pkgs.lib.attrNames (
+      pkgs.lib.filterAttrs (_: host: !host.rejectSSL) config.services.nginx.virtualHosts
+    );
+
+  # Their backends run on other machines.
+  remoteBackends = [ "photos.mkoppmann.at" ];
+in
+# Apollo’s complete configuration on a fresh disk, with generated secrets, a
+# test certificate authority and no network beyond the machine itself.
+pkgs.testers.runNixOSTest {
+  name = "apollo";
+
+  node = {
+    specialArgs = { inherit inputs; };
+    # The configuration sets its own platform.
+    pkgsReadOnly = false;
+  };
+
+  nodes.apollo =
+    { config, lib, ... }:
+    {
+      imports = [
+        ../configuration.nix
+        (import ./sops.nix {
+          inherit pkgs inputs;
+          secrets = lib.mapAttrs' (
+            _: secret: lib.nameValuePair secret.key (secretValue secret.key)
+          ) config.sops.secrets;
+        })
+      ];
+      # Replaced by the fixture above.
+      disabledModules = [ ../modules/system/secrets.nix ];
+
+      virtualisation = {
+        cores = 4;
+        memorySize = 8192;
+        diskSize = 8192;
+      };
+
+      # /persist is a directory on the VM’s disk: no pool, no passphrase and
+      # so no unlock over SSH.
+      disko.enableConfig = false;
+      boot.initrd = {
+        network.enable = lib.mkForce false;
+        systemd.network.enable = lib.mkForce false;
+        systemd.services.zfs-rollback.enable = false;
+      };
+
+      networking = {
+        interfaces = lib.mkForce config.system.build.networkConfig.networking.interfaces;
+        defaultGateway = lib.mkForce null;
+        defaultGateway6 = lib.mkForce null;
+        hosts."127.0.0.1" = webHosts config;
+      };
+
+      # Like on Apollo, instead of the test driver’s empty password.
+      users.users.root.hashedPasswordFile = lib.mkForce null;
+
+      # VMs switch it off, and with it the owner of its persisted directory.
+      services.timesyncd.enable = lib.mkForce true;
+
+      # No timer fires during the test: upgrades, backups and the periodic
+      # checks need the pool or the internet.
+      systemd.targets.timers.enable = false;
+
+      security.pki.certificateFiles = [ "${ca}/cert.pem" ];
+      systemd.services = lib.mapAttrs' (
+        cert: _: lib.nameValuePair "acme-order-renew-${cert}" { enable = false; }
+      ) config.security.acme.certs;
+
+      # Synapse only accepts a database with this collation, which Apollo’s
+      # has; the module would create one with the cluster’s.
+      services.postgresql.initialScript = pkgs.writeText "synapse-database.sql" ''
+        CREATE DATABASE "matrix-synapse" TEMPLATE template0 LC_COLLATE "C" LC_CTYPE "C";
+      '';
+
+      # What a fresh /persist lacks and no unit creates.
+      system.activationScripts = {
+        testState = {
+          deps = [
+            "users"
+            "groups"
+          ];
+          text = ''
+            mkdir -p /persist/etc
+            echo ${builtins.hashString "md5" "apollo"} > /persist/etc/machine-id
+
+            install -D -o acme -g acme -m 600 -t /persist/var/lib/acme/.minica ${ca}/key.pem ${ca}/cert.pem
+
+            mas=/persist/var/lib/private/matrix-authentication-service
+            install -D -m 600 ${masSecrets} $mas/secrets.yaml
+            install -m 600 ${sharedSecret} $mas/homeserver_secret
+
+            synapse=/persist/var/lib/matrix-synapse
+            install -d -o matrix-synapse -g matrix-synapse -m 700 $synapse
+            install -o matrix-synapse -g matrix-synapse -m 600 ${sharedSecret} $synapse/mas_secret
+          '';
+        };
+        createPersistentStorageDirs.deps = [ "testState" ];
+        setupSecretsForUsers.deps = [ "installTestKey" ];
+      };
+    };
+
+  testScript =
+    { nodes, ... }:
+    ''
+      import json
+
+      hosts = json.loads('${builtins.toJSON (webHosts nodes.apollo)}')
+      remote_backends = json.loads('${builtins.toJSON remoteBackends}')
+
+      def status(url):
+          return f"curl -sS -o /dev/null -w '%{{http_code}}' {url}"
+
+      def no_unit_failed():
+          failed = apollo.succeed("systemctl list-units --failed --plain --no-legend")
+          assert not failed.strip(), failed
+
+      apollo.wait_for_unit("multi-user.target", timeout=1800)
+
+      with subtest("No unit failed during boot"):
+          no_unit_failed()
+
+      with subtest("The activation succeeded on an empty /persist"):
+          # The first line shows that the journal holds the activation’s output.
+          apollo.succeed("journalctl -b | grep -F \"Source directory '/persist/var/lib/postgresql' does not exist\"")
+          apollo.fail("journalctl -b | grep 'Activation script snippet'")
+
+      with subtest("The backends answer through Nginx"):
+          for url, content in [
+              ("https://matrix.ncrypt.at/_matrix/client/versions", "unstable_features"),
+              ("https://matrix.ncrypt.at/_matrix/client/v3/login", "flows"),
+              ("https://auth.matrix.ncrypt.at/.well-known/openid-configuration", "authorization_endpoint"),
+              ("https://idp.ncrypt.at/api/v3/root/config/", "capabilities"),
+              ("https://cloud.ncrypt.at/status.php", '"installed":true'),
+              ("https://pw.ncrypt.at/api/config", '"version"'),
+              ("https://budget.ncrypt.at/account/needs-bootstrap", '"status":"ok"'),
+              ("https://communicating.cypherpunk.observer/api/v1/instance", "cypherpunk"),
+              ("https://chat.ncrypt.at/config.json", "matrix.ncrypt.at"),
+          ]:
+              apollo.wait_until_succeeds(f"curl -fsS {url} | grep -F '{content}'", timeout=600)
+
+      with subtest("Synapse reaches Matrix Authentication Service"):
+          apollo.succeed(
+              "curl -fsS https://matrix.ncrypt.at/_matrix/client/v1/auth_metadata"
+              " | grep -F https://auth.matrix.ncrypt.at/"
+          )
+
+      with subtest("Every virtual host answers"):
+          for host in hosts:
+              code = apollo.succeed(status(f"https://{host}/")).strip()
+              if host in remote_backends:
+                  assert code in ("502", "504"), f"{host}: {code}"
+              else:
+                  assert code != "000" and not code.startswith("5"), f"{host}: {code}"
+              code = apollo.succeed(status(f"http://{host}/")).strip()
+              assert code == "301", f"{host} without TLS: {code}"
+
+      with subtest("No unit failed since"):
+          no_unit_failed()
+    '';
+}
