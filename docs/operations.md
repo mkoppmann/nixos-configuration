@@ -38,7 +38,7 @@ Each run leaves an audit trail in `journalctl -u nixos-upgrade.service`: `nix fl
 
 ## DNS
 
-The zones `ncrypt.at`, `mkoppmann.at` and `cypherpunk.observer` are registered and hosted at INWX. [dns/dnsconfig.js](../dns/dnsconfig.js) defines all their records for [DNSControl](https://docs.dnscontrol.org/), which deletes records it doesn’t find there. Each zone has Apollo’s addresses, and its web hosts are aliases of the zone. The web hosts and addresses come from [dns/hosts.json](../dns/hosts.json); the flake check `dns-hosts` fails while that file differs from the Nginx virtual hosts or Apollo’s addresses.
+The zones `ncrypt.at`, `mkoppmann.at` and `cypherpunk.observer` are registered and hosted at INWX. [dns/dnsconfig.js](../dns/dnsconfig.js) defines all their records for [DNSControl](https://docs.dnscontrol.org/), which deletes records it doesn’t find there. INWX signs the zones with DNSSEC. Each zone has Apollo’s addresses, and its web hosts are aliases of the zone. The web hosts and addresses come from [dns/hosts.json](../dns/hosts.json); the flake check `dns-hosts` fails while that file differs from the Nginx virtual hosts or Apollo’s addresses.
 
 Run DNSControl from the checkout on the operator’s machine, in a terminal without an agent session. The INWX credentials are in `secrets/dnscontrol.yaml`, which only the admin key decrypts:
 
