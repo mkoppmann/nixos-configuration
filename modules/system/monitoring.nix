@@ -73,6 +73,51 @@ in
     serviceConfig.Type = "oneshot";
   };
 
+  # A switch replaces neither the running kernel and its modules nor the
+  # initrd and the boot parameters; they wait for a reboot.
+  systemd.services.pending-reboot-check = {
+    description = "Fail when the booted kernel, initrd or boot parameters are outdated";
+    startAt = "Mon 07:00 Europe/Vienna";
+    script = ''
+      pending=0
+      for part in kernel initrd kernel-modules kernel-params; do
+        booted=/run/booted-system/$part
+        current=/run/current-system/$part
+        # The parameters are a file in the system itself; the others link to
+        # their store paths.
+        if [ "$part" = kernel-params ]; then
+          booted=$(cat "$booted")
+          current=$(cat "$current")
+        else
+          booted=$(readlink -f "$booted")
+          current=$(readlink -f "$current")
+        fi
+        if [ "$booted" != "$current" ]; then
+          printf '%s differs; reboot to apply it:\n  booted:  %s\n  current: %s\n' "$part" "$booted" "$current"
+          pending=1
+        fi
+      done
+      [ "$pending" = 0 ]
+    '';
+    serviceConfig = {
+      Type = "oneshot";
+      DynamicUser = true;
+      CapabilityBoundingSet = "";
+      PrivateDevices = true;
+      PrivateNetwork = true;
+      ProtectHome = true;
+      ProtectKernelTunables = true;
+      ProtectKernelModules = true;
+      ProtectControlGroups = true;
+      RestrictAddressFamilies = "none";
+      SystemCallArchitectures = "native";
+      SystemCallFilter = [
+        "@system-service"
+        "~@privileged"
+      ];
+    };
+  };
+
   # healthchecks.io alerts when these pings stop, including when Apollo is down.
   systemd.services.healthchecks-heartbeat = {
     description = "Ping the healthchecks.io heartbeat";

@@ -197,6 +197,9 @@ pkgs.testers.runNixOSTest {
               code = apollo.succeed(status(f"http://{host}/")).strip()
               assert code == "301", f"{host} without TLS: {code}"
 
+      with subtest("A freshly booted system needs no reboot"):
+          apollo.succeed("systemctl start pending-reboot-check.service")
+
       with subtest("No unit failed since"):
           no_unit_failed()
     '';
