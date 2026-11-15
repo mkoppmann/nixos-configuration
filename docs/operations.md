@@ -51,7 +51,7 @@ dnscontrol push --config dns/dnsconfig.js --creds "$creds"
 unset SOPS_AGE_KEY
 ```
 
-`preview` lists what `push` would change and changes nothing. Push only from `main`, after the preview shows exactly what the merged commits describe. A new virtual host needs its record before the deploy, because Nginx only gets a certificate for a name that resolves to Apollo.
+`preview` lists what `push` would change and changes nothing. Push only from `main`, after the preview shows exactly what the merged commits describe. Mail servers only fetch an MTA-STS policy again when the `id` in the domain’s `_mta-sts` record changes: after changing a policy in the [websites module](../modules/services/websites.nix), set the `id` to the current time and push after the deploy. A new virtual host needs its record before the deploy, because Nginx only gets a certificate for a name that resolves to Apollo.
 
 ## Routine health checks
 

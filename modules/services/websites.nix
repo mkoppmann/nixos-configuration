@@ -68,11 +68,8 @@ let
     views | ${pkgs.gawk}/bin/awk '$4 != "-" && $4 != "www.mkoppmann.at" { print $4 }' | top
   '';
 
-  mailbox-org = [
-    "mxext1.mailbox.org"
-    "mxext2.mailbox.org"
-    "mxext3.mailbox.org"
-  ];
+  # Also the MX records of these domains.
+  mailbox-org = lib.importJSON ../../dns/mailbox-org.json;
 in
 {
   environment.systemPackages = [ visits ];
