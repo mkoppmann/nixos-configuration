@@ -18,7 +18,7 @@ function webHosts(zone) {
     if (noAlias.indexOf(host) === -1) {
       records.push(CNAME(label, zone + "."));
     } else {
-      records.push(A(label, apollo.ipv4));
+      records.push(A(label, apollo.ipv4), AAAA(label, apollo.ipv6));
     }
   });
   return records;
