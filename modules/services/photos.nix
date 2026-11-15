@@ -2,7 +2,7 @@
 let
   host = import ../../host.nix;
   inherit (import ../../lib/nginx-headers.nix)
-    hsts
+    proxy-hsts
     referrer-policy
     x-frame-options
     x-content-type-options
@@ -16,7 +16,7 @@ in
       forceSSL = true;
 
       extraConfig =
-        hsts
+        proxy-hsts
         + referrer-policy
         + x-frame-options
         + x-content-type-options
