@@ -13,7 +13,7 @@ nix fmt
 nix flake check --no-build --all-systems
 ```
 
-`--no-build` evaluates the complete `x86_64-linux` system without building it, and the checks for the local platform are built. Nix only sees files that Git tracks, so `git add` new files first. [CI](../.github/workflows/check.yml) runs on every push: it scans the Git history for secrets and builds every flake check (the system closure, NixOS VM tests, `nginx -t` on the generated Nginx configuration, formatting and lints, the DNS records, encrypted secrets and the targets of Markdown links). Its own build results go to the public Cachix cache `mkoppmann-apollo`, so later runs rebuild only what changed. Apollo does not use that cache.
+`--no-build` evaluates the complete `x86_64-linux` system without building it, and the checks for the local platform are built. Nix only sees files that Git tracks, so `git add` new files first. [CI](../.github/workflows/check.yml) runs on every push: it scans the Git history for secrets and builds every flake check (the system closure, NixOS VM tests, `nginx -t` on the generated Nginx configuration, formatting and lints, the DNS records, encrypted secrets and the targets of Markdown links). The test that boots the complete configuration runs in a second job at the same time. Its own build results go to the public Cachix cache `mkoppmann-apollo`, so later runs rebuild only what changed. Apollo does not use that cache.
 
 Checks built on macOS don’t prove the Linux build: the Linux build sandbox differs, for example in which CA certificates it offers. Linux builds and VM tests run in CI only.
 
@@ -42,6 +42,17 @@ nix shell nixpkgs#nix-diff -c nix-diff --skip-already-compared "$before" "$after
 ## Tests
 
 The [VM tests](../tests/) boot the real modules and check behavior, not that the configuration equals itself. nixpkgs’ own tests can’t be extended, because their test scripts don’t merge, so the tests build minimal nodes around Apollo’s modules. Sandboxes live in their own files for that reason: a test imports a service’s sandbox without the rest of the service. [tests/sops.nix](../tests/sops.nix) provides a test key and encrypted values for secrets.
+
+[tests/apollo.nix](../tests/apollo.nix) boots the complete configuration instead: every module of [configuration.nix](../configuration.nix) on a fresh disk. It fails when an activation step or a unit fails during boot, or when a virtual host doesn’t answer through Nginx, which catches what neither the build nor the tests of single services see, such as a service that doesn’t start with its real settings. It runs beside the other tests, which check behavior that booting doesn’t exercise. The machine differs from Apollo in what a VM can’t have:
+
+- `/persist` is a directory on the VM’s disk. There is no pool, so nothing is unlocked and the root file system isn’t rolled back.
+- Every secret that the configuration declares gets a generated value. A new secret needs a line in the test only when its consumer expects a format, like WireGuard’s keys.
+- A certificate authority built for the test signs the certificates, and the machine trusts it. No ACME order runs.
+- The host names resolve to the machine itself, which has no other network. The photo server’s host therefore answers 502.
+- No timer fires.
+- The test creates what Apollo has and no module creates: Matrix Authentication Service’s secret files, and Synapse’s database with the collation `C`.
+
+The state is new on every run: the test also shows whether the services come up on an empty `/persist`, but not whether they still start with Apollo’s data.
 
 ## Sandboxing services
 
