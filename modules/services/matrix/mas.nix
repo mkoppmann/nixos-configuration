@@ -16,6 +16,12 @@ in
     settings = {
       http = {
         public_base = "https://auth.matrix.ncrypt.at/";
+        # Only Nginx on this host may set forwarding headers; the default
+        # also believes every private network.
+        trusted_proxies = [
+          "127.0.0.1/8"
+          "::1/128"
+        ];
         listeners = [
           {
             name = "web";

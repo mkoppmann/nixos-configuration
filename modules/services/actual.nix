@@ -27,6 +27,9 @@ in
     settings = {
       hostname = "127.0.0.1";
       port = 5006;
+      # Nginx on this host sets the forwarding headers. The default list
+      # leaves it out, so every client would have Nginx’s address.
+      trustedProxies = [ "127.0.0.1/32" ];
 
       openId = {
         discoveryURL = "https://idp.ncrypt.at/application/o/actual-budget/";

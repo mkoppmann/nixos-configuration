@@ -68,7 +68,7 @@ ZFS encryption protects disks at rest, not against a provider with access to the
 - **SSH only through WireGuard,** for one user with keys declared in Nix and post-quantum key exchange. Only the initrd’s unlock SSH is public, because it runs before WireGuard exists. WireGuard peers use preshared keys against future quantum computers.
 - **Administration from the tunnel.** Authentik superusers may only sign in from WireGuard addresses, Authentik’s API accepts tokens only from there, and Pleroma’s admin paths only answer WireGuard addresses.
 - **Tunnel addresses in DNS only for navigation-only hosts.** Browsers ask before a public page loads resources from a private address. Hosts whose pages embed resources, such as Pleroma’s, keep their public address.
-- **Client addresses.** Authentik and Synapse take the first `X-Forwarded-For` entry, so Nginx replaces the header for them instead of appending to it.
+- **Client addresses.** Authentik and Synapse take the first `X-Forwarded-For` entry, so Nginx replaces the header for them instead of appending to it. Actual and MAS take the last entry that no trusted proxy added, and trust only Nginx on Apollo. The photo proxy’s upstream gets the appended header, which is correct for the same kind of backend.
 - **No local Nextcloud administrator.** Authentik’s superusers are Nextcloud’s administrators, so the admin gate covers them too; `nextcloud-occ` on Apollo is the fallback.
 
 ## Data, backups and monitoring
