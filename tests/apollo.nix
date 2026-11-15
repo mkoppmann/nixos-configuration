@@ -187,6 +187,17 @@ pkgs.testers.runNixOSTest {
           for url, content in backends:
               apollo.wait_until_succeeds(f"curl -fsS {url} | grep -F '{content}'", timeout=600)
 
+      with subtest("Only Nginx opens the backends’ sockets"):
+          sockets = [
+              ("matrix-synapse", "/run/matrix-synapse/nginx.sock"),
+              ("pleroma", "/run/pleroma/http.sock"),
+          ]
+          for owner, socket in sockets:
+              apollo.succeed(f"stat -c '%U %G %a' {socket} | grep -Fx '{owner} {owner} 660'")
+              members = apollo.succeed(f"getent group {owner}").strip().split(":")[3]
+              assert members == "nginx", f"{owner}: {members}"
+          apollo.fail("ss -Htln | grep -F ':4000 '")
+
       with subtest("Synapse reaches Matrix Authentication Service"):
           apollo.succeed(
               "curl -fsS https://matrix.ncrypt.at/_matrix/client/v1/auth_metadata"
