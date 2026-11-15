@@ -8,6 +8,18 @@ var apollo = require("./hosts.json");
 // Hosts that have address records instead of an alias of their zone.
 var noAlias = ["matrix.ncrypt.at"];
 
+// Only Apollo’s ACME account may get certificates, and only by answering
+// over HTTP.
+function letsencrypt(ttl) {
+  return CAA(
+    "@",
+    "issue",
+    "letsencrypt.org; accounturi=https://acme-v02.api.letsencrypt.org/acme/acct/1884672326; validationmethods=http-01",
+    CAA_CRITICAL,
+    TTL(ttl)
+  );
+}
+
 // The MX hosts of the domains with mail at mailbox.org. Their MTA-STS
 // policies, which Apollo serves, read the same file.
 function mailboxOrg() {
@@ -38,7 +50,7 @@ D(
   DnsProvider(DSP_INWX),
   NAMESERVER_TTL(86400),
   webHosts("ncrypt.at"),
-  CAA("@", "issue", "letsencrypt.org", CAA_CRITICAL, TTL(1800)),
+  letsencrypt(1800),
   MX("@", 10, "smtp-in0.prod0.webspace.bz.", TTL(3600)),
   MX("@", 20, "smtp-in1.prod0.webspace.bz.", TTL(3600)),
   TXT("@", "v=spf1 redirect=_spf.web-server.biz", TTL(10800)),
@@ -53,7 +65,7 @@ D(
   NAMESERVER_TTL(86400),
   DefaultTTL(3600),
   webHosts("mkoppmann.at"),
-  CAA("@", "issue", "letsencrypt.org", CAA_CRITICAL, TTL(10800)),
+  letsencrypt(10800),
   CNAME("autoconfig", "mailbox.org."),
   mailboxOrg(),
   SRV("_autodiscover._tcp", 0, 0, 443, "mailbox.org."),
@@ -74,7 +86,7 @@ D(
   NAMESERVER_TTL(86400),
   DefaultTTL(3600),
   webHosts("cypherpunk.observer"),
-  CAA("@", "issue", "letsencrypt.org", CAA_CRITICAL, TTL(10800)),
+  letsencrypt(10800),
   CNAME("autoconfig", "mailbox.org."),
   mailboxOrg(),
   SRV("_autodiscover._tcp", 0, 0, 443, "mailbox.org."),
