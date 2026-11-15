@@ -29,6 +29,7 @@ Nix takes more learning than a playbook. In exchange, many mistakes show up as e
 | [hardware-configuration.nix](hardware-configuration.nix) | Generated hardware settings |
 | [modules/system/](modules/system/) | Apollo itself: boot, disk layout, persistence, kernel, network and access, users, Nix, secrets, backups, monitoring and automatic updates |
 | [modules/services/](modules/services/) | One module, or a directory for several files, per service, owning its virtual host, database, persisted state, secrets and sandbox; Nginx and PostgreSQL, which the services share |
+| [dns/](dns/) | DNS records of the three zones for DNSControl, and the list of web hosts that a flake check compares with the virtual hosts |
 | [lib/](lib/) | Shared Nginx header snippets |
 | [nixos-modules/](nixos-modules/) | Local Matrix Authentication Service module |
 | [tests/](tests/) | NixOS VM tests: hardening, post-quantum secrets, backup and restore, installing on the disk layout, the Authentik and Nextcloud sandboxes, Pleroma with its command line; a syntax test of the generated Nginx configuration |

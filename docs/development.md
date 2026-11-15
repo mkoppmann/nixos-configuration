@@ -13,7 +13,7 @@ nix fmt
 nix flake check --no-build --all-systems
 ```
 
-`--no-build` evaluates the complete `x86_64-linux` system without building it, and the checks for the local platform are built. Nix only sees files that Git tracks, so `git add` new files first. [CI](../.github/workflows/check.yml) runs on every push: it scans the Git history for secrets and builds every flake check (the system closure, NixOS VM tests, `nginx -t` on the generated Nginx configuration, formatting and lints, encrypted secrets and the targets of Markdown links). Its own build results go to the public Cachix cache `mkoppmann-apollo`, so later runs rebuild only what changed. Apollo does not use that cache.
+`--no-build` evaluates the complete `x86_64-linux` system without building it, and the checks for the local platform are built. Nix only sees files that Git tracks, so `git add` new files first. [CI](../.github/workflows/check.yml) runs on every push: it scans the Git history for secrets and builds every flake check (the system closure, NixOS VM tests, `nginx -t` on the generated Nginx configuration, formatting and lints, the DNS records, encrypted secrets and the targets of Markdown links). Its own build results go to the public Cachix cache `mkoppmann-apollo`, so later runs rebuild only what changed. Apollo does not use that cache.
 
 Checks built on macOS don’t prove the Linux build: the Linux build sandbox differs, for example in which CA certificates it offers. Linux builds and VM tests run in CI only.
 

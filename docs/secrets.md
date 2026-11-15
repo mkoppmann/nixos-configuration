@@ -4,6 +4,8 @@
 
 Service secrets are managed with [sops-nix](https://github.com/Mic92/sops-nix): `secrets/apollo.yaml` is encrypted to two post-quantum age recipients listed in `.sops.yaml`, the admin key and Apollo’s host key. At activation, sops-nix decrypts the declared secrets to `/run/secrets` with the owner and mode each module declares; files that mix secret and non-secret settings are rendered from templates. The initrd host key and the MAS files are provisioned manually at the paths below. Never put secret values into Nix expressions: Nix-store files are readable by every user.
 
+The INWX credentials for [DNS changes](operations.md#dns) are in `secrets/dnscontrol.yaml`, in the format of DNSControl’s `creds.json` under the key `inwx`. That file is encrypted to the admin key only, because Apollo never changes DNS records.
+
 ## Keys
 
 | Key | Location |

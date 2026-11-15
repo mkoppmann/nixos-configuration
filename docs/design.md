@@ -7,7 +7,7 @@ The reasons behind the configuration, and what is deliberately left out. The oth
 ## Goals
 
 1. Secure enough for an internet-facing server that one person runs.
-2. Declarative: the repository describes the whole server. Outside it remain application data, secrets, DNS records and the provider account.
+2. Declarative: the repository describes the whole server. Outside it remain application data, secrets and the provider accounts.
 3. Reproducible on a new server from the repository and the backups.
 4. Simple: every part has to justify its maintenance.
 5. Public: readable as a showcase, without secrets or personal details.
@@ -18,6 +18,7 @@ The reasons behind the configuration, and what is deliberately left out. The oth
 - **Service-owned modules.** A service module declares everything of its service: package, sandbox, virtual host, database, persisted paths and secrets. Removing its import removes the service.
 - **Explicit imports.** `configuration.nix` lists every module, system modules first. Importing directories automatically would hide what is enabled.
 - **No hardening directory.** Hardening belongs to what it protects: a sandbox to its service, SSH limits to SSH. Only the kernel settings stand alone.
+- **DNS records in the repository.** [DNSControl](https://docs.dnscontrol.org/) applies the zones in [dns/](../dns/) from the operator’s machine, which shows every change before it happens. NixOS modules that generate zones pay off with many hosts; here a flake check compares one list of web hosts with the virtual hosts. The credentials for INWX are encrypted to the admin key only: CI and Apollo can’t change records, and whoever could would obtain certificates and receive mail for the domains.
 - **Application settings in Nix.** Where an application can store its settings in a database, that is disabled or replaced: Pleroma ignores its database configuration, Authentik’s applications come from a blueprint, Nextcloud’s login is set by a one-shot unit, and Vaultwarden has no admin page.
 
 ## Updates and deployment
