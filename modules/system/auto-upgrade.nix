@@ -5,13 +5,9 @@ let
   # Only inputs that can’t change how Apollo is configured: nixpkgs’ release
   # branches and the websites, which are packages built in the sandbox. The
   # other inputs provide NixOS modules, which run as root; they stay at the
-  # revisions of Git’s lock file until a reviewed commit changes them.
-  updatedInputs = [
-    "nixpkgs"
-    "nixpkgs-unstable"
-    "website"
-    "wtcvss"
-  ];
+  # revisions of Git’s lock file until a reviewed commit changes them. CI
+  # reads the same list for its scheduled runs.
+  updatedInputs = lib.importJSON ./updated-inputs.json;
 
   lock = lib.importJSON ../../flake.lock;
   pinnedInputs = lib.mapAttrs (_: node: lock.nodes.${node}.locked) (
