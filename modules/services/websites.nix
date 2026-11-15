@@ -22,6 +22,7 @@ let
   synapse-mk-well-known =
     data:
     hsts
+    + x-content-type-options
     + ''
       default_type application/json;
       add_header Access-Control-Allow-Origin *;
@@ -172,7 +173,7 @@ in
       enableACME = true;
       forceSSL = true;
 
-      extraConfig = hsts;
+      extraConfig = hsts + x-content-type-options;
 
       locations."= /.well-known/matrix/server".extraConfig = synapse-mk-well-known synapse-server-config;
 
