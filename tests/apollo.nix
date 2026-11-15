@@ -167,18 +167,30 @@ pkgs.testers.runNixOSTest {
           apollo.succeed("journalctl -b | grep -F \"Source directory '/persist/var/lib/postgresql' does not exist\"")
           apollo.fail("journalctl -b | grep 'Activation script snippet'")
 
+      backends = [
+          ("https://matrix.ncrypt.at/_matrix/client/versions", "unstable_features"),
+          ("https://matrix.ncrypt.at/_matrix/client/v3/login", "flows"),
+          ("https://auth.matrix.ncrypt.at/.well-known/openid-configuration", "authorization_endpoint"),
+          ("https://idp.ncrypt.at/api/v3/root/config/", "capabilities"),
+          ("https://cloud.ncrypt.at/status.php", '"installed":true'),
+          ("https://pw.ncrypt.at/api/config", '"version"'),
+          ("https://budget.ncrypt.at/account/needs-bootstrap", '"status":"ok"'),
+          ("https://communicating.cypherpunk.observer/api/v1/instance", "cypherpunk"),
+          ("https://chat.ncrypt.at/config.json", "matrix.ncrypt.at"),
+      ]
+
+      # Locations that set response headers of their own, where Nginx doesn’t
+      # inherit the host’s.
+      own_headers = [
+          "https://idp.ncrypt.at/static/missing.js",
+          "https://idp.ncrypt.at/static/dist/chunks/missing.js",
+          "https://ncrypt.at/.well-known/matrix/server",
+          "https://ncrypt.at/.well-known/security.txt",
+          "https://www.mkoppmann.at/_astro/missing.css",
+      ]
+
       with subtest("The backends answer through Nginx"):
-          for url, content in [
-              ("https://matrix.ncrypt.at/_matrix/client/versions", "unstable_features"),
-              ("https://matrix.ncrypt.at/_matrix/client/v3/login", "flows"),
-              ("https://auth.matrix.ncrypt.at/.well-known/openid-configuration", "authorization_endpoint"),
-              ("https://idp.ncrypt.at/api/v3/root/config/", "capabilities"),
-              ("https://cloud.ncrypt.at/status.php", '"installed":true'),
-              ("https://pw.ncrypt.at/api/config", '"version"'),
-              ("https://budget.ncrypt.at/account/needs-bootstrap", '"status":"ok"'),
-              ("https://communicating.cypherpunk.observer/api/v1/instance", "cypherpunk"),
-              ("https://chat.ncrypt.at/config.json", "matrix.ncrypt.at"),
-          ]:
+          for url, content in backends:
               apollo.wait_until_succeeds(f"curl -fsS {url} | grep -F '{content}'", timeout=600)
 
       with subtest("Synapse reaches Matrix Authentication Service"):
@@ -196,6 +208,13 @@ pkgs.testers.runNixOSTest {
                   assert code != "000" and not code.startswith("5"), f"{host}: {code}"
               code = apollo.succeed(status(f"http://{host}/")).strip()
               assert code == "301", f"{host} without TLS: {code}"
+
+      with subtest("Every response has one HSTS header"):
+          urls = [f"https://{host}/" for host in hosts] + [url for url, _ in backends] + own_headers
+          for url in urls:
+              headers = apollo.succeed(f"curl -sS -o /dev/null -D - {url}").lower()
+              count = headers.count("\nstrict-transport-security:")
+              assert count == 1, f"{url}: {count} HSTS headers"
 
       with subtest("A freshly booted system needs no reboot"):
           apollo.succeed("systemctl start pending-reboot-check.service")

@@ -62,6 +62,7 @@ Not used:
 | nix-mineral as an input | Desktop-oriented defaults, written for unstable; another module input to review. The kernel settings here are set individually |
 | Vulnerability scanners on the closure | Name and version matching is noisy, and nixpkgs’ fixes reach Apollo within hours anyway. The pinned inputs have their own checks against their branches |
 | Hiding addresses and host names | No security gain |
+| A `Content-Security-Policy` header from Nginx on every host | A policy belongs to whoever knows what the pages load. The applications send their own, and a second one from Nginx could only narrow it and would break with their upgrades. The website’s pages carry theirs, with the hashes of their scripts, in the page; framing, the one thing a policy in the page can’t forbid, is denied by `X-Frame-Options`. Redirects and JSON have nothing to protect. Nginx sets a policy only where it knows the content: the hosts that serve no pages, the CVSS site and framing of Element Web |
 
 ZFS encryption protects disks at rest, not against a provider with access to the running machine.
 
