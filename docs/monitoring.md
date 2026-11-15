@@ -11,6 +11,7 @@ The [monitoring module](../modules/system/monitoring.nix) reports problems by ma
 | `disk-space-check.timer`, daily | Fails, and so mails, while `rpool` or `/boot` is more than 80% full |
 | `authentik-update-check.timer`, daily | Fails, and so mails, while authentik-nix offers another Authentik release than the pinned one |
 | `pinned-inputs-check.timer`, Mondays | Fails, and so mails, while the pinned flake inputs are behind their branches; lists the newest commits |
+| `pending-reboot-check.timer`, Mondays | Fails, and so mails, while the booted kernel, kernel modules, initrd or boot parameters differ from the current system’s, which only a reboot applies |
 | `zfs-rollback-check.service`, at boot | Fails, and so mails, when the root dataset was not rolled back |
 | healthchecks.io | The nightly backup and a heartbeat every five minutes; alerts when a ping is late |
 
