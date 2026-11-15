@@ -7,9 +7,11 @@ let
   inherit (config.sops) placeholder;
   inherit (import ../../../lib/nginx-headers.nix) proxy-hsts x-content-type-options;
 
+  socket = "/run/matrix-synapse/nginx.sock";
+
   # Synapse takes the first X-Forwarded-For entry as the client address.
   synapse = extraConfig: {
-    proxyPass = "http://127.0.0.1:8008";
+    proxyPass = "http://unix:${socket}";
     recommendedProxySettings = false;
     extraConfig = (import ../../../lib/nginx-proxy.nix).clientAddressHeaders + extraConfig;
   };
@@ -55,11 +57,28 @@ in
       limit_profile_requests_to_users_who_share_rooms = true;
 
       listeners = [
+        # For MAS, which reaches Synapse only over TCP and needs /_synapse/mas
+        # of the client resource. Forwarding headers count for nothing here.
+        # It comes first: the module derives defaults from the first client
+        # listener.
         {
           port = 8008;
           bind_addresses = [ "127.0.0.1" ];
           type = "http";
           tls = false;
+          x_forwarded = false;
+          resources = [
+            {
+              names = [ "client" ];
+              compress = false;
+            }
+          ];
+        }
+        # For Nginx, the only other member of Synapse’s group.
+        {
+          path = socket;
+          mode = "660";
+          type = "http";
           x_forwarded = true;
           resources = [
             {
@@ -108,6 +127,8 @@ in
   services.synapse-auto-compressor = {
     enable = true;
   };
+
+  users.groups.matrix-synapse.members = [ config.services.nginx.user ];
 
   environment.persistence."/persist".directories = [
     "/var/lib/matrix-synapse"
