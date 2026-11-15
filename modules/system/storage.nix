@@ -133,7 +133,7 @@ in
       # Apollo still boots when the rollback fails; /run survives into the
       # booted system, where the unit below reports it.
       script = ''
-        zfs rollback -r "rpool/local/root@blank" || touch /run/zfs-rollback-failed
+        zfs rollback -r "rpool/local/root@blank" || : > /run/zfs-rollback-failed
       '';
     };
   };

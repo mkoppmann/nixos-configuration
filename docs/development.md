@@ -54,7 +54,7 @@ The [VM tests](../tests/) boot the real modules and check behavior, not that the
 
 The state is new on every run: the test also shows whether the services come up on an empty `/persist`, but not whether they still start with Apollo’s data.
 
-[tests/remote-unlock.nix](../tests/remote-unlock.nix) covers the boot that the complete configuration skips. A server with Apollo’s initrd settings, SSH settings and disk layout creates the encrypted pool on a second disk and reboots with its root on it. A client then connects like the operator does, with the declared host key pinned: it enters the passphrase at the prompt, and the server boots and rolls its root back. The test also fails when the unlock key runs a command of its own or when the initrd accepts a classical key exchange. Two things differ from Apollo: the host key is a public test key from the Nix store, and the address sits on the test network’s interface.
+[tests/remote-unlock.nix](../tests/remote-unlock.nix) covers the boot that the complete configuration skips. A server with Apollo’s initrd settings, SSH settings and disk layout creates the encrypted pool on a second disk and reboots with its root on it. A client then connects like the operator does, with the declared host key pinned: it enters the passphrase at the prompt, and the server boots and rolls its root back. The first boot has no pool yet, which shows that a failed rollback is reported. The test also fails when the unlock key runs a command of its own or when the initrd accepts a classical key exchange. Two things differ from Apollo: the host key is a public test key from the Nix store, and the address sits on the test network’s interface.
 
 ## Sandboxing services
 

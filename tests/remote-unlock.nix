@@ -103,6 +103,8 @@ pkgs.testers.runNixOSTest {
 
       with subtest("The pool is created with Apollo’s layout"):
           server.wait_for_unit("multi-user.target")
+          # Without a pool, the rollback failed.
+          server.succeed("systemctl is-failed zfs-rollback-check.service")
           server.succeed(
               "echo -n '${passphrase}' > /tmp/secret.key",
               "${pkgs.lib.getExe nodes.server.system.build.format}",
