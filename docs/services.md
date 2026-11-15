@@ -14,7 +14,7 @@ The declarations are in [service modules](../modules/services/), [system modules
 | Matrix Authentication Service | `auth.matrix.ncrypt.at` → `127.0.0.1:8091` | PostgreSQL `matrix-authentication-service`; internal health port `8092`; encryption/signing keys; SMTP; local passwords disabled |
 | Element Web | `chat.ncrypt.at` | Nix-store frontend configured for the `ncrypt.at` homeserver |
 | Nextcloud | `cloud.ncrypt.at`; package selection `nextcloud35` | PostgreSQL `nextcloud`; Redis, PHP-FPM, notify-push and cron; files and mutable configuration |
-| Pleroma | `communicating.cypherpunk.observer` → `127.0.0.1:4000` | PostgreSQL `pleroma`; uploads, static files and runtime secrets; the Erlang distribution that `pleroma_ctl` uses listens on loopback only, with the cookie from `/var/lib/pleroma/.cookie` |
+| Pleroma | `communicating.cypherpunk.observer` → `127.0.0.1:4000` | PostgreSQL `pleroma`; uploads, static files and runtime secrets; the Erlang distribution that `pleroma_ctl` uses listens on loopback only, with the cookie from `/var/lib/pleroma/.cookie`; its metrics server is off |
 | Vaultwarden | `pw.ncrypt.at` → `127.0.0.1:8222` | PostgreSQL `vaultwarden`; attachments, sends, keys and SMTP; WebSocket forwarding enabled |
 | Photo proxy | `photos.mkoppmann.at` → `10.100.0.2:2283` | Upstream reached through WireGuard; its database and media are outside Apollo’s backup coverage |
 
