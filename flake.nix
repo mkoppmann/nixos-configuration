@@ -128,6 +128,10 @@
                 pkgs = nixpkgs.legacyPackages.x86_64-linux;
                 inherit inputs;
               };
+              remote-unlock = import ./tests/remote-unlock.nix {
+                pkgs = nixpkgs.legacyPackages.x86_64-linux;
+                inherit inputs;
+              };
               secrets = import ./tests/secrets.nix {
                 pkgs = nixpkgs.legacyPackages.x86_64-linux;
                 inherit inputs;
