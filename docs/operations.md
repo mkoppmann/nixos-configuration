@@ -51,7 +51,13 @@ dnscontrol push --config dns/dnsconfig.js --creds "$creds"
 unset SOPS_AGE_KEY
 ```
 
-`preview` lists what `push` would change and changes nothing. Push only from `main`, after the preview shows exactly what the merged commits describe. Mail servers only fetch an MTA-STS policy again when the `id` in the domain’s `_mta-sts` record changes: after changing a policy in the [websites module](../modules/services/websites.nix), set the `id` to the current time and push after the deploy. A new virtual host needs its record before the deploy, because Nginx only gets a certificate for a name that resolves to Apollo.
+`preview` lists what `push` would change and changes nothing. Push only from `main`, after the preview shows exactly what the merged commits describe. The CAA records allow certificates only for Apollo’s ACME account, validated over HTTP. The account lives in `/var/lib/acme`; if it is lost, put the new account’s URI into the records before Nginx requests certificates:
+
+```bash
+sudo bash -c 'grep -rho "\"uri\": *\"[^\"]*\"" /var/lib/acme/.lego/accounts'
+```
+
+Mail servers only fetch an MTA-STS policy again when the `id` in the domain’s `_mta-sts` record changes: after changing a policy in the [websites module](../modules/services/websites.nix), set the `id` to the current time and push after the deploy. A new virtual host needs its record before the deploy, because Nginx only gets a certificate for a name that resolves to Apollo.
 
 ## Routine health checks
 
