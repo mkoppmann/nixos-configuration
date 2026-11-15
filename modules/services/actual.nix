@@ -5,12 +5,13 @@
   ...
 }:
 let
-  inherit (import ../../lib/nginx-headers.nix) hsts referrer-policy;
+  inherit (import ../../lib/nginx-headers.nix) hsts referrer-policy x-content-type-options;
 
   # A location with add_header must repeat its complete response-header policy.
   actual-headers =
     hsts
     + referrer-policy
+    + x-content-type-options
     + ''
       add_header Cross-Origin-Embedder-Policy "require-corp" always;
       add_header Cross-Origin-Opener-Policy "same-origin" always;
@@ -55,7 +56,7 @@ in
       enableACME = true;
       forceSSL = true;
 
-      extraConfig = hsts + referrer-policy;
+      extraConfig = hsts + referrer-policy + x-content-type-options;
 
       locations."/" = {
         proxyPass = "http://127.0.0.1:5006";
@@ -64,6 +65,7 @@ in
           # Nginx owns these headers; preserve the application's CSP and framing.
           proxy_hide_header Strict-Transport-Security;
           proxy_hide_header Referrer-Policy;
+          proxy_hide_header X-Content-Type-Options;
           proxy_hide_header Cross-Origin-Embedder-Policy;
           proxy_hide_header Cross-Origin-Opener-Policy;
           proxy_hide_header Origin-Agent-Cluster;

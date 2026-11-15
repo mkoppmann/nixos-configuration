@@ -4,7 +4,7 @@
 }:
 let
   inherit (config.sops) placeholder;
-  inherit (import ../../../lib/nginx-headers.nix) proxy-hsts;
+  inherit (import ../../../lib/nginx-headers.nix) proxy-hsts x-content-type-options;
 
   # Synapse takes the first X-Forwarded-For entry as the client address.
   synapse = extraConfig: {
@@ -126,7 +126,7 @@ in
     virtualHosts."matrix.ncrypt.at" = {
       enableACME = true;
       forceSSL = true;
-      extraConfig = proxy-hsts;
+      extraConfig = proxy-hsts + x-content-type-options;
 
       locations."/".return = "404";
 

@@ -2,7 +2,7 @@
   ...
 }:
 let
-  inherit (import ../../../lib/nginx-headers.nix) proxy-hsts;
+  inherit (import ../../../lib/nginx-headers.nix) proxy-hsts x-content-type-options;
   secretsDir = "/var/lib/private/matrix-authentication-service";
 in
 {
@@ -111,7 +111,7 @@ in
     virtualHosts."auth.matrix.ncrypt.at" = {
       enableACME = true;
       forceSSL = true;
-      extraConfig = proxy-hsts;
+      extraConfig = proxy-hsts + x-content-type-options;
 
       locations."/" = {
         proxyPass = "http://127.0.0.1:8091";
