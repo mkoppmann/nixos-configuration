@@ -103,7 +103,7 @@ During initrd, connect from an independent administrator machine using the priva
 ssh -t -p 2222 -i /PATH/TO/ADMINISTRATOR_KEY root@152.53.35.165
 ```
 
-Verify the separate initrd host fingerprint and enter the ZFS unlock secret at the prompt. The key only reaches this prompt in the initrd: it gets no shell and no forwarding. SSH may disconnect as boot transitions. After boot, SSH is reachable only through WireGuard:
+Verify the separate initrd host fingerprint and enter the ZFS unlock secret at the prompt. The key only reaches this prompt in the initrd: it gets no shell and no forwarding. Connect with plain `ssh`: a terminal’s SSH integration that runs its own command at login, for example to install its terminfo, gets no prompt, because the key runs the password agent instead of that command. SSH may disconnect as boot transitions. After boot, SSH is reachable only through WireGuard:
 
 ```bash
 ssh -i /PATH/TO/ADMINISTRATOR_KEY mcp@10.100.0.1
