@@ -5,6 +5,8 @@
   ...
 }:
 let
+  host = import ../../host.nix;
+
   # RFC 9116 wants an expiry date within a year. It is a year after the date
   # of the nixpkgs revision, which is part of the system’s version, so every
   # automatic update moves it on.
@@ -61,7 +63,7 @@ in
 
     # WireGuard clients reach the websites through the tunnel, and photos.nix
     # proxies to the photo server in it.
-    systemd.services.nginx.serviceConfig.IPAddressAllow = "10.100.0.0/24";
+    systemd.services.nginx.serviceConfig.IPAddressAllow = host.wireguard.network;
 
     services.nginx = {
       enable = true;

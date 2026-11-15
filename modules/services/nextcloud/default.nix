@@ -3,6 +3,9 @@
   pkgs,
   ...
 }:
+let
+  host = import ../../../host.nix;
+in
 {
   imports = [ ./sandbox.nix ];
 
@@ -89,8 +92,8 @@
       "overwrite.cli.url" = "https://${config.services.nextcloud.hostName}";
       trusted_proxies = [
         "127.0.0.1"
-        "152.53.35.165"
-        "2a0a:4cc0:100:23::bad:c0de"
+        host.ipv4.address
+        host.ipv6.address
       ];
     };
   };

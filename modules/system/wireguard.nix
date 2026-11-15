@@ -1,5 +1,7 @@
 { config, lib, ... }:
 let
+  host = import ../../host.nix;
+
   # Named after the last octet of their address.
   peers = {
     peer2 = "+IFbnbONQDMU/o2+WElWUhrTBmxr1oU4cibRMZTLnlg=";
@@ -26,7 +28,7 @@ in
   networking.firewall.filterForward = true;
   networking.nat = {
     enable = true;
-    externalInterface = "ens3";
+    externalInterface = host.interface;
     internalInterfaces = [ "wg0" ];
   };
 
@@ -34,13 +36,13 @@ in
   # IPAddressAllow permits it.
   systemd.slices.system = {
     overrideStrategy = "asDropin";
-    sliceConfig.IPAddressDeny = "10.100.0.0/24";
+    sliceConfig.IPAddressDeny = host.wireguard.network;
   };
 
   networking.wireguard = {
     enable = true;
     interfaces.wg0 = {
-      ips = [ "10.100.0.1/24" ];
+      ips = [ "${host.wireguard.address}/${toString host.wireguard.prefixLength}" ];
       listenPort = 51820;
       privateKeyFile = config.sops.secrets.wireguard_private_key.path;
 
@@ -49,7 +51,7 @@ in
       peers = lib.mapAttrsToList (name: publicKey: {
         inherit name publicKey;
         presharedKeyFile = config.sops.secrets."wireguard_psk_${name}".path;
-        allowedIPs = [ "10.100.0.${lib.removePrefix "peer" name}/32" ];
+        allowedIPs = [ "${host.wireguard.peer (lib.removePrefix "peer" name)}/32" ];
       }) peers;
     };
   };

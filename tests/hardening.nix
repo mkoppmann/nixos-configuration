@@ -1,5 +1,8 @@
 { pkgs, inputs }:
 let
+  host = import ../host.nix;
+  inherit (host) wireguard;
+  clientAddress = wireguard.peer 2;
   keys = import (pkgs.path + "/nixos/tests/ssh-keys.nix") pkgs;
   homeAuthorizedKeys = pkgs.writeText "authorized_keys" keys.snakeOilPublicKey;
   wgKeys = import (pkgs.path + "/nixos/tests/wireguard/snakeoil-keys.nix");
@@ -45,7 +48,7 @@ pkgs.testers.runNixOSTest {
       networking.wireguard.interfaces.wg0.peers = lib.mkForce [
         {
           publicKey = wgPublicKey "peer1";
-          allowedIPs = [ "10.100.0.2/32" ];
+          allowedIPs = [ "${clientAddress}/32" ];
         }
       ];
 
@@ -74,12 +77,12 @@ pkgs.testers.runNixOSTest {
         pkgs.dig
       ];
       networking.wireguard.interfaces.wg0 = {
-        ips = [ "10.100.0.2/24" ];
+        ips = [ "${clientAddress}/${toString wireguard.prefixLength}" ];
         privateKeyFile = wgPrivateKey "peer1";
         peers = [
           {
             publicKey = wgPublicKey "peer0";
-            allowedIPs = [ "10.100.0.0/24" ];
+            allowedIPs = [ wireguard.network ];
             endpoint = "server:51820";
           }
         ];
@@ -99,7 +102,7 @@ pkgs.testers.runNixOSTest {
             key, _, value = line.partition(" ")
             effective.setdefault(key.lower(), []).append(value)
         expected = {
-            "allowusers": "mcp@10.100.0.0/24",
+            "allowusers": "mcp@${wireguard.network}",
             "permitrootlogin": "no",
             "authenticationmethods": "publickey",
             "passwordauthentication": "no",
@@ -120,7 +123,7 @@ pkgs.testers.runNixOSTest {
     client.succeed("install -m 600 ${keys.snakeOilPrivateKey} /root/homedir")
 
     client.wait_for_unit("wireguard-wg0.service")
-    client.wait_until_succeeds("ping -c 1 -W 1 10.100.0.1")
+    client.wait_until_succeeds("ping -c 1 -W 1 ${wireguard.address}")
 
     with subtest("Only WireGuard peers are forwarded, and only to the internet"):
         assert "policy drop" in server.succeed("nft list chain inet nixos-fw forward")
@@ -129,25 +132,25 @@ pkgs.testers.runNixOSTest {
             for line in server.succeed("nft list chain inet nixos-fw forward-allow").splitlines()
             if "wg0" in line
         ]
-        assert len(allowed) == 1 and "ens3" in allowed[0], allowed
+        assert len(allowed) == 1 and "${host.interface}" in allowed[0], allowed
 
     with subtest("The resolver answers WireGuard clients with the tunnel address"):
         server.wait_for_unit("unbound.service")
         dig = "dig +short +time=2 +tries=1"
-        assert client.succeed(f"{dig} @10.100.0.1 idp.ncrypt.at A").strip() == "10.100.0.1"
-        assert client.succeed(f"{dig} @10.100.0.1 idp.ncrypt.at AAAA").strip() == ""
+        assert client.succeed(f"{dig} @${wireguard.address} idp.ncrypt.at A").strip() == "${wireguard.address}"
+        assert client.succeed(f"{dig} @${wireguard.address} idp.ncrypt.at AAAA").strip() == ""
         client.fail(f"{dig} @server idp.ncrypt.at A")
 
     with subtest("Only services that allow it reach the tunnel"):
-        client.succeed("curl -sf -H 'Host: known.test' http://10.100.0.1/ | grep -q known")
+        client.succeed("curl -sf -H 'Host: known.test' http://${wireguard.address}/ | grep -q known")
         # The test driver’s commands run as a system service too.
-        server.fail("ping -c 1 -W 2 10.100.0.2")
+        server.fail("ping -c 1 -W 2 ${clientAddress}")
         server.succeed(
-            "systemd-run --wait --pipe -p IPAddressAllow=10.100.0.0/24 $(command -v ping) -c 1 -W 2 10.100.0.2"
+            "systemd-run --wait --pipe -p IPAddressAllow=${wireguard.network} $(command -v ping) -c 1 -W 2 ${clientAddress}"
         )
 
     with subtest("SSH answers only through WireGuard"):
-        client.succeed("${ssh} -i /root/declared mcp@10.100.0.1 true")
+        client.succeed("${ssh} -i /root/declared mcp@${wireguard.address} true")
         client.fail("${ssh} -i /root/declared mcp@server true")
         # AllowUsers also refuses addresses outside WireGuard, firewall aside.
         server.succeed("install -m 600 ${keys.snakeOilEd25519PrivateKey} /root/declared")
@@ -155,13 +158,13 @@ pkgs.testers.runNixOSTest {
         server.wait_until_succeeds("journalctl -u sshd.service | grep -q 'mcp from 127.0.0.1 not allowed'")
 
     with subtest("Only mcp logs in, only with keys declared in Nix"):
-        client.fail("${ssh} -i /root/declared root@10.100.0.1 true")
+        client.fail("${ssh} -i /root/declared root@${wireguard.address} true")
         server.succeed("install -d -m 700 -o mcp -g users /home/mcp/.ssh")
         server.succeed("install -m 600 -o mcp -g users ${homeAuthorizedKeys} /home/mcp/.ssh/authorized_keys")
-        client.fail("${ssh} -i /root/homedir mcp@10.100.0.1 true")
+        client.fail("${ssh} -i /root/homedir mcp@${wireguard.address} true")
 
     with subtest("Classical key exchange is refused"):
-        client.fail("${ssh} -i /root/declared -o KexAlgorithms=curve25519-sha256 mcp@10.100.0.1 true")
+        client.fail("${ssh} -i /root/declared -o KexAlgorithms=curve25519-sha256 mcp@${wireguard.address} true")
 
     with subtest("Unknown host names get no response"):
         client.succeed("curl -sf -H 'Host: known.test' http://server/ | grep -q known")

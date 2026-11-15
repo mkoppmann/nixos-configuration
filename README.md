@@ -27,6 +27,7 @@ Nix takes more learning than a playbook. In exchange, many mistakes show up as e
 | [flake.nix](flake.nix), [flake.lock](flake.lock) | System output and pinned inputs |
 | [configuration.nix](configuration.nix) | Module imports, time zone and `stateVersion` |
 | [hardware-configuration.nix](hardware-configuration.nix) | Generated hardware settings |
+| [host.nix](host.nix) | Apollo’s addresses and the WireGuard network, imported by modules and tests |
 | [modules/system/](modules/system/) | Apollo itself: boot, disk layout, persistence, kernel, network and access, users, Nix, secrets, backups, monitoring and automatic updates |
 | [modules/services/](modules/services/) | One module, or a directory for several files, per service, owning its virtual host, database, persisted state, secrets and sandbox; Nginx and PostgreSQL, which the services share |
 | [dns/](dns/) | DNS records of the three zones for DNSControl, and the list of web hosts that a flake check compares with the virtual hosts |

@@ -1,6 +1,7 @@
 { lib, ... }:
 let
-  wireguardNet = "10.100.0.0/24";
+  inherit (import ../../host.nix) wireguard;
+  wireguardNet = wireguard.network;
 
   # Only hosts reached by whole-page navigations. Browsers ask before a public
   # page fetches resources from a private address, so hosts whose pages load
@@ -19,7 +20,7 @@ in
         interface = [
           "127.0.0.1"
           "::1"
-          "10.100.0.1"
+          wireguard.address
         ];
         access-control = [
           "127.0.0.0/8 allow"
@@ -34,7 +35,7 @@ in
           view-first = true;
           # Static: no IPv6 answer, which would bypass the tunnel.
           local-zone = map (host: ''"${host}." static'') tunnelHosts;
-          local-data = map (host: ''"${host}. A 10.100.0.1"'') tunnelHosts;
+          local-data = map (host: ''"${host}. A ${wireguard.address}"'') tunnelHosts;
         }
       ];
       forward-zone = [
