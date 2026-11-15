@@ -72,4 +72,4 @@ The state is new on every run: the test also shows whether the services come up 
 - `ak shell` output passes through a terminal and can carry invisible prefixes; extract values with `grep -o`.
 - `pleroma_ctl` exits successfully when a database query fails; check its output for `QUERY ERROR`.
 - Elixir releases take `RELEASE_COOKIE` as the cookie itself, not as the path of a file.
-- Nginx sends files from the Nix store with a `Last-Modified` of 1970. Sites served from the store need the `revalidate` snippet of [lib/nginx-headers.nix](../lib/nginx-headers.nix), or browsers keep their files for years.
+- Every file in the Nix store dates from 1970. nixpkgs’ Nginx leaves out `Last-Modified` for store files, unless `etag` is off; other servers, such as Authentik’s, send it, and browsers then keep the files for a week or for years. Sites served from the store use the `revalidate` snippet of [lib/nginx-headers.nix](../lib/nginx-headers.nix).

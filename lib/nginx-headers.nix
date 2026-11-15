@@ -28,9 +28,10 @@ rec {
     add_header X-Content-Type-Options nosniff always;
   '';
 
-  # Files in the Nix store all date from 1970. Without this header, browsers
-  # derive from that date that a file stays fresh for years. With it they ask
-  # every time, and Nginx answers 304 while the file’s store path is unchanged.
+  # nixpkgs’ Nginx sends files from the Nix store with an ETag made of their
+  # store path and without their date, which is the same for all of them. This
+  # header makes browsers ask every time instead of leaving that to them;
+  # Nginx answers 304 while the file’s store path is unchanged.
   revalidate = ''
     add_header Cache-Control "no-cache" always;
   '';
