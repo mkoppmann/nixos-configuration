@@ -45,7 +45,8 @@ The reasons behind the configuration, and what is deliberately left out. The oth
 Kernel settings, per-service systemd sandboxes and network restrictions each limit what a compromised service can do on its own.
 
 - **Sandboxes.** Internet-facing services run with system call filters, minimal capabilities and a read-only system. `MemoryDenyWriteExecute` is only set where no JIT compiler runs; the Erlang VM needs one. Small helper units and units that need root by design stay unsandboxed.
-- **Network.** Services can’t reach the WireGuard network unless their unit allows it. PostgreSQL and Redis have no network at all; their clients use Unix sockets. Backends listen on loopback, behind Nginx. Apollo forwards packets only from WireGuard peers to the internet.
+- **Network.** Services can’t reach the WireGuard network unless their unit allows it. PostgreSQL and Redis have no network at all; their clients use Unix sockets. Apollo forwards packets only from WireGuard peers to the internet.
+- **Backends behind Nginx.** Every local process reaches a loopback port, past Nginx’s limits and with forwarding headers of its choice. Where Nginx is a backend’s only client, the backend listens on a Unix socket instead: Pleroma’s only opens for its group, whose only other member is Nginx, and Nextcloud’s PHP-FPM and push daemon have the sockets of their NixOS modules. The others stay on loopback. Synapse and MAS call each other and only speak HTTP over TCP for that, so each keeps a port that serves what Nginx serves. Synapse has a socket for Nginx beside it, like Pleroma’s, and believes forwarding headers only there. MAS would gain nothing from a second listener, because Nginx limits none of its paths. Authentik’s server offers a Unix socket only in its temporary directory, next to its internal sockets and keys.
 - **Kernel.** Targeted settings instead of a hardening profile; see [services](services.md#host-and-network).
 
 Not used:
@@ -71,7 +72,7 @@ ZFS encryption protects disks at rest, not against a provider with access to the
 - **SSH only through WireGuard,** for one user with keys declared in Nix and post-quantum key exchange. Only the initrd’s unlock SSH is public, because it runs before WireGuard exists. WireGuard peers use preshared keys against future quantum computers.
 - **Administration from the tunnel.** Authentik superusers may only sign in from WireGuard addresses, Authentik’s API accepts tokens only from there, and Pleroma’s admin paths only answer WireGuard addresses.
 - **Tunnel addresses in DNS only for navigation-only hosts.** Browsers ask before a public page loads resources from a private address. Hosts whose pages embed resources, such as Pleroma’s, keep their public address.
-- **Client addresses.** Authentik and Synapse take the first `X-Forwarded-For` entry, so Nginx replaces the header for them instead of appending to it. Actual and MAS take the last entry that no trusted proxy added, and trust only Nginx on Apollo. The photo proxy’s upstream gets the appended header, which is correct for the same kind of backend.
+- **Client addresses.** Authentik and Synapse take the first `X-Forwarded-For` entry, so Nginx replaces the header for them instead of appending to it. Actual and MAS take the last entry that no trusted proxy added, and trust only loopback addresses. Nextcloud trusts them as well: its push daemon forwards its clients’ addresses and reaches Nextcloud through Nginx on loopback. The photo proxy’s upstream gets the appended header, which is correct for the same kind of backend.
 - **No local Nextcloud administrator.** Authentik’s superusers are Nextcloud’s administrators, so the admin gate covers them too; `nextcloud-occ` on Apollo is the fallback.
 
 ## Data, backups and monitoring
