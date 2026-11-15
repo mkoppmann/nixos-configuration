@@ -1,0 +1,25 @@
+{
+  "ipv4": "152.53.35.165",
+  "ipv6": "2a0a:4cc0:100:23::bad:c0de",
+  "hosts": [
+    "auth.matrix.ncrypt.at",
+    "budget.ncrypt.at",
+    "chat.ncrypt.at",
+    "cloud.ncrypt.at",
+    "communicating.cypherpunk.observer",
+    "cypherpunk.observer",
+    "idp.ncrypt.at",
+    "matrix.ncrypt.at",
+    "media.communicating.cypherpunk.observer",
+    "mkoppmann.at",
+    "mta-sts.cypherpunk.observer",
+    "mta-sts.mkoppmann.at",
+    "ncrypt.at",
+    "photos.mkoppmann.at",
+    "pw.ncrypt.at",
+    "wtcvss.mkoppmann.at",
+    "www.cypherpunk.observer",
+    "www.mkoppmann.at",
+    "www.ncrypt.at"
+  ]
+}

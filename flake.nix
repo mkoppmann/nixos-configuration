@@ -58,6 +58,7 @@
         default = pkgs.mkShellNoCC {
           packages = with pkgs; [
             age
+            dnscontrol
             nixfmt
             sops
           ];
@@ -67,6 +68,24 @@
       checks =
         nixpkgs.lib.recursiveUpdate
           (forAllSystems (pkgs: {
+            # Every virtual host has address records, and they point to Apollo.
+            dns-hosts =
+              let
+                inherit (self.nixosConfigurations.apollo) config;
+                inherit (config.networking.interfaces) ens3;
+                expected = {
+                  ipv4 = (builtins.head ens3.ipv4.addresses).address;
+                  ipv6 = (builtins.head ens3.ipv6.addresses).address;
+                  hosts = builtins.filter (host: host != "_") (builtins.attrNames config.services.nginx.virtualHosts);
+                };
+              in
+              assert nixpkgs.lib.assertMsg (builtins.fromJSON (builtins.readFile ./dns/hosts.json) == expected)
+                "dns/hosts.json differs from the virtual hosts and addresses. Expected: ${builtins.toJSON expected}";
+              pkgs.emptyFile;
+            dns-config = pkgs.runCommand "dns-config" { nativeBuildInputs = [ pkgs.dnscontrol ]; } ''
+              dnscontrol check --config ${self}/dns/dnsconfig.js
+              touch $out
+            '';
             formatting = pkgs.runCommand "formatting" { nativeBuildInputs = [ pkgs.nixfmt ]; } ''
               find ${self} -name '*.nix' -exec nixfmt --check {} +
               touch $out

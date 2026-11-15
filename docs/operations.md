@@ -36,6 +36,23 @@ To update the pinned inputs, run `nix flake update authentik-nix sops-nix imperm
 
 Each run leaves an audit trail in `journalctl -u nixos-upgrade.service`: `nix flake update` lists every changed input revision, and the post-start step prints `nix store diff-closures` between the previous and new system. Major application/database migrations arrive unreviewed this way; there is no automatic data-migration rollback.
 
+## DNS
+
+The zones `ncrypt.at`, `mkoppmann.at` and `cypherpunk.observer` are registered and hosted at INWX. [dns/dnsconfig.js](../dns/dnsconfig.js) defines all their records for [DNSControl](https://docs.dnscontrol.org/), which deletes records it doesn’t find there. Each zone has Apollo’s addresses, and its web hosts are aliases of the zone. The web hosts and addresses come from [dns/hosts.json](../dns/hosts.json); the flake check `dns-hosts` fails while that file differs from the Nginx virtual hosts or Apollo’s addresses.
+
+Run DNSControl from the checkout on the operator’s machine, in a terminal without an agent session. The INWX credentials are in `secrets/dnscontrol.yaml`, which only the admin key decrypts:
+
+```bash
+nix develop
+read -rsp "Admin key: " SOPS_AGE_KEY && export SOPS_AGE_KEY; echo   # paste from KeePass
+creds='!sops decrypt --output-type json secrets/dnscontrol.yaml'
+dnscontrol preview --config dns/dnsconfig.js --creds "$creds"
+dnscontrol push --config dns/dnsconfig.js --creds "$creds"
+unset SOPS_AGE_KEY
+```
+
+`preview` lists what `push` would change and changes nothing. Push only from `main`, after the preview shows exactly what the merged commits describe. A new virtual host needs its record before the deploy, because Nginx only gets a certificate for a name that resolves to Apollo.
+
 ## Routine health checks
 
 ```bash
