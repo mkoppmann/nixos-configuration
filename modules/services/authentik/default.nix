@@ -204,9 +204,8 @@ in
         extraConfig = proxyHeaders + "limit_req zone=login burst=20 nodelay;";
       };
       # Authentik sends each file’s date as Last-Modified, and every file in the
-      # Nix store dates from 1970: browsers would keep files for years and be
-      # told that changed ones are unchanged. Only chunks and assets carry
-      # content hashes in their names.
+      # Nix store dates from 1970: Chromium would keep files for years, Firefox
+      # for a week. Only chunks and assets carry content hashes in their names.
       locations."/static/" = {
         proxyPass = "https://localhost:9443";
         recommendedProxySettings = false;
