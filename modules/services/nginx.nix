@@ -1,53 +1,102 @@
 {
+  config,
+  lib,
+  pkgs,
   ...
 }:
-{
-  environment.persistence."/persist".directories = [
-    "/var/lib/acme"
-  ];
+let
+  # RFC 9116 wants an expiry date within a year. It is a year after the date
+  # of the nixpkgs revision, which is part of the system’s version, so every
+  # automatic update moves it on.
+  expires =
+    let
+      date = builtins.match ".*\\.([0-9]{4})([0-9]{2})([0-9]{2})\\..*" config.system.nixos.version;
+      year = toString (lib.toInt (lib.head date) + 1);
+      # A leap day has no counterpart in the next year.
+      monthAndDay =
+        if
+          lib.tail date == [
+            "02"
+            "29"
+          ]
+        then
+          "02-28"
+        else
+          lib.concatStringsSep "-" (lib.tail date);
+    in
+    # Builds without a dated version, such as the VM tests, get a fixed date.
+    if date == null then "2000-01-01T00:00:00Z" else "${year}-${monthAndDay}T00:00:00Z";
 
-  security.acme = {
-    acceptTerms = true;
-    defaults.email = "acme@ncrypt.at";
+  securityTxt = pkgs.writeText "security.txt" ''
+    Contact: mailto:security@ncrypt.at
+    Expires: ${expires}
+    Preferred-Languages: en, de
+  '';
+in
+{
+  # Every virtual host, whichever module declares it, serves a security.txt.
+  options.services.nginx.virtualHosts = lib.mkOption {
+    type = lib.types.attrsOf (
+      lib.types.submodule (
+        { name, ... }:
+        {
+          config.locations."= /.well-known/security.txt" = lib.mkIf (name != "_") {
+            alias = securityTxt;
+            extraConfig = "charset utf-8;";
+          };
+        }
+      )
+    );
   };
 
-  # WireGuard clients reach the websites through the tunnel, and photos.nix
-  # proxies to the photo server in it.
-  systemd.services.nginx.serviceConfig.IPAddressAllow = "10.100.0.0/24";
+  config = {
+    environment.persistence."/persist".directories = [
+      "/var/lib/acme"
+    ];
 
-  services.nginx = {
-    enable = true;
+    security.acme = {
+      acceptTerms = true;
+      defaults.email = "acme@ncrypt.at";
+    };
 
-    recommendedGzipSettings = true;
-    recommendedOptimisation = true;
-    recommendedProxySettings = true;
-    recommendedTlsSettings = true;
+    # WireGuard clients reach the websites through the tunnel, and photos.nix
+    # proxies to the photo server in it.
+    systemd.services.nginx.serviceConfig.IPAddressAllow = "10.100.0.0/24";
 
-    # Service modules apply `limit_req zone=login` to their login endpoints.
-    # Only POST requests count, so page loads and reads stay unlimited.
-    appendHttpConfig = ''
-      # Requests are not logged; a host that wants a log declares its own.
-      access_log off;
+    services.nginx = {
+      enable = true;
 
-      # IPv6 clients count by their /64: a client chooses its addresses
-      # within that network freely.
-      map $remote_addr $login_limit_client {
-        default $binary_remote_addr;
-        "~^(?<login_limit_network>([0-9a-f]*:){4})" $login_limit_network;
-      }
-      map $request_method $login_limit_key {
-        POST $login_limit_client;
-        default "";
-      }
-      limit_req_zone $login_limit_key zone=login:10m rate=10r/m;
-      limit_req_status 429;
-    '';
+      recommendedGzipSettings = true;
+      recommendedOptimisation = true;
+      recommendedProxySettings = true;
+      recommendedTlsSettings = true;
 
-    # Requests for unknown host names get no response and no certificate.
-    virtualHosts."_" = {
-      default = true;
-      rejectSSL = true;
-      locations."/".return = "444";
+      # Service modules apply `limit_req zone=login` to their login endpoints.
+      # Only POST requests count, so page loads and reads stay unlimited.
+      appendHttpConfig = ''
+        # Requests are not logged; a host that wants a log declares its own.
+        access_log off;
+
+        # IPv6 clients count by their /64: a client chooses its addresses
+        # within that network freely.
+        map $remote_addr $login_limit_client {
+          default $binary_remote_addr;
+          "~^(?<login_limit_network>([0-9a-f]*:){4})" $login_limit_network;
+        }
+        map $request_method $login_limit_key {
+          POST $login_limit_client;
+          default "";
+        }
+        limit_req_zone $login_limit_key zone=login:10m rate=10r/m;
+        limit_req_status 429;
+      '';
+
+      # Requests for unknown host names get no response and no certificate.
+      virtualHosts."_" = {
+        default = true;
+        rejectSSL = true;
+        locations."/".return = "444";
+      };
     };
   };
 }
