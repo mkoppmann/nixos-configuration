@@ -19,7 +19,7 @@ sudo -u postgres psql -X --host=/run/postgresql --dbname=postgres \
 
 Require both services to be ready. The target includes the server and separate provisioning service in the NixOS PostgreSQL module. Apollo uses peer authentication: OS user `postgres` can administer all databases without an application password.
 
-Declarative provisioning creates the [configured databases and owning roles](backups.md#nightly-run). It does not reconstruct arbitrary role attributes, memberships, tablespaces or extension packages. Inspect the selected exports for those dependencies and verify source encoding, locale provider/collation, database settings, owners and grants. Supply matching extension binaries and required tablespace directories before restoration. Do not suppress missing-owner/ACL errors and treat that as equivalent recovery.
+Declarative provisioning creates the [configured databases and owning roles](backups.md#nightly-run), on a new cluster Synapse’s with the collation `C` that Synapse requires. It does not reconstruct arbitrary role attributes, memberships, tablespaces or extension packages. Inspect the selected exports for those dependencies and verify source encoding, locale provider/collation, database settings, owners and grants. Supply matching extension binaries and required tablespace directories before restoration. Do not suppress missing-owner/ACL errors and treat that as equivalent recovery.
 
 ## Restore globals
 
@@ -71,7 +71,7 @@ sudo -u postgres psql -X --host=/run/postgresql --dbname="$restore_database" \
   --set=ON_ERROR_STOP=1 --command='ANALYZE;'
 ```
 
-`--create` selects the original name recorded in the archive; `--dbname=postgres` is the initial maintenance connection. Do not combine this restore with `--single-transaction`. A failure can leave partial state: keep clients stopped, correct the prerequisite and retry deliberately from the unchanged dump. See the [PostgreSQL 16 restore reference](https://www.postgresql.org/docs/16/app-pgrestore.html).
+`--create` selects the original name recorded in the archive and recreates the database with the encoding and locale recorded there, so Synapse’s database keeps the collation `C` whatever the dropped one had; `--dbname=postgres` is the initial maintenance connection. Do not combine this restore with `--single-transaction`. A failure can leave partial state: keep clients stopped, correct the prerequisite and retry deliberately from the unchanged dump. See the [PostgreSQL 16 restore reference](https://www.postgresql.org/docs/16/app-pgrestore.html).
 
 Check expected tables/records, owners, extensions, database properties and application file/key alignment before releasing the service. Repeat for each required database.
 

@@ -109,12 +109,6 @@ pkgs.testers.runNixOSTest {
         cert: _: lib.nameValuePair "acme-order-renew-${cert}" { enable = false; }
       ) config.security.acme.certs;
 
-      # Synapse only accepts a database with this collation, which Apollo’s
-      # has; the module would create one with the cluster’s.
-      services.postgresql.initialScript = pkgs.writeText "synapse-database.sql" ''
-        CREATE DATABASE "matrix-synapse" TEMPLATE template0 LC_COLLATE "C" LC_CTYPE "C";
-      '';
-
       # What a fresh /persist lacks and no unit creates.
       system.activationScripts = {
         testState = {

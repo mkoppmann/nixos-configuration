@@ -81,5 +81,5 @@ ZFS encryption protects disks at rest, not against a provider with access to the
 - **Off-site copies.** The Storage Box keeps snapshots that Apollo can’t delete. Local snapshots are for mistakes, not a backup.
 - **No access logs.** Nobody reads them, and they would hold the addresses of every visitor. The personal website counts page views without address or user agent, which is enough for trends.
 - **Logs stay in the journal.** They reach the Storage Box every night with the backup; central logging would add little for one host.
-- **PostgreSQL** listens on its socket only, with a fixed memory budget next to the ZFS cache. Major upgrades go through dump and restore, which also reclaims space.
+- **PostgreSQL** listens on its socket only, with a fixed memory budget next to the ZFS cache. Major upgrades go through dump and restore, which also reclaims space. Synapse needs a database with the collation `C`, which declarative provisioning can’t create, so its module creates the database when a new cluster is initialised. `initialScript` takes a single file that only one module can set: a second service with such a need moves the script to the PostgreSQL module.
 - **Pleroma, not Akkoma.** Akkoma integrates better with NixOS, but moving there is large and one-way. Old remote posts are pruned monthly with Pleroma’s own task.

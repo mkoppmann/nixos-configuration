@@ -1,5 +1,6 @@
 {
   config,
+  pkgs,
   ...
 }:
 let
@@ -113,6 +114,12 @@ in
   ];
 
   services.postgresql = {
+    # Synapse only accepts a database with this collation; ensureDatabases
+    # would create one with the cluster’s. Runs once, on a new cluster. Only
+    # one module can set the script.
+    initialScript = pkgs.writeText "synapse-database.sql" ''
+      CREATE DATABASE "matrix-synapse" TEMPLATE template0 LC_COLLATE "C" LC_CTYPE "C";
+    '';
     ensureDatabases = [ "matrix-synapse" ];
     ensureUsers = [
       {

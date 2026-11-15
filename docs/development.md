@@ -50,7 +50,7 @@ The [VM tests](../tests/) boot the real modules and check behavior, not that the
 - A certificate authority built for the test signs the certificates, and the machine trusts it. No ACME order runs.
 - The host names resolve to the machine itself, which has no other network. The photo server’s host therefore answers 502.
 - No timer fires.
-- The test creates what Apollo has and no module creates: Matrix Authentication Service’s secret files, and Synapse’s database with the collation `C`.
+- The test creates what Apollo has and no module creates: Matrix Authentication Service’s secret files.
 
 The state is new on every run: the test also shows whether the services come up on an empty `/persist`, but not whether they still start with Apollo’s data.
 
