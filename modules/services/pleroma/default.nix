@@ -164,11 +164,16 @@ in
           status_id_action: {60_000, 3},
           authentication: {60_000, 15}
 
+        # Pleroma’s search index uses the text search configuration english,
+        # and the search uses the connection’s default. If they differ,
+        # PostgreSQL reads every post instead of the index. The database’s own
+        # setting doesn’t survive every restore.
         config :pleroma, Pleroma.Repo,
           adapter: Ecto.Adapters.Postgres,
           database: "pleroma",
           socket_dir: "/var/run/postgresql",
-          pool_size: 10
+          pool_size: 10,
+          parameters: [default_text_search_config: "english"]
 
         config :pleroma, :http_security,
           sts: true,
