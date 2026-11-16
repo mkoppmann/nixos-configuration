@@ -17,7 +17,7 @@ This document gives the reasons behind the configuration, and what is deliberate
 - One host, no framework. Option APIs (`options.apollo.*`), flake-parts and deployment tools such as colmena or deploy-rs pay off with several hosts or remote builds. Apollo builds its own system, and the flake has few outputs. Shared values belong in a plain imported file. [host.nix](../host.nix) holds Apollo’s addresses and the WireGuard network, and modules and tests import it.
 - Two network definitions. The initrd configures its address with systemd-networkd. The running system uses NixOS’ scripted networking. Both read the same values, so what repeats is a few lines of structure. One networkd definition for both would replace the running system’s network stack on a server that is only reachable through it. The two also differ on purpose: the initrd has no IPv6.
 - Service-owned modules. A service module declares everything of its service: package, sandbox, virtual host, database, persisted paths and secrets. Removing the module’s import removes the service.
-- Explicit imports. `configuration.nix` lists every module, system modules first. Importing directories automatically would hide what is enabled.
+- Explicit imports. `configuration.nix` lists every system and service module, system modules first. A module imports only what belongs to it: its sandbox file or the input module that it configures. Importing directories automatically would hide what is enabled.
 - No hardening directory. Hardening belongs to what it protects: a sandbox to its service, SSH limits to SSH. Only the kernel settings stand alone.
 - DNS records in the repository. [DNSControl](https://docs.dnscontrol.org/) applies the zones in [dns/](../dns/) from the operator’s machine, and shows every change before it happens. NixOS modules that generate zones pay off with many hosts. Here a flake check compares one list of web hosts with the virtual hosts. The credentials for INWX are encrypted to the admin key only, so CI and Apollo can’t change records. Whoever could change records would obtain certificates and receive mail for the domains.
 - Application settings in Nix. Where an application can store its settings in a database, the configuration disables or replaces that:
@@ -56,7 +56,7 @@ Kernel settings, per-service systemd sandboxes and network restrictions each lim
   - Pleroma’s socket only opens for its group, whose only other member is Nginx.
   - Nextcloud’s PHP-FPM and push daemon have the sockets of their NixOS modules.
 
-  The others stay on loopback. Synapse and MAS call each other and only speak HTTP over TCP for that, so each keeps a port that serves what Nginx serves. Synapse has a socket for Nginx beside it, like Pleroma’s, and believes forwarding headers only there. MAS would gain nothing from a second listener, because Nginx limits none of its paths. Authentik’s server offers a Unix socket only in its temporary directory, next to its internal sockets and keys.
+  The others stay on loopback. Synapse and MAS call each other and only speak HTTP over TCP for that, so each keeps a loopback port. MAS’s port is the one that Nginx uses. Synapse’s port serves the client API, and Synapse has a socket for Nginx beside it, like Pleroma’s, and believes forwarding headers only there. MAS would gain nothing from a second listener, because Nginx limits none of its paths. Authentik’s server offers a Unix socket only in its temporary directory, next to its internal sockets and keys.
 - Kernel. Targeted settings instead of a hardening profile, listed in [services](services.md#host-and-network).
 
 Not used:
@@ -87,7 +87,7 @@ ZFS encryption protects disks at rest, not against a provider with access to the
 
 ## Data, backups and monitoring
 
-- Upstream modules instead of custom code. Backups use the `borgbackup` module with one atomic ZFS snapshot. Alerts are a failure mail for every unit, ZFS events, a disk space check and healthchecks.io for missing pings.
+- Upstream modules instead of custom code. Backups use the `borgbackup` module with one atomic ZFS snapshot. Alerts are a failure mail for every service, ZFS events, a disk space check and healthchecks.io for missing pings.
 - Database dumps instead of the live cluster in backups. Restores need no PostgreSQL of the same version. The dumps only exist while the backup runs, so the local snapshots don’t keep a week of them.
 - Off-site copies. The Storage Box keeps snapshots that Apollo can’t delete. Local snapshots are for mistakes, not a backup.
 - No access logs. Nobody reads them, and they would hold the addresses of every visitor. The personal website counts page views without address or user agent, which is enough for trends.
