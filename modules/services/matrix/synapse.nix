@@ -135,7 +135,7 @@ in
   ];
 
   services.postgresql = {
-    # Synapse only accepts a database with this collation; ensureDatabases
+    # Synapse only accepts a database with this collation, and ensureDatabases
     # would create one with the cluster’s. Runs once, on a new cluster. Only
     # one module can set the script.
     initialScript = pkgs.writeText "synapse-database.sql" ''

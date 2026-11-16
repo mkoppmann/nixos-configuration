@@ -69,7 +69,7 @@ in
       };
       error_reporting.enabled = false;
       listen = {
-        # Only Nginx reaches Authentik; the default is every interface.
+        # Only Nginx reaches Authentik. The default is every interface.
         http = [
           "127.0.0.1:9000"
           "[::1]:9000"
@@ -211,7 +211,7 @@ in
       # date and length, and every file in the Nix store dates from 1970: a
       # rebuilt file of the same length would pass for unchanged. Nginx sends
       # store files with an ETag made of their store path. Only chunks carry a
-      # content hash in every name; assets also hold files with fixed names.
+      # content hash in every name. Assets also hold files with fixed names.
       # The header is left off errors, so that no missing chunk is kept.
       locations."/static/" = {
         alias = "${config.services.authentik.authentikComponents.frontend}/";

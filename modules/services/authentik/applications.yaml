@@ -278,8 +278,8 @@ entries:
       network_binding: bind_asn_network_ip
       geoip_binding: no_binding
 
-  # The flows' regular logins (100), referenced by id because policy bindings
-  # need the binding's policy target, which only !KeyOf returns. Policies must
+  # The flows’ regular logins (100), referenced by id because policy bindings
+  # need the binding’s policy target, which only !KeyOf returns. Policies must
   # see the identified user, so they are evaluated when the stage is reached.
   - model: authentik_flows.flowstagebinding
     id: authentication-login
@@ -313,7 +313,7 @@ entries:
       target: !KeyOf authentication-ip-bound-login
     attrs:
       policy: !KeyOf superuser
-  # The regular login only for everyone else; a second login would replace
+  # The regular login only for everyone else. A second login would replace
   # the binding.
   - model: authentik_policies.policybinding
     identifiers:

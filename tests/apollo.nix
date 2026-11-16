@@ -9,7 +9,7 @@ let
   '';
 
   # Matrix Authentication Service’s keys and mail password, and the secret it
-  # shares with Synapse; none of them is in sops yet.
+  # shares with Synapse. None of them is in sops.
   masSecrets =
     pkgs.runCommand "mas-secrets.yaml"
       {

@@ -30,7 +30,7 @@ rec {
 
   # nixpkgs’ Nginx sends files from the Nix store with an ETag made of their
   # store path and without their date, which is the same for all of them. This
-  # header makes browsers ask every time instead of leaving that to them;
+  # header makes browsers ask every time instead of leaving that to them.
   # Nginx answers 304 while the file’s store path is unchanged.
   revalidate = ''
     add_header Cache-Control "no-cache" always;

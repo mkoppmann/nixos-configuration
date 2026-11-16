@@ -35,9 +35,7 @@
 
   time.timeZone = "Europe/Vienna";
 
-  # Do NOT change this value unless you have manually inspected all the changes it would make to your configuration,
-  # and migrated your data accordingly.
-  #
-  # For more information, see `man configuration.nix` or https://nixos.org/manual/nixos/stable/options#opt-system.stateVersion .
-  system.stateVersion = "23.11"; # Did you read the comment?
+  # Pins defaults that depend on when Apollo’s data was created, not the
+  # release in use.
+  system.stateVersion = "23.11";
 }

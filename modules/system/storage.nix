@@ -61,7 +61,7 @@ in
         mountpoint = "none";
         encryption = "aes-256-gcm";
         keyformat = "passphrase";
-        # The installer reads the passphrase from this file; booting asks for it.
+        # The installer reads the passphrase from this file. Booting asks for it.
         keylocation = "file:///tmp/secret.key";
       };
       postCreateHook = "zfs set keylocation=prompt rpool";
@@ -113,7 +113,7 @@ in
     supportedFilesystems = [ "zfs" ];
 
     # ZFS would otherwise cache with nearly all RAM and push PostgreSQL and
-    # the applications into swap; see the budget in postgresql.nix.
+    # the applications into swap. See the budget in postgresql.nix.
     kernelParams = [ "zfs.zfs_arc_max=${toString (4 * 1024 * 1024 * 1024)}" ];
 
     zfs = {
@@ -130,7 +130,7 @@ in
       unitConfig.DefaultDependencies = false;
       serviceConfig.Type = "oneshot";
       path = [ pkgs.zfs ];
-      # Apollo still boots when the rollback fails; /run survives into the
+      # Apollo still boots when the rollback fails. /run survives into the
       # booted system, where the unit below reports it.
       script = ''
         zfs rollback -r "rpool/local/root@blank" || : > /run/zfs-rollback-failed

@@ -29,7 +29,7 @@ let
       exec ${config.services.pleroma.package}/bin/${command}
     '';
 
-  # A location with its own proxy_set_header does not inherit the parent's, so
+  # A location with its own proxy_set_header does not inherit the parent’s, so
   # the media location repeats them.
   pleroma-proxy-headers = ''
     proxy_set_header Upgrade $http_upgrade;

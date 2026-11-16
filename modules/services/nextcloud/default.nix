@@ -46,7 +46,7 @@
 
     maxUploadSize = "16G";
     https = true;
-    # A year, like the other hosts; the module’s default is half of that.
+    # A year, like the other hosts. The module’s default is half of that.
     nginx.hstsMaxAge = 31536000;
 
     autoUpdateApps.enable = false;
@@ -100,7 +100,7 @@
     after = [ "postgresql.target" ];
   };
 
-  # Login through Authentik; the matching provider is in the Authentik
+  # Login through Authentik. The matching provider is in the Authentik
   # applications blueprint. Every login sets the membership of Nextcloud’s
   # admin group from the groups claim: Authentik’s superusers are Nextcloud’s
   # administrators. Other groups stay as they are in Nextcloud.
@@ -154,7 +154,7 @@
     virtualHosts."cloud.ncrypt.at" = {
       enableACME = true;
       forceSSL = true;
-      # Same routing as the module's `location /`.
+      # Same routing as the module’s `location /`.
       locations."= /login".extraConfig = ''
         limit_req zone=login burst=20 nodelay;
         try_files $uri $uri/ /index.php$request_uri;

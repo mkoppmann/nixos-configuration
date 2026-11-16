@@ -71,7 +71,8 @@
   security.sudo = {
     execWheelOnly = true;
     extraConfig = ''
-      # rollback results in sudo lectures after each reboot
+      # The rollback deletes the record of the lecture, so sudo would show it
+      # after each reboot.
       Defaults lecture = never
     '';
   };

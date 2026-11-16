@@ -44,7 +44,7 @@ pkgs.testers.runNixOSTest {
         ];
         allowedUDPPorts = [ 51820 ];
       };
-      # Apollo's WireGuard module with the test client as its only peer.
+      # Apollo’s WireGuard module with the test client as its only peer.
       networking.wireguard.interfaces.wg0.peers = lib.mkForce [
         {
           publicKey = wgPublicKey "peer1";

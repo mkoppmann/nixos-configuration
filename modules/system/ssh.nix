@@ -3,7 +3,7 @@ let
   host = import ../../host.nix;
 in
 {
-  # Reachable only through WireGuard. The initrd's unlock SSH on port 2222 has
+  # Reachable only through WireGuard. The initrd’s unlock SSH on port 2222 has
   # no firewall and stays public.
   networking.firewall.interfaces.wg0.allowedTCPPorts = [ 22 ];
   systemd.services.sshd.serviceConfig.IPAddressAllow = host.wireguard.network;

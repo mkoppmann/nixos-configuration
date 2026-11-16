@@ -62,7 +62,7 @@ pkgs.testers.runNixOSTest {
         useEFIBoot = true;
         mountHostNixStore = true;
         memorySize = 2048;
-        # The pool’s disk; the VM boots from its own.
+        # The pool’s disk. The VM boots from its own.
         emptyDiskImages = [ 4096 ];
       };
       disko.enableConfig = false;
