@@ -4,7 +4,7 @@
     "machine-id".source = "/persist/etc/machine-id";
   };
 
-  # Host-level state; services declare their own directories.
+  # Host-level state. Services declare their own directories.
   environment.persistence."/persist" = {
     hideMounts = true;
     directories = [
@@ -29,7 +29,7 @@
     };
   };
 
-  # Protect the backing tree too: DynamicUser's host-side private directory
+  # Protect the backing tree too: DynamicUser’s host-side private directory
   # must not become traversable through /persist. Do not chown its children.
   system.activationScripts.apollo-private-state-permissions = {
     deps = [ "createPersistentStorageDirs" ];
@@ -39,7 +39,7 @@
     '';
   };
 
-  # Logrotate atomically replaces its state file; persist its directory.
+  # Logrotate replaces its state file atomically, which needs the directory.
   services.logrotate.extraArgs = [
     "--state"
     "/var/lib/logrotate/status"

@@ -1,4 +1,4 @@
-# Sandboxes Authentik’s server, worker and migrations; `ak` runs with the
+# Sandboxes Authentik’s server, worker and migrations. `ak` runs with the
 # server’s settings. Separate from default.nix so its test can use it.
 { config, lib, ... }:
 let

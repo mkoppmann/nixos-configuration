@@ -55,13 +55,13 @@ in
     psql -d postgres -c 'CREATE EXTENSION IF NOT EXISTS pg_stat_statements'
   '';
 
-  # The Borg job starts the dumps and deletes them afterwards; see backup.nix.
+  # The Borg job starts the dumps and deletes them afterwards. See backup.nix.
   services.postgresqlBackup = {
     enable = true;
     startAt = [ ];
     location = "/var/backup/postgresql";
     # Uncompressed, so that Borg finds the unchanged parts of yesterday’s
-    # dump; it compresses the rest itself.
+    # dump. It compresses the rest itself.
     compression = "none";
     pgdumpOptions = "--format=custom --compress=0";
     # Databases are declared by the modules of their services.

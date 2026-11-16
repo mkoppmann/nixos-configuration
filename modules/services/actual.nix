@@ -62,7 +62,7 @@ in
         proxyPass = "http://127.0.0.1:5006";
 
         extraConfig = actual-headers + ''
-          # Nginx owns these headers; preserve the application's CSP and framing.
+          # Nginx owns these headers. The application’s CSP and framing pass.
           proxy_hide_header Strict-Transport-Security;
           proxy_hide_header Referrer-Policy;
           proxy_hide_header X-Content-Type-Options;

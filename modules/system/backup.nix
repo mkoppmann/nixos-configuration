@@ -108,7 +108,7 @@ in
   systemd.services.borgbackup-job-sidechest.serviceConfig = {
     # ExecStartPost then runs only after a successful run.
     Type = "oneshot";
-    # The snapshot mounts live in the unit's private mount namespace.
+    # The snapshot mounts live in the unit’s private mount namespace.
     RuntimeDirectory = "borgbackup-sidechest";
     ReadWritePaths = [ dumpDirectory ];
     ExecStartPre = [ "-${pkgs.writeShellScript "ping-start" (ping "/start")}" ];

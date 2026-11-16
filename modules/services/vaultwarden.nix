@@ -25,7 +25,7 @@ in
       DATABASE_URL = "postgresql:///vaultwarden";
       SIGNUPS_ALLOWED = false;
       SIGNUPS_VERIFY = true;
-      # Organisation admins invite new users; without ADMIN_TOKEN there is no
+      # Organisation admins invite new users. Without ADMIN_TOKEN there is no
       # admin page.
       INVITATIONS_ALLOWED = true;
       SHOW_PASSWORD_HINT = false;

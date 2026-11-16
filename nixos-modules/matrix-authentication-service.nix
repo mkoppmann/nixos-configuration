@@ -64,7 +64,6 @@ in
         Restart = "on-failure";
         RestartSec = "5s";
 
-        # Hardening
         DynamicUser = true;
         StateDirectory = "matrix-authentication-service";
         RuntimeDirectory = "matrix-authentication-service";

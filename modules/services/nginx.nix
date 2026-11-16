@@ -76,7 +76,7 @@ in
       # Service modules apply `limit_req zone=login` to their login endpoints.
       # Only POST requests count, so page loads and reads stay unlimited.
       appendHttpConfig = ''
-        # Requests are not logged; a host that wants a log declares its own.
+        # Requests are not logged. A host that wants a log declares its own.
         access_log off;
 
         # IPv6 clients count by their /64: a client chooses its addresses

@@ -1,7 +1,7 @@
 { ... }:
 {
   boot.kernel.sysctl = {
-    # Hide kernel addresses and the kernel log from unprivileged users; both
+    # Hide kernel addresses and the kernel log from unprivileged users. Both
     # help an attacker to defeat address randomisation.
     "kernel.kptr_restrict" = 2;
     "kernel.dmesg_restrict" = 1;
@@ -26,7 +26,7 @@
     "net.ipv6.conf.all.accept_redirects" = 0;
     "net.ipv6.conf.default.accept_redirects" = 0;
 
-    # Source-routed packets dictate their own path, e.g. to bypass filtering.
+    # Source-routed packets choose their own path, for example past a filter.
     "net.ipv4.conf.all.accept_source_route" = 0;
     "net.ipv4.conf.default.accept_source_route" = 0;
     "net.ipv6.conf.all.accept_source_route" = 0;
@@ -36,7 +36,7 @@
     # filters, and it has been a frequent source of kernel exploits.
     "kernel.io_uring_disabled" = 2;
 
-    # Only root may load line disciplines; opening a terminal could otherwise
+    # Only root may load line disciplines. Opening a terminal could otherwise
     # load rarely used ones.
     "dev.tty.ldisc_autoload" = 0;
   };
@@ -45,7 +45,7 @@
     # 32-bit x86 programs and their separate system call entry are disabled.
     "ia32_emulation=0"
     # Objects of different types never share a slab cache, and free pages are
-    # handed out in random order; both make heap corruption harder to exploit.
+    # handed out in random order. Both make heap corruption harder to exploit.
     "slab_nomerge"
     "page_alloc.shuffle=1"
     # Writes through /proc/PID/mem respect page protections unless the writer

@@ -74,7 +74,7 @@ in
   };
 
   # A switch replaces neither the running kernel and its modules nor the
-  # initrd and the boot parameters; they wait for a reboot.
+  # initrd and the boot parameters. They wait for a reboot.
   systemd.services.pending-reboot-check = {
     description = "Fail when the booted kernel, initrd or boot parameters are outdated";
     startAt = "Mon 07:00 Europe/Vienna";
@@ -83,7 +83,7 @@ in
       for part in kernel initrd kernel-modules kernel-params; do
         booted=/run/booted-system/$part
         current=/run/current-system/$part
-        # The parameters are a file in the system itself; the others link to
+        # The parameters are a file in the system itself. The others link to
         # their store paths.
         if [ "$part" = kernel-params ]; then
           booted=$(cat "$booted")

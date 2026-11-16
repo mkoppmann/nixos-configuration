@@ -9,7 +9,7 @@
     };
     impermanence = {
       url = "github:nix-community/impermanence";
-      # Both are only used by impermanence's own tests.
+      # Both are only used by impermanence’s own tests.
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.home-manager.follows = "";
     };
@@ -21,7 +21,7 @@
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # The sites build with their own locked nixpkgs, so Apollo's updates
+    # The sites build with their own locked nixpkgs, so Apollo’s updates
     # cannot break them.
     website.url = "github:mkoppmann/website";
     wtcvss.url = "github:mkoppmann/wtcvss";
