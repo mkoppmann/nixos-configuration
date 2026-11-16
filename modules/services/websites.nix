@@ -185,7 +185,7 @@ in
     virtualHosts."www.ncrypt.at" = {
       enableACME = true;
       forceSSL = true;
-      extraConfig = hsts;
+      extraConfig = default-headers;
       locations."/".return = "200";
     };
   };
