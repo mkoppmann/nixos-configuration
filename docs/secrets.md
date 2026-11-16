@@ -66,7 +66,7 @@ Paths below are configured readers or boot inputs. Files beneath persisted servi
 | `/run/secrets/rendered/pleroma-secret.exs` | Template from `pleroma_secret_key_base` and `pleroma_vapid_private_key`. The VAPID public key is in Nix. | `pleroma` reader, `0400`. The VAPID key pair must match. |
 | `/run/secrets/rendered/vaultwarden.env` | Template from `vaultwarden_smtp_password`. systemd environment file. | `root:root 0400` |
 
-The values in sops have no quotes and no trailing newline, and templates insert them verbatim. Environment-file syntax is not shell syntax, so do not source these files. Preserve the MAS files as a whole, because the repository doesn’t declare their contents.
+The values in sops have no quotes and no trailing newline, except `borg_ssh_key`, which ends with a newline. Templates insert the values verbatim. Environment-file syntax is not shell syntax, so do not source these files. Preserve the MAS files as a whole, because the repository doesn’t declare their contents.
 
 ## Identity and shared keys
 

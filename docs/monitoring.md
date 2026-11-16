@@ -17,7 +17,7 @@ The [monitoring module](../modules/system/monitoring.nix) reports problems by ma
 
 A service that `Restart=` restarts only fails once it hits its restart limit. ACME renewals report through their failing `acme-*.service` units.
 
-Apollo cannot report its own outage. healthchecks.io notices missing pings when Apollo is down or offline, or when its mail is broken. It notifies through channels configured there, independent of Apollo. Its ping URLs are the sops secrets `healthchecks_backup_url` and `healthchecks_heartbeat_url`.
+Apollo cannot report its own outage. healthchecks.io notices missing pings when Apollo is down or offline. It notifies through channels configured there, independent of Apollo, so its alerts also arrive while Apollo’s mail is broken. Its ping URLs are the sops secrets `healthchecks_backup_url` and `healthchecks_heartbeat_url`.
 
 ## Commands
 

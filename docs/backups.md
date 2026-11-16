@@ -50,4 +50,4 @@ sudo borg-job-sidechest info --last 1
 zfs list -t snapshot rpool/safe/persist
 ```
 
-A failure sends a mail, like every failed unit. A missing success ping alerts through healthchecks.io. [Monitoring](monitoring.md) describes both.
+A failure sends a mail, like every failed service. A missing success ping alerts through healthchecks.io. [Monitoring](monitoring.md) describes both.

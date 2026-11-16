@@ -12,7 +12,7 @@ Keep these accessible without Apollo, its SSO, mail or password manager hosting:
 - The Borg passphrase, the Storage Box SSH key or login, and the exported Borg repository key (`sudo borg-job-sidechest key export`).
 - End-user material that server backups do not replace: Vaultwarden master passwords, Matrix recovery keys, Actual budget passwords.
 
-The Borg passphrase and SSH key are also in sops, but decrypting sops needs a working server key. Keep the KeePass copies.
+The Borg passphrase and SSH key are also in sops, but decrypting sops needs the admin key or the host key. Keep the KeePass copies.
 
 ## Recent mistakes: local snapshots
 

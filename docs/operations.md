@@ -51,7 +51,7 @@ CI [checks `main` with the same inputs updated](development.md#validation) about
 
 ## DNS
 
-INWX is the registrar and DNS host of the zones `ncrypt.at`, `mkoppmann.at` and `cypherpunk.observer`. [dns/dnsconfig.js](../dns/dnsconfig.js) defines all their records for [DNSControl](https://docs.dnscontrol.org/), which deletes records it doesn’t find there. INWX signs the zones with DNSSEC. Each zone has Apollo’s addresses, and its web hosts are aliases of the zone. The web hosts and addresses come from [dns/hosts.json](../dns/hosts.json). The flake check `dns-hosts` fails while that file differs from the Nginx virtual hosts or Apollo’s addresses.
+INWX is the registrar and DNS host of the zones `ncrypt.at`, `mkoppmann.at` and `cypherpunk.observer`. [dns/dnsconfig.js](../dns/dnsconfig.js) defines all their records for [DNSControl](https://docs.dnscontrol.org/), which deletes records it doesn’t find there. INWX signs the zones with DNSSEC. Each zone has Apollo’s addresses, and its web hosts are aliases of the zone. `matrix.ncrypt.at` is the exception and has address records of its own. The web hosts and addresses come from [dns/hosts.json](../dns/hosts.json). The flake check `dns-hosts` fails while that file differs from the Nginx virtual hosts or Apollo’s addresses.
 
 Run DNSControl from the checkout on the operator’s machine, in a terminal without an agent session. The INWX credentials are in `secrets/dnscontrol.yaml`, which only the admin key decrypts:
 
