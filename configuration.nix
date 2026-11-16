@@ -26,7 +26,7 @@
     ./modules/services/nextcloud
     ./modules/services/nginx.nix
     ./modules/services/photos.nix
-    ./modules/services/pleroma.nix
+    ./modules/services/pleroma
     ./modules/services/postgresql.nix
     ./modules/services/vaultwarden.nix
     ./modules/services/websites.nix

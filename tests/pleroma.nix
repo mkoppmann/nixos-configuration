@@ -3,6 +3,17 @@ let
   # Runs a command as pleroma with the node’s cookie, like the units do.
   instance = "curl -fs --unix-socket /run/pleroma/http.sock http://localhost/api/v1/instance";
   withCookie = "runuser -u pleroma -- sh -c 'export RELEASE_COOKIE=$(cat ~/.cookie); exec \\\"$@\\\"' sh";
+
+  # Two remote activities whose object doesn’t exist, and a local one. The
+  # prune deletes only the remote ones.
+  orphans = pkgs.writeText "orphans.sql" ''
+    insert into activities (id, data, local, actor, recipients, inserted_at, updated_at) values
+      (gen_random_uuid(), '{"id": "https://remote.example/activities/1", "type": "Create", "actor": "https://remote.example/users/a", "to": ["https://www.w3.org/ns/activitystreams#Public"], "object": "https://remote.example/notes/1"}', false, 'https://remote.example/users/a', '{https://www.w3.org/ns/activitystreams#Public}', now(), now()),
+      (gen_random_uuid(), '{"id": "https://remote.example/activities/2", "type": "Like", "actor": "https://remote.example/users/a", "object": "https://remote.example/notes/2"}', false, 'https://remote.example/users/a', '{}', now(), now()),
+      (gen_random_uuid(), '{"id": "https://local.example/activities/1", "type": "Like", "actor": "https://local.example/users/b", "object": "https://remote.example/notes/3"}', true, 'https://local.example/users/b', '{}', now(), now());
+  '';
+  psql = "runuser -u postgres -- psql pleroma -v ON_ERROR_STOP=1";
+  count = where: "${psql} -Atc 'select count(*) from activities where ${where}'";
 in
 # Apollo’s Pleroma module with its sandbox, on Apollo’s PostgreSQL.
 pkgs.testers.runNixOSTest {
@@ -20,7 +31,7 @@ pkgs.testers.runNixOSTest {
           };
         })
         inputs.impermanence.nixosModules.impermanence
-        ../modules/services/pleroma.nix
+        ../modules/services/pleroma
         ../modules/services/postgresql.nix
       ];
 
@@ -62,9 +73,12 @@ pkgs.testers.runNixOSTest {
             assert " 127.0.0.1:" in listener or " [::1]:" in listener, listener
             assert ":4000 " not in listener, listener
 
-    with subtest("The monthly prune runs and resumes the upgrade timer"):
+    with subtest("The monthly prune deletes orphaned activities and resumes the upgrade timer"):
+        machine.succeed("${psql} -f ${orphans}")
         machine.succeed("systemctl start pleroma-prune.service")
         machine.succeed("systemctl is-active nixos-upgrade.timer")
+        machine.succeed("${count "not local"} | grep -Fx 0")
+        machine.succeed("${count "local"} | grep -Fx 1")
 
     with subtest("Pleroma stops and starts"):
         machine.succeed("systemctl restart pleroma.service")
