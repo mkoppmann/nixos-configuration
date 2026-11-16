@@ -5,8 +5,8 @@
   ...
 }:
 let
-  host = import ../../host.nix;
-  inherit (import ../../lib/nginx-headers.nix) proxy-hsts;
+  host = import ../../../host.nix;
+  inherit (import ../../../lib/nginx-headers.nix) proxy-hsts;
 
   # Erlang’s node-to-node protocol, which pleroma_ctl uses, would listen on
   # every interface. Pleroma’s node is named pleroma@127.0.0.1.
@@ -59,6 +59,13 @@ in
 
   services.pleroma = {
     enable = true;
+    # Pleroma deletes the orphaned activities in one transaction. A deleted
+    # post locks its instance’s counter until the transaction ends, and new
+    # posts of that instance wait for the lock and are lost. The patch deletes
+    # in batches.
+    package = pkgs.pleroma.overrideAttrs (old: {
+      patches = (old.patches or [ ]) ++ [ ./prune-in-batches.patch ];
+    });
     secretConfigFile = config.sops.templates."pleroma-secret.exs".path;
     configs = [
       ''
@@ -182,7 +189,7 @@ in
   # Pleroma keeps every remote post it ever received. This deletes remote
   # threads older than remote_post_retention_days, except threads with local
   # activity, bookmarked ones and non-public ones, and then the activities left
-  # without their post.
+  # without their post, in batches.
   systemd.services.pleroma-prune = {
     description = "Delete old remote Pleroma posts";
     startAt = "*-*-02 04:00:00 Europe/Vienna";
