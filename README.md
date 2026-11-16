@@ -1,22 +1,22 @@
 # Apollo NixOS configuration
 
-The complete, public configuration of Apollo, a personal NixOS server. Everything the server is, from its disk layout to each service’s sandbox, follows from the files in this repository.
+This repository is the complete, public configuration of Apollo, a personal NixOS server. Everything the server is, from its disk layout to each service’s sandbox, follows from the files in this repository.
 
 ## Why NixOS
 
 Tools like Ansible describe steps that change a server’s existing state. Whatever the steps don’t cover stays behind: a manual fix, a package of a removed role, an outdated configuration file. Over time the server drifts away from its playbooks. NixOS instead builds the entire system from one configuration:
 
-- **No drift.** Apollo’s root file system returns to an empty snapshot on every boot, and only explicitly persisted state survives. What isn’t declared here doesn’t exist on the server.
-- **Safe updates.** Every change builds a complete new system next to the running one; a failed build changes nothing. Earlier systems stay bootable, so one command or the boot menu undoes a bad update.
-- **Pinned inputs.** [flake.lock](flake.lock) pins every input, so a checkout evaluates to the same system on any machine. This goes beyond nixpkgs: the websites are flakes in their own repositories, pinned and built like any other package.
-- **Tested in VMs.** The [tests](tests/) boot the real modules in throwaway virtual machines and check the security measures, backup and restore, installation onto the declared disk layout, and the remote unlock after a reboot. One of them boots the complete configuration and asks every web host for an answer. CI runs them and builds the system on every push.
-- **Self-contained services.** Each [service module](modules/services/) owns everything of its service: package, sandbox, virtual host, database, persisted directories and secrets. Removing its import removes the service; only its data stays.
-- **DNS in the repository.** The records of all zones live in [dns/](dns/), and [DNSControl](https://docs.dnscontrol.org/) shows every change before applying it and deletes records that aren’t declared. A flake check fails while the DNS hosts differ from the Nginx virtual hosts or Apollo’s addresses, so a service can’t be added or removed without its record.
-- **Security as code.** The hardening is part of the configuration, not a checklist applied once:
+- No drift. Apollo’s root file system returns to an empty snapshot on every boot, and only explicitly persisted state survives. What isn’t declared here doesn’t exist on the server.
+- Safe updates. Every change builds a complete new system next to the running one. A failed build changes nothing. Earlier systems stay bootable, so one command or the boot menu undoes a bad update.
+- Pinned inputs. [flake.lock](flake.lock) pins every input, so a checkout evaluates to the same system on any machine. This goes beyond nixpkgs: the websites are flakes in their own repositories, pinned and built like any other package.
+- Tested in VMs. The [tests](tests/) boot the real modules in throwaway virtual machines. They check the security measures, backup and restore, installation onto the declared disk layout, and the remote unlock after a reboot. One test boots the complete configuration and asks every web host for an answer. CI runs the tests and builds the system on every push.
+- Self-contained services. Each [service module](modules/services/) owns everything of its service: package, sandbox, virtual host, database, persisted directories and secrets. Removing the module’s import removes the service. Only its data stays.
+- DNS in the repository. The records of all zones live in [dns/](dns/). [DNSControl](https://docs.dnscontrol.org/) shows every change before it applies the change, and deletes records that aren’t declared. A flake check fails while the DNS hosts differ from the Nginx virtual hosts or Apollo’s addresses. A service therefore can’t be added or removed without its record.
+- Security as code. The hardening is part of the configuration, not a checklist applied once:
   - Services run in systemd sandboxes with system call filters, minimal privileges and a read-only system. They can’t reach the WireGuard network unless allowed, and the databases have no network at all.
-  - The kernel runs with hardened settings, and interfaces nothing here uses, such as io_uring, are switched off.
+  - The kernel runs with hardened settings. Interfaces that nothing here uses, such as io_uring, are switched off.
   - SSH and Authentik’s administrator logins only work through WireGuard. SSH accepts keys only, with post-quantum key exchange only.
-  - Secrets are encrypted with sops for post-quantum age keys, so they live in this public repository next to the configuration that uses them.
+  - sops encrypts the secrets for post-quantum age keys, so they live in this public repository next to the configuration that uses them.
 
 Nix takes more learning than a playbook. In exchange, many mistakes show up as evaluation errors, build errors or failing VM tests before anything on the server changes.
 
@@ -30,11 +30,11 @@ Nix takes more learning than a playbook. In exchange, many mistakes show up as e
 | [hardware-configuration.nix](hardware-configuration.nix) | Generated hardware settings |
 | [host.nix](host.nix) | Apollo’s addresses and the WireGuard network, imported by modules and tests |
 | [modules/system/](modules/system/) | Apollo itself: boot, disk layout, persistence, kernel, network and access, users, Nix, secrets, backups, monitoring and automatic updates |
-| [modules/services/](modules/services/) | One module, or a directory for several files, per service, owning its virtual host, database, persisted state, secrets and sandbox; Nginx and PostgreSQL, which the services share |
+| [modules/services/](modules/services/) | One module per service, or a directory for a service with several files. Each owns its virtual host, database, persisted state, secrets and sandbox. Nginx and PostgreSQL, which the services share, are here too. |
 | [dns/](dns/) | DNS records of the three zones for DNSControl, and the list of web hosts that a flake check compares with the virtual hosts |
 | [lib/](lib/) | Shared Nginx header snippets |
 | [nixos-modules/](nixos-modules/) | Local Matrix Authentication Service module |
-| [tests/](tests/) | NixOS VM tests: booting the complete configuration, hardening, post-quantum secrets, backup and restore, installing on the disk layout, unlocking the encrypted pool over SSH, the Authentik and Nextcloud sandboxes, Pleroma with its command line; a syntax test of the generated Nginx configuration |
+| [tests/](tests/) | NixOS VM tests and a syntax test of the generated Nginx configuration. The VM tests boot the complete configuration, install on the disk layout and unlock the encrypted pool over SSH. They also cover hardening, post-quantum secrets, backup and restore, the Authentik and Nextcloud sandboxes, and Pleroma with its command line. |
 | [.github/workflows/](.github/workflows/) | CI: secret scan, tests, link check and system build on every push |
 
 ## Documentation

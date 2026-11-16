@@ -2,7 +2,7 @@
 
 [Repository overview](../README.md) · [Backups](backups.md) · [Secrets](secrets.md)
 
-The [monitoring module](../modules/system/monitoring.nix) reports problems by mail to `admin@ncrypt.at`. Mail goes through msmtp with `reporting@ncrypt.at` at `smtp.webspace.bz:465`; the password is the sops secret `reporting_smtp_password`.
+The [monitoring module](../modules/system/monitoring.nix) reports problems by mail to `admin@ncrypt.at`. Mail goes through msmtp with `reporting@ncrypt.at` at `smtp.webspace.bz:465`. The password is the sops secret `reporting_smtp_password`.
 
 | Source | Reports |
 | --- | --- |
@@ -10,14 +10,14 @@ The [monitoring module](../modules/system/monitoring.nix) reports problems by ma
 | ZFS event daemon | Pool and device errors and finished scrubs (monthly) |
 | `disk-space-check.timer`, daily | Fails, and so mails, while `rpool` or `/boot` is more than 80% full |
 | `authentik-update-check.timer`, daily | Fails, and so mails, while authentik-nix offers another Authentik release than the pinned one |
-| `pinned-inputs-check.timer`, Mondays | Fails, and so mails, while the pinned flake inputs are behind their branches; lists the newest commits |
-| `pending-reboot-check.timer`, Mondays | Fails, and so mails, while the booted kernel, kernel modules, initrd or boot parameters differ from the current system’s, which only a reboot applies |
+| `pinned-inputs-check.timer`, Mondays | Fails, and so mails, while the pinned flake inputs are behind their branches. The mail lists the newest commits. |
+| `pending-reboot-check.timer`, Mondays | Fails, and so mails, while the booted kernel, kernel modules, initrd or boot parameters differ from the current system’s. Only a reboot applies them. |
 | `zfs-rollback-check.service`, at boot | Fails, and so mails, when the root dataset was not rolled back |
-| healthchecks.io | The nightly backup and a heartbeat every five minutes; alerts when a ping is late |
+| healthchecks.io | The nightly backup and a heartbeat every five minutes. Alerts when a ping is late. |
 
-A service restarted by `Restart=` only fails once its restart limit is hit. ACME renewals report through their failing `acme-*.service` units.
+A service that `Restart=` restarts only fails once it hits its restart limit. ACME renewals report through their failing `acme-*.service` units.
 
-Apollo cannot report its own outage. healthchecks.io notices missing pings when Apollo is down, offline or its mail is broken, and notifies through channels configured there, independent of Apollo. Its ping URLs are the sops secrets `healthchecks_backup_url` and `healthchecks_heartbeat_url`.
+Apollo cannot report its own outage. healthchecks.io notices missing pings when Apollo is down or offline, or when its mail is broken. It notifies through channels configured there, independent of Apollo. Its ping URLs are the sops secrets `healthchecks_backup_url` and `healthchecks_heartbeat_url`.
 
 ## Commands
 
