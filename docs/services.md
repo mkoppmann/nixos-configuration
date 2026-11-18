@@ -26,7 +26,7 @@ Synapse, Pleroma and Vaultwarden have public registration disabled. Vaultwarden 
 
 ## HTTP routing and limits
 
-[Nginx configuration](../modules/services/nginx.nix) terminates HTTPS with ACME certificates. Each service module declares its own virtual host. [Websites](../modules/services/websites.nix) holds the static sites and redirects. Nginx enables the recommended proxy, TLS, gzip and optimisation settings and uses the stable Nginx package.
+[Nginx configuration](../modules/services/nginx.nix) terminates HTTPS with ACME certificates. Each service module declares its own virtual host. [Websites](../modules/services/websites.nix) holds the static sites and redirects. Nginx enables the recommended proxy, TLS, gzip and optimisation settings and uses the stable Nginx package. It serves every virtual host over HTTP/1.1 only.
 
 - Nginx closes requests for unknown host names, including bare IP addresses, without a response. It rejects TLS handshakes for them, so it reveals no certificate.
 - Nginx keeps no access log. Only `www.mkoppmann.at` logs its page views to `/var/log/nginx/visits.log`, with nothing that identifies a visitor. A log line holds the hour, the status, whether the client calls itself a program, the referring site and the path. `sudo visits` prints the views per day and the most viewed pages and referring sites. The personal sites (`mkoppmann.at`, `www.mkoppmann.at`, `wtcvss.mkoppmann.at`) also keep failed requests, which name the client’s address, out of Nginx’s error log.
