@@ -252,7 +252,7 @@ pkgs.testers.runNixOSTest {
                   assert headers["content-type"].startswith("text/css"), f"{path}: {headers}"
 
           missing = apollo.succeed("curl -sS -o /dev/null -D - https://idp.ncrypt.at/static/dist/chunks/missing.js").lower()
-          assert missing.startswith("http/2 404"), missing
+          assert missing.startswith("http/1.1 404"), missing
           assert "cache-control:" not in missing, missing
 
       with subtest("A freshly booted system needs no reboot"):

@@ -36,15 +36,22 @@ let
   '';
 in
 {
-  # Every virtual host, whichever module declares it, serves a security.txt.
+  # These settings apply to every virtual host, whichever module declares it.
   options.services.nginx.virtualHosts = lib.mkOption {
     type = lib.types.attrsOf (
       lib.types.submodule (
         { name, ... }:
         {
-          config.locations."= /.well-known/security.txt" = lib.mkIf (name != "_") {
-            alias = securityTxt;
-            extraConfig = "charset utf-8;";
+          config = {
+            # No service needs HTTP/2 or HTTP/3, so clients reach only the
+            # HTTP/1.1 parser. Nginx serves HTTP/3 only on a QUIC listener.
+            http2 = false;
+            quic = false;
+
+            locations."= /.well-known/security.txt" = lib.mkIf (name != "_") {
+              alias = securityTxt;
+              extraConfig = "charset utf-8;";
+            };
           };
         }
       )

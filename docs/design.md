@@ -57,6 +57,7 @@ Kernel settings, per-service systemd sandboxes and network restrictions each lim
   - Nextcloud’s PHP-FPM and push daemon have the sockets of their NixOS modules.
 
   The others stay on loopback. Synapse and MAS call each other and only speak HTTP over TCP for that, so each keeps a loopback port. MAS’s port is the one that Nginx uses. Synapse’s port serves the client API, and Synapse has a socket for Nginx beside it, like Pleroma’s, and believes forwarding headers only there. MAS would gain nothing from a second listener, because Nginx limits none of its paths. Authentik’s server offers a Unix socket only in its temporary directory, next to its internal sockets and keys.
+- HTTP/1.1 only. Nginx offers neither HTTP/2 nor HTTP/3, so clients reach one request parser. No service needs the newer protocols. The cost is speed: a browser opens several connections per host instead of one.
 - Kernel. Targeted settings instead of a hardening profile, listed in [services](services.md#host-and-network).
 
 Not used:
